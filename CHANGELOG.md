@@ -4,6 +4,16 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## Unreleased
 
+## [0.2.2] - 2026-05-23
+
+### Added
+
+- Added doctor validation for the README Vercel and Netlify deploy buttons and Netlify template environment prompts.
+
+### Fixed
+
+- Stopped `scripts/doctor.mjs` from logging env-derived values or provider error text in clear text, resolving the CodeQL `js/clear-text-logging` alert.
+
 ## [0.2.1] - 2026-05-23
 
 ### Fixed

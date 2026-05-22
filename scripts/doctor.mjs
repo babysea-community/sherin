@@ -13,6 +13,18 @@ const STORAGE_PROVIDERS = new Set([
   'cloudflare-r2',
   'aws-s3',
 ]);
+const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
+const SHERIN_VERCEL_DEPLOY_URL =
+  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,STORAGE_PROVIDER';
+const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
+const SHERIN_NETLIFY_TEMPLATE_ENV = [
+  'NEXT_PUBLIC_SITE_URL',
+  'OWNER_EMAIL',
+  'NEXT_PUBLIC_SUPABASE_URL',
+  'NEXT_PUBLIC_SUPABASE_PUBLIC_KEY',
+  'SUPABASE_SECRET_KEY',
+  'BFL_API_KEY',
+];
 
 const env = loadEnv();
 const checks = [];
@@ -36,7 +48,7 @@ if (preferredInference && !INFERENCE_PROVIDERS.has(preferredInference)) {
 } else if (!hasBabySea && !hasBfl) {
   fail('Set BABYSEA_API_KEY or BFL_API_KEY.');
 } else {
-  pass(`Inference: ${preferredInference ?? (hasBfl ? 'bfl' : 'babysea')}`);
+  pass('Inference provider is configured.');
 }
 
 const preferredStorage = optional('STORAGE_PROVIDER')?.toLowerCase();
@@ -69,9 +81,9 @@ if (preferredStorage && !STORAGE_PROVIDERS.has(preferredStorage)) {
     'STORAGE_PROVIDER must be supabase-storage, vercel-blob, cloudflare-r2, or aws-s3.',
   );
 } else if (preferredStorage && !storageAvailability[preferredStorage]) {
-  fail(`STORAGE_PROVIDER=${preferredStorage} is missing required env values.`);
+  fail('Selected storage provider is missing required env values.');
 } else {
-  pass(`Storage: ${preferredStorage ?? detectStorageProvider()}`);
+  pass('Storage provider is configured.');
 }
 
 if (hasAny(storageRequirements['cloudflare-r2'])) {
@@ -111,6 +123,8 @@ checkOptionalPositiveInteger('CUSTOM_USER_STORAGE_QUOTA_GB');
 if (optional('STORAGE_SMOKE_TEST')) {
   await probeStorage();
 }
+
+checkDeployButtons();
 
 for (const check of checks) {
   console.log(`${check.ok ? 'OK' : 'ERROR'} ${check.message}`);
@@ -156,6 +170,16 @@ function loadEnv() {
   }
 
   return loaded;
+}
+
+function readRequiredFile(name) {
+  const path = resolve(process.cwd(), name);
+
+  if (!existsSync(path)) {
+    throw new Error(`${name} is missing.`);
+  }
+
+  return readFileSync(path, 'utf8');
 }
 
 function unquote(value) {
@@ -238,17 +262,13 @@ function checkR2EndpointBucketPath(name) {
     }
 
     if (endpointBucket !== bucket) {
-      fail(
-        `${name} bucket path (${endpointBucket}) must match CLOUDFLARE_R2_BUCKET_NAME (${bucket}).`,
-      );
+      fail(`${name} bucket path must match CLOUDFLARE_R2_BUCKET_NAME.`);
       return;
     }
 
     pass(`${name} bucket path matches CLOUDFLARE_R2_BUCKET_NAME.`);
-  } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
+  } catch {
+    fail(`${name} bucket path must be valid.`);
   }
 }
 
@@ -287,10 +307,8 @@ function checkR2EndpointHost(name) {
     }
 
     pass(`${name} host matches CLOUDFLARE_R2_ACCOUNT_ID.`);
-  } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
+  } catch {
+    fail(`${name} host must be valid.`);
   }
 }
 
@@ -313,10 +331,8 @@ function checkR2PublicReadHost(name) {
     }
 
     pass(`${name} is a public-read host.`);
-  } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
+  } catch {
+    fail(`${name} public-read host must be valid.`);
   }
 }
 
@@ -336,10 +352,8 @@ function checkNoUrlCredentials(name) {
     }
 
     pass(`${name} does not include credentials.`);
-  } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
+  } catch {
+    fail(`${name} must be a valid URL.`);
   }
 }
 
@@ -419,6 +433,48 @@ function pass(message) {
 
 function fail(message) {
   checks.push({ ok: false, message });
+}
+
+function checkDeployButtons() {
+  let ok = true;
+  const readme = readRequiredFile('README.md');
+  const netlify = readRequiredFile('netlify.toml');
+  const vercel = JSON.parse(readRequiredFile('vercel.json'));
+  const expectedVercelButton = `[![Deploy with Vercel](https://vercel.com/button)](${SHERIN_VERCEL_DEPLOY_URL})`;
+  const expectedNetlifyButton = `[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](${SHERIN_NETLIFY_DEPLOY_URL})`;
+
+  if (!readme.includes(expectedVercelButton)) {
+    ok = false;
+    fail('README Vercel deploy button must clone babysea-community/sherin.');
+  }
+
+  if (!readme.includes(expectedNetlifyButton)) {
+    ok = false;
+    fail('README Netlify deploy button must clone babysea-community/sherin.');
+  }
+
+  if (vercel.framework !== 'nextjs') {
+    ok = false;
+    fail('vercel.json framework must be nextjs.');
+  }
+
+  if (!netlify.includes('[template.environment]')) {
+    ok = false;
+    fail('netlify.toml must include template environment prompts.');
+  }
+
+  for (const name of SHERIN_NETLIFY_TEMPLATE_ENV) {
+    if (!netlify.includes(`${name} =`)) {
+      ok = false;
+      fail(`netlify.toml template environment must include ${name}.`);
+    }
+  }
+
+  if (ok) {
+    pass(
+      'Vercel and Netlify deploy buttons are wired to the public Sherin repo.',
+    );
+  }
 }
 
 async function probeStorage() {
@@ -514,9 +570,9 @@ async function probeSupabaseStorage(key, payload, label) {
 
     uploaded = false;
 
-    pass(`${label} Put/Get/Delete smoke test passed for bucket '${bucket}'.`);
-  } catch (error) {
-    fail(`${label} smoke test failed: ${errorMessage(error)}`);
+    pass(`${label} Put/Get/Delete smoke test passed.`);
+  } catch {
+    fail(`${label} smoke test failed; inspect provider logs for details.`);
 
     if (uploaded) {
       try {
@@ -571,8 +627,8 @@ async function probeVercelBlobStorage(key, payload) {
     await blob.del(uploadedUrl, { token });
     uploadedUrl = null;
     pass('Vercel Blob Put/Get/Delete smoke test passed.');
-  } catch (error) {
-    fail(`Vercel Blob smoke test failed: ${errorMessage(error)}`);
+  } catch {
+    fail('Vercel Blob smoke test failed; inspect provider logs for details.');
 
     if (uploadedUrl) {
       try {
@@ -611,10 +667,8 @@ async function probeS3CompatibleStorage(config, key, payload) {
         secretAccessKey: config.secretAccessKey,
       },
     });
-  } catch (error) {
-    fail(
-      `${config.label} smoke test could not load @aws-sdk/client-s3: ${errorMessage(error)}`,
-    );
+  } catch {
+    fail(`${config.label} smoke test could not load @aws-sdk/client-s3.`);
     return;
   }
 
@@ -650,11 +704,11 @@ async function probeS3CompatibleStorage(config, key, payload) {
       ? 'Put/Get/Public read/Delete'
       : 'Put/Get/Delete';
 
-    pass(
-      `${config.label} ${checks} smoke test passed for bucket '${config.bucket}'.`,
+    pass(`${config.label} ${checks} smoke test passed.`);
+  } catch {
+    fail(
+      `${config.label} smoke test failed; inspect provider logs for details.`,
     );
-  } catch (error) {
-    fail(`${config.label} smoke test failed: ${errorMessage(error)}`);
 
     try {
       await client.send(
@@ -744,12 +798,10 @@ function checkAwsS3EndpointUrl(name) {
   try {
     const config = resolveAwsS3EndpointConfig({ bucket, endpointUrl, region });
 
-    pass(`${name} writes through ${config.clientEndpoint}.`);
-    pass(`${name} serves public images from ${config.publicBaseUrl}.`);
-  } catch (error) {
-    if (error instanceof Error) {
-      fail(error.message);
-    }
+    pass(`${name} write endpoint is valid.`);
+    pass(`${name} public image endpoint is valid.`);
+  } catch {
+    fail(`${name} endpoint configuration is invalid.`);
   }
 }
 
@@ -906,8 +958,4 @@ async function bodyToUint8Array(body) {
   }
 
   return merged;
-}
-
-function errorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
 }

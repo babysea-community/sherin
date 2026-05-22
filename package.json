@@ -1,6 +1,6 @@
 {
   "name": "sherin",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Self-hosted private workspace for generative media. Built for creators, artists, designers, and developers who want their own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
