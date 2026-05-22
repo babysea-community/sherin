@@ -4,6 +4,12 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## Unreleased
 
+## [0.2.1] - 2026-05-23
+
+### Fixed
+
+- Fixed CircleCI pnpm setup to install pnpm into a user-owned `$HOME/.local` prefix, avoiding `EACCES` failures from `cimg/node:24.11` when the image already has pnpm under `/usr/local/lib/node_modules`.
+
 ## [0.2.0] - 2026-05-22
 
 ### Added

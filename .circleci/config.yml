@@ -23,7 +23,9 @@ jobs:
       - run:
           name: Set up pnpm
           command: |
-            npm install --global pnpm@10.19.0
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            npm install --global --prefix "$HOME/.local" pnpm@10.19.0
             pnpm config set store-dir ~/.pnpm-store
       - run:
           name: Install dependencies
@@ -64,7 +66,9 @@ jobs:
       - run:
           name: Set up pnpm
           command: |
-            npm install --global pnpm@10.19.0
+            echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$BASH_ENV"
+            source "$BASH_ENV"
+            npm install --global --prefix "$HOME/.local" pnpm@10.19.0
             pnpm config set store-dir ~/.pnpm-store
       - run:
           name: Install dependencies
