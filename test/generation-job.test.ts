@@ -1,0 +1,68 @@
+import { describe, expect, it } from 'vitest';
+
+import {
+  createQueuedGenerationJob,
+  readQueuedGenerationJob,
+} from '@/app/dashboard/studio/_lib/generation-job';
+import type { Json } from '@/lib/database.types';
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+describe('queued generation jobs', () => {
+  it('stores a durable BabySea idempotency key with the job payload', () => {
+    const job = createQueuedGenerationJob(createGenerationInput(), {}, 's3');
+
+    expect(job.babyseaIdempotencyKey).toEqual(
+      expect.stringMatching(UUID_PATTERN),
+    );
+    expect(readQueuedGenerationJob({ sherin_job: job } as Json)).toMatchObject({
+      babyseaIdempotencyKey: job.babyseaIdempotencyKey,
+    });
+  });
+
+  it('keeps prepared uploaded input URLs in the durable request body', () => {
+    const inputUrls = ['https://storage.example.com/input.png?token=stable'];
+    const inputFileAssets = [
+      {
+        byteLength: 1234,
+        contentType: 'image/png',
+        publicUrl: 'https://storage.example.com/input.png?token=stable',
+        source: 'upload' as const,
+        storagePath:
+          'user-upload/user-1/00000000-0000-4000-8000-000000000000/input-1.png',
+        storageProvider: 'supabase-storage' as const,
+        url: 'https://storage.example.com/input.png?token=stable',
+      },
+    ];
+    const job = createQueuedGenerationJob(
+      createGenerationInput({ generation_input_file: inputUrls }),
+      {},
+      'supabase-storage',
+      inputFileAssets,
+    );
+
+    expect(job.values.generation_input_file).toEqual(inputUrls);
+    expect(job.inputFileAssets).toEqual(inputFileAssets);
+    expect(job.inputFileUploadPaths).toEqual([]);
+  });
+});
+
+function createGenerationInput(
+  overrides: Partial<Parameters<typeof createQueuedGenerationJob>[0]> = {},
+): Parameters<typeof createQueuedGenerationJob>[0] {
+  return {
+    bfl_prompt_upsampling: false,
+    bfl_safety_tolerance: 2,
+    generation_input_file: [],
+    generation_output_number: 1,
+    generation_provider_order: 'fastest',
+    generation_resolution: '1MP',
+    model: 'bfl/flux-1.1-pro',
+    output_format: 'jpeg',
+    prompt: 'A calm editorial image of a glass sculpture',
+    ratio: '1:1',
+    ...overrides,
+    bfl_raw: overrides.bfl_raw ?? false,
+  };
+}
