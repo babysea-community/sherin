@@ -4,8 +4,16 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## Unreleased
 
+## [0.2.5] - 2026-05-24
+
+### Added
+
+- Added a GitLab CI pipeline that mirrors BabyChain's verification, coverage, build, dependency audit, secret scanning, Code Quality, SAST, Dependency Scanning, and scheduled/manual DAST checks.
+- Added Cobertura coverage output for GitLab coverage reports.
+
 ### Fixed
 
+- Fixed the Deploy workflow so preview dispatches do not pass production flags and `v*` tag releases still build and deploy with production flags.
 - Replaced Sentry URL trailing-slash regex normalization with a bounded string scan to avoid CodeQL ReDoS noise.
 
 ## [0.2.3] - 2026-05-23

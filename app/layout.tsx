@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 
 const title = 'Sherin';
 const description =
-  'Self-hosted private workspace for generative media. Built for creators, artists, designers, and developers who want their own key, domain, and storage.';
+  'Self-hosted private workspace for generative media with own key, domain, and storage.';
 const socialImageUrl = 'https://cdn.babysea.live/assets/oss/sherin-card.png';
 
 export const metadata: Metadata = {
@@ -18,24 +18,21 @@ export const metadata: Metadata = {
   keywords: [
     'babysea',
     'open-source',
-    'starter-pack',
-    'black-forest-labs',
-    'supabase',
-    'vercel-blob',
-    'cloudflare-r2',
-    'aws-s3',
-    'vercel',
-    'netlify',
     'ai-infrastructure',
     'control-plane',
     'execution-layer',
-    'developer-tools',
-    'generative-ai',
     'inference-providers',
-    'image-generation',
-    'multimodal',
-    'generative-media',
+    'developer-tools',
     'creative-tools',
+    'generative-ai',
+    'generative-media',
+    'black-forest-labs',
+    'supabase',
+    'cloudflare',
+    'aws',
+    'sentry',
+    'netlify',
+    'vercel',
   ],
   icons: {
     icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],

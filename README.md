@@ -1,7 +1,7 @@
 <div align="center">
 
 <p>
-  <img src="public/icon.png" width="100" alt="Sherin icon" />
+  <img src="public/icon.png" width="140" alt="Sherin icon" />
 </p>
 
 <h1>
@@ -9,7 +9,7 @@
 </h1>
 
 <p>
-  Self-hosted private workspace for generative media. Built for creators, artists, designers, and developers who want their own key, domain, and storage.
+  Self-hosted private workspace for generative media with own key, domain, and storage.
 </p>
 
 <p>
@@ -18,20 +18,13 @@
 
 <br />
 
+<strong>Quick links</strong>
+
 [![BabySea Demo](https://custom-icon-badges.demolab.com/badge/babysea-see_demo-0D9488?style=for-the-badge&logo=babysea&logoColor=white)](https://demo.sherin.babysea.live)
 
-<br />
-
-<img src="public/card.png" alt="Sherin card" />
-
-<br />
-
-<img src="public/dashboard.png" alt="Sherin dashboard" />
-
-<br/>
 <br/>
 
-<strong>Project</strong>
+<strong>Project details</strong>
 
 [![BabySea OSS Starter](https://custom-icon-badges.demolab.com/badge/oss-starter-2563EB?style=for-the-badge&logo=babysea&logoColor=white)](#babysea-oss-taxonomy)
 [![BabySea OSS Status Working](https://custom-icon-badges.demolab.com/badge/oss_status-working-DB2777?style=for-the-badge&logo=babysea&logoColor=white)](#status)
@@ -39,10 +32,10 @@
 
 <br/>
 
-<strong>Assistants & Bots</strong>
+<strong>Assistants & bots</strong>
 
-![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white)
 ![OpenAI](https://custom-icon-badges.demolab.com/badge/openai-000000?style=for-the-badge&logo=openai&logoColor=white)
+![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white)
 
 <br/>
 
@@ -66,6 +59,7 @@
 [![Supabase](https://img.shields.io/badge/supabase-249361?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![AWS](https://custom-icon-badges.demolab.com/badge/aws-252F3E?style=for-the-badge&logo=aws&logoColor=white)](https://aws.amazon.com)
 [![Cloudflare](https://img.shields.io/badge/cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com)
+[![Sentry](https://img.shields.io/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
 [![Netlify](https://img.shields.io/badge/netlify-05BDBA?style=for-the-badge&logo=netlify&logoColor=white)](https://www.netlify.com)
 [![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
@@ -73,12 +67,20 @@
 
 <strong>One-click deploy</strong>
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,STORAGE_PROVIDER)
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,STORAGE_PROVIDER)
+
+<br />
+
+<img src="public/card.png" alt="Sherin card" />
+
+<br />
+
+<img src="public/dashboard.png" alt="Sherin dashboard" />
 
 </div>
 
----
+<br/>
 
 ## BabySea OSS taxonomy
 

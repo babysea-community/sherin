@@ -22,7 +22,7 @@ jobs:
       NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci
       SUPABASE_SECRET_KEY: ci
       INFERENCE_PROVIDER: bfl
-      BFL_API_KEY: bfl_ci
+      BFL_API_KEY: ci
       STORAGE_PROVIDER: supabase-storage
     steps:
       - uses: actions/checkout@v6
