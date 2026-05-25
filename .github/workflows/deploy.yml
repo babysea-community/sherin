@@ -56,10 +56,100 @@ jobs:
         run: pnpm add -g vercel@latest
       - name: Pull Vercel environment
         if: steps.check.outputs.deploy == 'true'
+        env:
+          VERCEL_ENVIRONMENT: ${{ github.event.inputs.environment == 'preview' && 'preview' || 'production' }}
         run: |
           vercel pull --yes \
-            --environment=${{ github.event.inputs.environment == 'preview' && 'preview' || 'production' }} \
+            --environment="$VERCEL_ENVIRONMENT" \
             --token "$VERCEL_TOKEN"
+      - name: Check Sherin runtime environment
+        if: steps.check.outputs.deploy == 'true'
+        env:
+          VERCEL_ENVIRONMENT: ${{ github.event.inputs.environment == 'preview' && 'preview' || 'production' }}
+        run: |
+          node <<'NODE'
+          const { existsSync, readFileSync } = require('node:fs');
+
+          const required = [
+            'NEXT_PUBLIC_SITE_URL',
+            'OWNER_EMAIL',
+            'NEXT_PUBLIC_SUPABASE_URL',
+            'NEXT_PUBLIC_SUPABASE_PUBLIC_KEY',
+            'SUPABASE_SECRET_KEY',
+          ];
+          const envName = process.env.VERCEL_ENVIRONMENT || 'production';
+          const file = `.vercel/.env.${envName}.local`;
+
+          if (!existsSync(file)) {
+            console.error(`::error::Vercel environment file was not pulled: ${file}`);
+            process.exit(1);
+          }
+
+          const env = Object.create(null);
+
+          for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+            const trimmed = line.trim();
+
+            if (!trimmed || trimmed.startsWith('#')) {
+              continue;
+            }
+
+            const separator = trimmed.indexOf('=');
+
+            if (separator === -1) {
+              continue;
+            }
+
+            const name = trimmed.slice(0, separator).trim();
+            let value = trimmed.slice(separator + 1).trim();
+
+            if (
+              (value.startsWith('"') && value.endsWith('"')) ||
+              (value.startsWith("'") && value.endsWith("'"))
+            ) {
+              value = value.slice(1, -1);
+            }
+
+            env[name] = value;
+          }
+
+          const missing = required.filter((name) => !env[name]?.trim());
+
+          if (missing.length > 0) {
+            console.error(
+              `::error::Missing required Sherin Vercel ${envName} env vars: ${missing.join(', ')}`,
+            );
+            process.exit(1);
+          }
+
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(env.OWNER_EMAIL.trim())) {
+            console.error('::error::OWNER_EMAIL must be a valid email address.');
+            process.exit(1);
+          }
+
+          let siteUrl;
+
+          try {
+            siteUrl = new URL(env.NEXT_PUBLIC_SITE_URL);
+          } catch {
+            console.error('::error::NEXT_PUBLIC_SITE_URL must be a valid URL.');
+            process.exit(1);
+          }
+
+          if (siteUrl.protocol !== 'https:') {
+            console.error('::error::NEXT_PUBLIC_SITE_URL must use HTTPS in hosted deployments.');
+            process.exit(1);
+          }
+
+          const inferenceProvider = (env.INFERENCE_PROVIDER || 'bfl').trim().toLowerCase();
+
+          if (inferenceProvider === 'bfl' && !env.BFL_API_KEY?.trim()) {
+            console.error('::error::BFL_API_KEY is required when INFERENCE_PROVIDER is "bfl".');
+            process.exit(1);
+          }
+
+          console.log(`Sherin Vercel ${envName} environment has required runtime variables.`);
+          NODE
       - name: Build
         if: steps.check.outputs.deploy == 'true'
         run: |

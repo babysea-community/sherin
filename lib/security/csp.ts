@@ -33,28 +33,30 @@ export const API_SECURITY_HEADERS = [
 /**
  * Builds Sherin's static CSP from the active deployment environment.
  * Sherin is a single private starter, so a small static policy in next.config
- * keeps the same allowlist discipline without needing middleware nonce plumbing.
+ * keeps the same allowlist discipline without needing middleware nonce
+ * plumbing. The CSP applies to HTML responses; JSON API responses under
+ * /api/* receive Cache-Control headers via API_SECURITY_HEADERS.
  */
 function buildContentSecurityPolicy() {
   const connectHosts = new Set<string>([
     "'self'",
-    'https://api.bfl.ai', // global
-    'https://api.us.bfl.ai', // us-region
-    'https://api.eu.bfl.ai', // eu-region
     'https://api.us.babysea.ai', // us-region
     'https://api.eu.babysea.ai', // eu-region
     'https://api.jp.babysea.ai', // apac-region
+    'https://api.bfl.ai', // global
+    'https://api.us.bfl.ai', // us-region
+    'https://api.eu.bfl.ai', // eu-region
   ]);
   const imageHosts = new Set<string>([
     "'self'",
     'data:',
     'blob:',
-    'https://delivery-us.bfl.ai', // us-region
-    'https://delivery-eu.bfl.ai', // eu-region
     'https://app.us.babysea.ai', // us-region
     'https://app.eu.babysea.ai', // eu-region
     'https://app.jp.babysea.ai', // apac-region
     BABYSEA_CDN_ORIGIN, // sample image and Goo background assets
+    'https://delivery-us.bfl.ai', // us-region
+    'https://delivery-eu.bfl.ai', // eu-region
     'https://lh3.googleusercontent.com', // Google profile photos from Google OAuth
   ]);
   const scriptHosts = new Set<string>([

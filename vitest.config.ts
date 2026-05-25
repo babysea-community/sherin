@@ -1,12 +1,11 @@
 import { defineConfig } from 'vitest/config';
 import { resolve } from 'node:path';
 
-// Minimal Vitest config for the Sherin starter.
+// Minimal Vitest config for the starter.
 //
 // Tests cover the pure, server-only helpers that are easy to break and hard
-// to debug in production: rate limiting, error classification, Sentry option
-// resolution, and the BFL resume heuristics. Component / integration tests
-// belong in the apps/e2e Playwright project.
+// to debug in production. Component / integration tests belong in the
+// apps/e2e Playwright project.
 export default defineConfig({
   test: {
     environment: 'node',

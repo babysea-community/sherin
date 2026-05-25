@@ -2,7 +2,16 @@
 
 All notable changes will be documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [0.2.6] - 2026-05-25
+
+### Added
+
+- Added a `.gitleaks.toml` with project-specific allowlist entries so the Gitleaks workflow ignores documentation and CI placeholder examples (mirrors BabyChain).
+- Added a Vercel deploy preflight that fails the workflow if `NEXT_PUBLIC_SITE_URL`, `OWNER_EMAIL`, Supabase keys, or `BFL_API_KEY` (when `INFERENCE_PROVIDER=bfl`) are missing—and validates the email format and HTTPS site URL—so misconfiguration is caught before deploy instead of at runtime (mirrors BabyChain's deploy preflight).
+
+### Changed
+
+- Quoted `VERCEL_ENVIRONMENT` in `deploy.yml` via a dedicated env var rather than inline interpolation, matching BabyChain's hardened deploy pattern.
 
 ## [0.2.5] - 2026-05-24
 

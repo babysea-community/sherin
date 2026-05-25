@@ -13,7 +13,7 @@ This code applies to Sherin issues, pull requests, discussions, security reports
 Examples of behavior that contributes to a positive environment:
 
 - Using welcoming and inclusive language
-- Being respectful of differing viewpoints, workflows, and creative practices
+- Being respectful of differing viewpoints, workflows, creative practices, and deployment constraints
 - Gracefully accepting constructive criticism
 - Focusing on what is best for the community and the starter's users
 - Respecting creative ownership, private prompts, private reference images, generated media, and deployment details
