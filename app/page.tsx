@@ -43,7 +43,7 @@ const pageContainerClass = 'mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
+    <main className="min-h-screen space-y-10 overflow-hidden bg-slate-950 text-white sm:space-y-14">
       <section
         className={`${pageContainerClass} relative flex min-h-screen flex-col py-8`}
       >

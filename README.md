@@ -18,25 +18,12 @@
 
 <br />
 
-<strong>Quick links</strong>
-
-[![BabySea Demo](https://custom-icon-badges.demolab.com/badge/babysea-see_demo-0D9488?style=for-the-badge&logo=babysea&logoColor=white)](https://demo.sherin.babysea.live)
-
-<br />
-
 <strong>Project details</strong>
 
+[![BabySea Demo](https://custom-icon-badges.demolab.com/badge/babysea-demo-0D9488?style=for-the-badge&logo=babysea&logoColor=white)](https://demo.sherin.babysea.live)
 [![BabySea OSS Starter](https://custom-icon-badges.demolab.com/badge/oss-starter-2563EB?style=for-the-badge&logo=babysea&logoColor=white)](#babysea-oss-taxonomy)
 [![BabySea OSS Status Working](https://custom-icon-badges.demolab.com/badge/oss_status-working-DB2777?style=for-the-badge&logo=babysea&logoColor=white)](#status)
 [![License](https://custom-icon-badges.demolab.com/badge/license-apache_2.0-059669?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
-
-<br/>
-
-<strong>Assistants & bots</strong>
-
-![Claude](https://img.shields.io/badge/claude-D97757?style=for-the-badge&logo=claude&logoColor=white)
-![OpenAI](https://custom-icon-badges.demolab.com/badge/gpt-000000?style=for-the-badge&logo=openai&logoColor=white)
-![Dependabot](https://img.shields.io/badge/dependabot-025E8C?style=for-the-badge&logo=dependabot&logoColor=white)
 
 <br/>
 
@@ -46,7 +33,7 @@
 [![GitLabCI](https://img.shields.io/gitlab/pipeline-status/babysea/sherin?branch=main&style=for-the-badge&label=gitlabci&logo=gitlab&logoColor=white&color=FC6D26)](https://gitlab.com/babysea/sherin/-/commits/main)
 [![CircleCI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcircleci.com%2Fapi%2Fv1.1%2Fproject%2Fcircleci%2F2uTLcwc4naeNuKDP41es88%2FUVW4ijtkbzrFah5yHrnaQ2%2Ftree%2Fmain%3Flimit%3D1&query=%24%5B0%5D.status&style=for-the-badge&logo=circleci&logoColor=white&label=circleci&color=003740)](https://dl.circleci.com/status-badge/redirect/circleci/2uTLcwc4naeNuKDP41es88/UVW4ijtkbzrFah5yHrnaQ2/tree/main)
 [![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
-[![Sentry](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/sentry-check.yml?style=for-the-badge&label=sentry&logo=sentry&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/sentry-check.yml)
+[![Sentry](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/sentry-check.yml?style=for-the-badge&label=sentry&logo=sentry&logoColor=white&color=181225)](https://github.com/babysea-community/sherin/actions/workflows/sentry-check.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/codeql.yml?style=for-the-badge&label=codeql&logo=github&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/codeql.yml)
 [![Package](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/publish-check.yml?style=for-the-badge&label=package&logo=npm&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/publish-check.yml)
 

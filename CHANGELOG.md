@@ -2,6 +2,13 @@
 
 All notable changes will be documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-05-27
+
+### Changed
+
+- Updated the standalone starter catalog to `babysea@2.0.0` for the BabySea inference provider path.
+- Bumped the starter release metadata to `0.2.9` for the SDK 2.0.0 compatibility update.
+
 ## [0.2.8] - 2026-05-27
 
 ### Added
@@ -11,6 +18,9 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Changed
 
+- Added `AGENTS.md` with the shared starter guide structure and Sherin-specific owner auth, inference, storage, protected image, mobile solid-paint, and verification rules.
+- Added more vertical breathing room between homepage sections and simplified gallery social shortcut buttons to solid paint with simple hover states.
+- Aligned the README Sentry check badge with the shared Sentry badge color.
 - Refined the public homepage branding around Sherin ownership: Sherin icon in the header, a key-marked Owner access button, fuchsia primary action styling, no duplicate hero owner action or Conduct button, and a right-weighted hero preview surface.
 - Updated the separated CTA band with the `#000416` Sherin background color and a dashboard screenshot below the "Ship your own Sherin" button.
 - Standardized the header, hero, gallery, CTA, and footer on the same wide `max-w-7xl` container while keeping the gallery image section slightly wider and preserving the original balanced two-stack visual rhythm.
