@@ -21,6 +21,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 ### Fixed
 
 - Allowlisted `https://imagedelivery.net` in the starter CSP so the bundled demo gallery assets render in deployed previews.
+- Simplified the homepage Project surface card on narrow mobile viewports with solid paint layers, compact rows, and deferred description text to avoid Android browser compositing artifacts while preserving the richer card treatment from `sm` upward.
 
 ## [0.2.7] - 2026-05-25
 

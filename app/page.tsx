@@ -110,8 +110,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/40 ring-1 ring-white/10 sm:p-5">
-            <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/80 p-4 sm:p-5">
+          <div className="min-w-0 rounded-3xl border border-white/10 bg-slate-950 p-3 sm:bg-white/[0.04] sm:p-5 sm:shadow-2xl sm:shadow-black/40 sm:ring-1 sm:ring-white/10">
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-[#050817] p-4 sm:bg-slate-950/80 sm:p-5">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">
@@ -137,16 +137,16 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="group flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-slate-200 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06] sm:items-start sm:rounded-2xl sm:p-4"
+                      className="group flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-[#080b1a] px-4 py-3 text-slate-200 sm:items-start sm:rounded-2xl sm:bg-white/[0.03] sm:p-4 sm:transition sm:hover:border-fuchsia-200/40 sm:hover:bg-white/[0.06]"
                     >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 ring-1 ring-fuchsia-200/15 transition group-hover:bg-fuchsia-200/20 sm:size-9">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 sm:size-9 sm:ring-1 sm:ring-fuchsia-200/15 sm:transition sm:group-hover:bg-fuchsia-200/20">
                         <Icon className="size-4" aria-hidden="true" />
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-2 font-semibold leading-5 text-white">
                           {item.label}
                           <ExternalLink
-                            className="size-3.5 shrink-0 text-slate-500 transition group-hover:text-fuchsia-100"
+                            className="size-3.5 shrink-0 text-slate-500 sm:transition sm:group-hover:text-fuchsia-100"
                             aria-hidden="true"
                           />
                         </span>
