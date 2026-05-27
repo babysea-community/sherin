@@ -15,7 +15,7 @@ const STORAGE_PROVIDERS = new Set([
 ]);
 const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
-  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,STORAGE_PROVIDER';
+  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'NEXT_PUBLIC_SITE_URL',
@@ -23,7 +23,13 @@ const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'NEXT_PUBLIC_SUPABASE_URL',
   'NEXT_PUBLIC_SUPABASE_PUBLIC_KEY',
   'SUPABASE_SECRET_KEY',
+  'INFERENCE_PROVIDER',
   'BFL_API_KEY',
+  'BFL_API_BASE_URL',
+  'BABYSEA_API_KEY',
+  'BABYSEA_API_BASE_URL',
+  'STORAGE_PROVIDER',
+  'CUSTOM_USER_STORAGE_QUOTA_GB',
 ];
 
 const env = loadEnv();
@@ -437,11 +443,13 @@ function fail(message) {
 
 function checkDeployButtons() {
   let ok = true;
+  const homePage = readRequiredFile('app/page.tsx');
   const readme = readRequiredFile('README.md');
   const netlify = readRequiredFile('netlify.toml');
   const vercel = JSON.parse(readRequiredFile('vercel.json'));
   const expectedVercelButton = `[![Deploy with Vercel](https://vercel.com/button)](${SHERIN_VERCEL_DEPLOY_URL})`;
   const expectedNetlifyButton = `[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](${SHERIN_NETLIFY_DEPLOY_URL})`;
+  const expectedNetlifyHomeLink = 'This site is powered by Netlify';
 
   if (!readme.includes(expectedVercelButton)) {
     ok = false;
@@ -451,6 +459,14 @@ function checkDeployButtons() {
   if (!readme.includes(expectedNetlifyButton)) {
     ok = false;
     fail('README Netlify deploy button must clone babysea-community/sherin.');
+  }
+
+  if (
+    !homePage.includes(expectedNetlifyHomeLink) ||
+    !homePage.includes('https://www.netlify.com/')
+  ) {
+    ok = false;
+    fail('Homepage must include the Netlify-powered backlink.');
   }
 
   if (vercel.framework !== 'nextjs') {
@@ -472,7 +488,7 @@ function checkDeployButtons() {
 
   if (ok) {
     pass(
-      'Vercel and Netlify deploy buttons are wired to the public Sherin repo.',
+      'Vercel and Netlify deploy buttons plus the homepage backlink are wired.',
     );
   }
 }

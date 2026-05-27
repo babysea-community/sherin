@@ -16,14 +16,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      NEXT_PUBLIC_SITE_URL: https://sherin.example.com
+      NEXT_PUBLIC_SITE_URL: https://your-sherin.example.com
       OWNER_EMAIL: owner@example.com
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci
-      SUPABASE_SECRET_KEY: ci
+      NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci_supabase_public_key
+      SUPABASE_SECRET_KEY: ci_supabase_secret_key
       INFERENCE_PROVIDER: bfl
-      BFL_API_KEY: ci
+      BFL_API_KEY: ci_bfl_api_key
+      BFL_API_BASE_URL: https://api.bfl.ai
+      BABYSEA_API_KEY: ci_babysea_api_key
+      BABYSEA_API_BASE_URL: https://api.us.babysea.ai
       STORAGE_PROVIDER: supabase-storage
+      CUSTOM_USER_STORAGE_QUOTA_GB: ci
+      BLOB_READ_WRITE_TOKEN: ci_blob_read_write_token
+      CLOUDFLARE_R2_ACCOUNT_ID: ci
+      CLOUDFLARE_R2_ACCESS_KEY_ID: ci_cloudflare_r2_access_key_id
+      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ci_cloudflare_r2_secret_access_key
+      CLOUDFLARE_R2_BUCKET_NAME: ci
+      CLOUDFLARE_R2_ENDPOINT_URL: https://example.r2.cloudflarestorage.com
+      CLOUDFLARE_R2_CUSTOM_DOMAIN_URL: https://example.pub-token.r2.dev
+      AWS_S3_REGION: ci
+      AWS_S3_ACCESS_KEY_ID: ci_aws_s3_access_key_id
+      AWS_S3_SECRET_ACCESS_KEY: ci_aws_s3_secret_access_key
+      AWS_S3_BUCKET_NAME: ci
+      AWS_S3_ENDPOINT_URL: https://example.s3.amazonaws.com
+      NEXT_PUBLIC_SENTRY_DSN: https://example.sentry.io
+      NEXT_PUBLIC_SENTRY_ENVIRONMENT: ci
+      SENTRY_ORG: ci
+      SENTRY_PROJECT: ci
+      SENTRY_AUTH_TOKEN: ci_sentry_auth_token
     steps:
       - uses: actions/checkout@v6
         with:
