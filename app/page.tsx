@@ -110,19 +110,19 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5 shadow-2xl shadow-black/40 ring-1 ring-white/10">
-            <div className="rounded-[1.4rem] border border-white/10 bg-slate-950/80 p-5">
+          <div className="min-w-0 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/40 ring-1 ring-white/10 sm:rounded-[2rem] sm:p-5">
+            <div className="min-w-0 rounded-[1.15rem] border border-white/10 bg-slate-950/80 p-4 sm:rounded-[1.4rem] sm:p-5">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">
                     Project surface
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
                     Source, conduct, license, and community links
                   </p>
                 </div>
                 <GitCompareArrows
-                  className="size-5 text-fuchsia-200"
+                  className="size-5 shrink-0 text-fuchsia-200"
                   aria-hidden="true"
                 />
               </div>
@@ -137,21 +137,21 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06]"
+                      className="group min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06] sm:p-4"
                     >
                       <div className="flex items-start gap-3">
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 ring-1 ring-fuchsia-200/15 transition group-hover:bg-fuchsia-200/20">
                           <Icon className="size-4" aria-hidden="true" />
                         </span>
                         <span className="min-w-0">
-                          <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                          <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-white">
                             {item.label}
                             <ExternalLink
-                              className="size-3.5 text-slate-500 transition group-hover:text-fuchsia-100"
+                              className="size-3.5 shrink-0 text-slate-500 transition group-hover:text-fuchsia-100"
                               aria-hidden="true"
                             />
                           </span>
-                          <span className="mt-1 block text-sm leading-6 text-slate-400">
+                          <span className="mt-1 block break-words text-sm leading-6 text-slate-400">
                             {item.description}
                           </span>
                         </span>
