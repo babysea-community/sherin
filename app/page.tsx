@@ -110,8 +110,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="min-w-0 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-3 shadow-2xl shadow-black/40 ring-1 ring-white/10 sm:rounded-[2rem] sm:p-5">
-            <div className="min-w-0 rounded-[1.15rem] border border-white/10 bg-slate-950/80 p-4 sm:rounded-[1.4rem] sm:p-5">
+          <div className="min-w-0 rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-2xl shadow-black/40 ring-1 ring-white/10 sm:p-5">
+            <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/80 p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-white">
@@ -127,7 +127,7 @@ export default function HomePage() {
                 />
               </div>
 
-              <div className="mt-5 grid gap-3">
+              <div className="mt-5 grid gap-3 text-sm">
                 {communityLinks.map((item) => {
                   const Icon = item.Icon;
 
@@ -137,25 +137,23 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="group min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] p-3 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06] sm:p-4"
+                      className="group flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-slate-200 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06] sm:items-start sm:rounded-2xl sm:p-4"
                     >
-                      <div className="flex items-start gap-3">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 ring-1 ring-fuchsia-200/15 transition group-hover:bg-fuchsia-200/20">
-                          <Icon className="size-4" aria-hidden="true" />
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 ring-1 ring-fuchsia-200/15 transition group-hover:bg-fuchsia-200/20 sm:size-9">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex min-w-0 items-center gap-2 font-semibold leading-5 text-white">
+                          {item.label}
+                          <ExternalLink
+                            className="size-3.5 shrink-0 text-slate-500 transition group-hover:text-fuchsia-100"
+                            aria-hidden="true"
+                          />
                         </span>
-                        <span className="min-w-0">
-                          <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-white">
-                            {item.label}
-                            <ExternalLink
-                              className="size-3.5 shrink-0 text-slate-500 transition group-hover:text-fuchsia-100"
-                              aria-hidden="true"
-                            />
-                          </span>
-                          <span className="mt-1 block break-words text-sm leading-6 text-slate-400">
-                            {item.description}
-                          </span>
+                        <span className="mt-1 hidden break-words leading-6 text-slate-400 sm:block">
+                          {item.description}
                         </span>
-                      </div>
+                      </span>
                     </a>
                   );
                 })}
