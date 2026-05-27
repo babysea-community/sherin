@@ -1,13 +1,17 @@
 import {
   ExternalLink,
-  GitBranch,
+  GitCompareArrows,
   Github,
   HeartHandshake,
   KeyRound,
+  Rocket,
   Scale,
   ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
+
+import { ClientGallery } from '@/components/gallery/client';
+import { ProtectedImage } from '@/components/protected-image';
 
 const repositoryUrl = 'https://github.com/babysea-community/sherin';
 
@@ -15,7 +19,7 @@ const communityLinks = [
   {
     href: repositoryUrl,
     label: 'Source code',
-    description: 'Apache-2.0 project code, issues, releases, and docs.',
+    description: 'Sherin project code, issues, releases, and docs.',
     Icon: Github,
   },
   {
@@ -27,21 +31,22 @@ const communityLinks = [
   {
     href: `${repositoryUrl}/blob/main/LICENSE`,
     label: 'License',
-    description: 'OSI-approved Apache License 2.0 for reuse and forks.',
+    description: 'OSI-approved Apache-2.0 License for reuse and forks.',
     Icon: Scale,
   },
 ] as const;
 
-const projectBoundaries = [
-  'Apache-2.0 open-source starter for self-hosted generative media workspaces.',
-  'Community contributions happen through GitHub issues and pull requests.',
-  'No hosted SaaS, paid support package, billing layer, or managed Sherin service is included.',
-] as const;
+const shipCta =
+  'Sherin runs on your own inference API key, your own domain, and your own storage. There is no paid plan inside Sherin.';
+
+const pageContainerClass = 'mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
-      <section className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col px-6 py-8 sm:px-8 lg:px-10">
+      <section
+        className={`${pageContainerClass} relative flex min-h-screen flex-col py-8`}
+      >
         <div
           aria-hidden="true"
           className="absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(circle_at_top_left,rgba(217,70,239,0.22),transparent_38rem),radial-gradient(circle_at_top_right,rgba(45,212,191,0.16),transparent_32rem)]"
@@ -51,64 +56,57 @@ export default function HomePage() {
           <a
             href={repositoryUrl}
             target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 font-semibold uppercase tracking-[0.32em] text-fuchsia-100 transition hover:text-white"
+            rel="noreferrer noopener"
+            className="inline-flex items-center gap-3 font-semibold text-white transition hover:text-fuchsia-100"
           >
-            Sherin
-            <ExternalLink className="size-3.5" aria-hidden="true" />
+            <ProtectedImage
+              src="/icon.png"
+              alt="Sherin"
+              width={36}
+              height={36}
+              className="size-9 rounded-xl"
+              decoding="async"
+              fetchPriority="high"
+              loading="eager"
+            />
+            <span>Sherin</span>
           </a>
-          <div className="flex items-center gap-2">
-            <a
-              href={`${repositoryUrl}/blob/main/CODE_OF_CONDUCT.md`}
-              target="_blank"
-              rel="noreferrer"
-              className="hidden rounded-full border border-white/10 px-4 py-2 font-medium text-slate-300 transition hover:border-white/30 hover:text-white sm:inline-flex"
-            >
-              Conduct
-            </a>
-            <Link
-              href="/access"
-              className="rounded-full border border-white/10 px-4 py-2 font-medium text-slate-300 transition hover:border-white/30 hover:text-white"
-            >
-              Owner access
-            </Link>
-          </div>
+          <Link
+            href="/access"
+            className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
+          >
+            <KeyRound className="size-4" aria-hidden="true" />
+            Owner access
+          </Link>
         </nav>
 
-        <div className="grid flex-1 items-center gap-12 py-16 lg:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)] lg:py-20">
+        <div className="grid flex-1 items-center gap-12 py-16 lg:grid-cols-[minmax(0,0.88fr)_minmax(26rem,1.12fr)] lg:py-20">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-teal-300/20 bg-teal-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-teal-100">
+            <p className="inline-flex items-center gap-2 rounded-full border border-fuchsia-300/20 bg-fuchsia-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-fuchsia-100">
               <ShieldCheck className="size-4" aria-hidden="true" />
-              Apache-2.0 OSS starter
+              Self-hosted private workspace
             </p>
 
             <h1 className="mt-7 max-w-3xl text-4xl font-semibold tracking-tight text-white sm:text-6xl">
-              Community-owned source for private generative media workspaces.
+              Own key. Own domain. Own storage.
             </h1>
 
             <p className="mt-6 max-w-2xl text-base leading-8 text-slate-300 sm:text-lg">
-              Sherin is open-source software for builders who want to fork,
-              inspect, self-host, and improve a single-owner creative workspace
-              with their own keys, domain, and storage.
+              Sherin is a self-hosted private workspace for generative media,
+              built for creators, artists, and developers who want more
+              ownership over their creative workflow.
             </p>
 
             <div className="mt-10 flex flex-wrap items-center gap-3">
               <a
                 href={repositoryUrl}
                 target="_blank"
-                rel="noreferrer"
+                rel="noreferrer noopener"
                 className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
               >
                 <Github className="size-4" aria-hidden="true" />
                 View source
               </a>
-              <Link
-                href="/access"
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-sm font-semibold text-white transition hover:border-white/40 hover:bg-white/10"
-              >
-                <KeyRound className="size-4" aria-hidden="true" />
-                Owner access
-              </Link>
             </div>
           </div>
 
@@ -123,8 +121,8 @@ export default function HomePage() {
                     Source, conduct, license, and community links
                   </p>
                 </div>
-                <GitBranch
-                  className="size-5 text-teal-200"
+                <GitCompareArrows
+                  className="size-5 text-fuchsia-200"
                   aria-hidden="true"
                 />
               </div>
@@ -138,7 +136,7 @@ export default function HomePage() {
                       key={item.href}
                       href={item.href}
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noreferrer noopener"
                       className="group rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition hover:border-fuchsia-200/40 hover:bg-white/[0.06]"
                     >
                       <div className="flex items-start gap-3">
@@ -165,47 +163,69 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-
-        <section className="border-t border-white/10 py-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            {projectBoundaries.map((item) => (
-              <div
-                key={item}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-6 text-slate-300"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <footer className="flex flex-col gap-3 border-t border-white/10 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-          <a
-            href="https://www.netlify.com/"
-            className="font-medium text-teal-100 underline decoration-teal-200/40 underline-offset-4 transition hover:text-white hover:decoration-white"
-          >
-            This site is powered by Netlify
-          </a>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <a
-              href={`${repositoryUrl}/blob/main/LICENSE`}
-              target="_blank"
-              rel="noreferrer"
-              className="transition hover:text-white"
-            >
-              Apache-2.0 license
-            </a>
-            <a
-              href={`${repositoryUrl}/blob/main/CODE_OF_CONDUCT.md`}
-              target="_blank"
-              rel="noreferrer"
-              className="transition hover:text-white"
-            >
-              Code of Conduct
-            </a>
-          </div>
-        </footer>
       </section>
+
+      <section className="border-y border-white/10 bg-[#000416]">
+        <div className={`${pageContainerClass} py-20 sm:py-24`}>
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 text-center">
+            <p className="max-w-4xl text-xl font-semibold leading-8 tracking-tight text-white sm:text-2xl sm:leading-9 lg:text-3xl lg:leading-10">
+              {shipCta}
+            </p>
+            <a
+              href={repositoryUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
+            >
+              <Rocket className="size-4" aria-hidden="true" />
+              Ship your own Sherin
+            </a>
+            <ProtectedImage
+              src="/dashboard.png"
+              alt="Sherin dashboard"
+              width={1000}
+              height={525}
+              decoding="async"
+              loading="lazy"
+              sizes="(min-width: 1280px) 72rem, calc(100vw - 3rem)"
+              className="w-full rounded-2xl border border-white/10 shadow-2xl shadow-black/40"
+            />
+          </div>
+        </div>
+      </section>
+
+      <ClientGallery />
+
+      <footer
+        className={`${pageContainerClass} flex flex-col gap-3 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between`}
+      >
+        <a
+          href="https://www.netlify.com/"
+          target="_blank"
+          rel="noreferrer noopener"
+          className="font-medium text-[#05BDBA] underline decoration-[#05BDBA]/40 underline-offset-4 transition hover:text-white hover:decoration-white"
+        >
+          This site is powered by Netlify
+        </a>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <a
+            href={`${repositoryUrl}/blob/main/LICENSE`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-fuchsia-100 transition hover:text-white"
+          >
+            Apache-2.0 License
+          </a>
+          <a
+            href={`${repositoryUrl}/blob/main/CODE_OF_CONDUCT.md`}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="text-fuchsia-100 transition hover:text-white"
+          >
+            Code of Conduct
+          </a>
+        </div>
+      </footer>
     </main>
   );
 }

@@ -5,28 +5,9 @@ import { cn } from '../../lib/utils';
 // -------------------------------------------------------
 // HOSTING PROVIDERS
 // -------------------------------------------------------
-// 1. Vercel
-// 2. Netlify
+// 1. Netlify
+// 2. Vercel
 // -------------------------------------------------------
-
-export function InlineVercel({
-  className,
-  ...props
-}: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="1155"
-      height="1000"
-      viewBox="0 0 1155 1000"
-      fill="none"
-      className={cn(className)}
-      {...props}
-    >
-      <path d="M577.344 0L1154.69 1000H0L577.344 0Z" fill="#000000" />
-    </svg>
-  );
-}
 
 export function InlineNetlify({
   className,
@@ -69,6 +50,25 @@ export function InlineNetlify({
         fill="#05BDBA"
         d="M58.9 111.9V85.6l.7-.7h8.8l.7.7v26.3l-.7.7h-8.8l-.7-.7z"
       />
+    </svg>
+  );
+}
+
+export function InlineVercel({
+  className,
+  ...props
+}: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="1155"
+      height="1000"
+      viewBox="0 0 1155 1000"
+      fill="none"
+      className={cn(className)}
+      {...props}
+    >
+      <path d="M577.344 0L1154.69 1000H0L577.344 0Z" fill="#000000" />
     </svg>
   );
 }

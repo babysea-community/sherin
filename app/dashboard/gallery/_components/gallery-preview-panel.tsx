@@ -52,7 +52,7 @@ export function GalleryPreviewPanel({
       <a
         href={previewUrl}
         target="_blank"
-        rel="noreferrer"
+        rel="noreferrer noopener"
         aria-label="Open generated image"
         aria-busy={showLoadingPreview}
         className="group relative mt-4 block aspect-[4/3] overflow-hidden rounded-2xl border border-white/10 bg-slate-950"

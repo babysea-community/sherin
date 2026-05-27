@@ -55,6 +55,7 @@ function buildContentSecurityPolicy() {
     'https://app.eu.babysea.ai', // eu-region
     'https://app.jp.babysea.ai', // apac-region
     BABYSEA_CDN_ORIGIN, // sample image and Goo background assets
+    'https://imagedelivery.net', // Sherin demo gallery assets
     'https://delivery-us.bfl.ai', // us-region
     'https://delivery-eu.bfl.ai', // eu-region
     'https://lh3.googleusercontent.com', // Google profile photos from Google OAuth

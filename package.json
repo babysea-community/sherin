@@ -1,6 +1,6 @@
 {
   "name": "sherin",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Apache-2.0 open-source starter for a self-hosted private generative media workspace with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",

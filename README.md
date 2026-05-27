@@ -9,7 +9,7 @@
 </h1>
 
 <p>
-  Apache-2.0 open-source starter for a self-hosted private generative media workspace with own key, domain, and storage.
+  Self-hosted private workspace for generative media with own key, domain, and storage.
 </p>
 
 <p>

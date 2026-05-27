@@ -86,7 +86,7 @@ export function StudioResultPanel({
           <a
             href={previewUrl}
             target="_blank"
-            rel="noreferrer"
+            rel="noreferrer noopener"
             aria-label="Open generated image"
             aria-busy={showLoadingPreview}
             className="group relative block size-full"

@@ -2,6 +2,26 @@
 
 All notable changes will be documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-05-27
+
+### Added
+
+- Added the refreshed Sherin homepage gallery to the public landing page, using the production gallery component instead of a detached demo.
+- Added a separated "Ship your own Sherin" CTA section that explains the own-key, own-domain, own-storage deployment model and links builders to the source.
+
+### Changed
+
+- Refined the public homepage branding around Sherin ownership: Sherin icon in the header, a key-marked Owner access button, fuchsia primary action styling, no duplicate hero owner action or Conduct button, and a right-weighted hero preview surface.
+- Updated the separated CTA band with the `#000416` Sherin background color and a dashboard screenshot below the "Ship your own Sherin" button.
+- Standardized the header, hero, gallery, CTA, and footer on the same wide `max-w-7xl` container while keeping the gallery image section slightly wider and preserving the original balanced two-stack visual rhythm.
+- Rebuilt the gallery as a data-driven 24-image layout with icon-only creator/social shortcuts, restored desktop proportions, mobile square-card grids, protected plain-image rendering, and touch-safe active-card handling.
+- Replaced homepage and gallery `next/image` usage with protected plain `<img>` rendering for Sherin icon, dashboard screenshot, and gallery assets.
+- Removed archived gallery demo variants and the unused URL touch helper now that the gallery ships through one maintained component.
+
+### Fixed
+
+- Allowlisted `https://imagedelivery.net` in the starter CSP so the bundled demo gallery assets render in deployed previews.
+
 ## [0.2.7] - 2026-05-25
 
 ### Added
