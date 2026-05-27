@@ -110,9 +110,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
-            <div className="rounded-[1.4rem] border border-white/10 bg-slate-950/80 p-5">
-              <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+          <div className="rounded-[2rem] border border-[#20263a] bg-[#070b1a] p-5">
+            <div className="rounded-[1.4rem] border border-[#20263a] bg-[#050817] p-5">
+              <div className="flex items-center justify-between gap-3 border-b border-[#20263a] pb-4">
                 <div>
                   <p className="text-sm font-semibold text-white">
                     Project surface
@@ -137,10 +137,10 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
+                      className="rounded-2xl border border-[#20263a] bg-[#0a0f22] p-4"
                     >
                       <div className="flex items-start gap-3">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#25163f] text-fuchsia-100">
                           <Icon className="size-4" aria-hidden="true" />
                         </span>
                         <span className="min-w-0">

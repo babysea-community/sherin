@@ -21,7 +21,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 ### Fixed
 
 - Allowlisted `https://imagedelivery.net` in the starter CSP so the bundled demo gallery assets render in deployed previews.
-- Removed shadow, ring, hover, and transition effects from the homepage Project surface link-card treatment to avoid the Android mobile rendering artifact while keeping the original card layout.
+- Removed shadow, ring, hover, transition, and translucent paint effects from the homepage Project surface link-card treatment to avoid the Android mobile rendering artifact while keeping the original card layout.
 
 ## [0.2.7] - 2026-05-25
 
