@@ -43,7 +43,7 @@ const pageContainerClass = 'mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen space-y-10 overflow-hidden bg-slate-950 text-white sm:space-y-14">
+    <main className="min-h-screen overflow-hidden bg-slate-950 text-white">
       <section
         className={`${pageContainerClass} relative flex min-h-screen flex-col py-8`}
       >
@@ -73,7 +73,7 @@ export default function HomePage() {
           </a>
           <Link
             href="/access"
-            className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
+            className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-4 py-2 font-semibold text-slate-950 shadow-lg shadow-[#4a044e66] transition hover:bg-fuchsia-200"
           >
             <KeyRound className="size-4" aria-hidden="true" />
             Owner access
@@ -82,7 +82,7 @@ export default function HomePage() {
 
         <div className="grid flex-1 items-center gap-12 py-16 lg:grid-cols-[minmax(0,0.88fr)_minmax(26rem,1.12fr)] lg:py-20">
           <div>
-            <p className="inline-flex items-center gap-2 rounded-full border border-fuchsia-300/20 bg-fuchsia-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-fuchsia-100">
+            <p className="inline-flex items-center gap-2 rounded-full border border-[#f0abfc33] bg-[#f0abfc1a] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-fuchsia-100">
               <ShieldCheck className="size-4" aria-hidden="true" />
               Self-hosted private workspace
             </p>
@@ -102,7 +102,7 @@ export default function HomePage() {
                 href={repositoryUrl}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
+                className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-[#4a044e66] transition hover:bg-fuchsia-200"
               >
                 <Github className="size-4" aria-hidden="true" />
                 View source
@@ -165,9 +165,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-white/10 bg-[#000416]">
-        <div className={`${pageContainerClass} py-20 sm:py-24`}>
-          <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 text-center">
+      <section className="border-y border-[#20263a] bg-[#000416]">
+        <div className={`${pageContainerClass} py-28 sm:py-36`}>
+          <div className="mx-auto flex max-w-6xl flex-col items-center gap-14 text-center sm:gap-16 lg:gap-20">
             <p className="max-w-4xl text-xl font-semibold leading-8 tracking-tight text-white sm:text-2xl sm:leading-9 lg:text-3xl lg:leading-10">
               {shipCta}
             </p>
@@ -175,7 +175,7 @@ export default function HomePage() {
               href={repositoryUrl}
               target="_blank"
               rel="noreferrer noopener"
-              className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-fuchsia-950/40 transition hover:bg-fuchsia-200"
+              className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-[#4a044e66] transition hover:bg-fuchsia-200"
             >
               <Rocket className="size-4" aria-hidden="true" />
               Ship your own Sherin
@@ -188,7 +188,7 @@ export default function HomePage() {
               decoding="async"
               loading="lazy"
               sizes="(min-width: 1280px) 72rem, calc(100vw - 3rem)"
-              className="w-full rounded-2xl border border-white/10 shadow-2xl shadow-black/40"
+              className="w-full rounded-2xl border border-[#20263a] shadow-2xl shadow-[#00000066]"
             />
           </div>
         </div>
@@ -197,13 +197,13 @@ export default function HomePage() {
       <ClientGallery />
 
       <footer
-        className={`${pageContainerClass} flex flex-col gap-3 py-6 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between`}
+        className={`${pageContainerClass} flex flex-col gap-3 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between`}
       >
         <a
           href="https://www.netlify.com/"
           target="_blank"
           rel="noreferrer noopener"
-          className="font-medium text-[#05BDBA] underline decoration-[#05BDBA]/40 underline-offset-4 transition hover:text-white hover:decoration-white"
+          className="font-medium text-[#05BDBA] underline decoration-[#05BDBA66] underline-offset-4 transition hover:text-white hover:decoration-white"
         >
           This site is powered by Netlify
         </a>

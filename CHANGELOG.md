@@ -2,6 +2,13 @@
 
 All notable changes will be documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- Expanded the homepage gallery to 36 mosaic images plus a full-width final image, keeping visible rendition-size suffixes in the bundled demo asset URLs.
+- Swapped the gallery creator/social shortcut buttons to Simple Icons SVG paths for more accurate brand icons while keeping existing fallback icons for LinkedIn and Website.
+
 ## [0.2.9] - 2026-05-27
 
 ### Changed

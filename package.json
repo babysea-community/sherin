@@ -65,6 +65,7 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "simple-icons": "catalog:",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "zod": "catalog:"
