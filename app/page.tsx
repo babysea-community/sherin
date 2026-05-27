@@ -110,24 +110,24 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="min-w-0 rounded-3xl border border-white/10 bg-slate-950 p-3 sm:bg-white/[0.04] sm:p-5">
-            <div className="min-w-0 rounded-2xl border border-white/10 bg-[#050817] p-4 sm:bg-slate-950/80 sm:p-5">
+          <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-5">
+            <div className="rounded-[1.4rem] border border-white/10 bg-slate-950/80 p-5">
               <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-4">
-                <div className="min-w-0">
+                <div>
                   <p className="text-sm font-semibold text-white">
                     Project surface
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                  <p className="mt-1 text-xs text-slate-500">
                     Source, conduct, license, and community links
                   </p>
                 </div>
                 <GitCompareArrows
-                  className="size-5 shrink-0 text-fuchsia-200"
+                  className="size-5 text-fuchsia-200"
                   aria-hidden="true"
                 />
               </div>
 
-              <div className="mt-5 grid gap-3 text-sm">
+              <div className="mt-5 grid gap-3">
                 {communityLinks.map((item) => {
                   const Icon = item.Icon;
 
@@ -137,23 +137,25 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="flex min-w-0 items-center gap-3 rounded-xl border border-white/10 bg-[#080b1a] px-4 py-3 text-slate-200 sm:items-start sm:rounded-2xl sm:bg-white/[0.03] sm:p-4"
+                      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
                     >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100 sm:size-9">
-                        <Icon className="size-4" aria-hidden="true" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex min-w-0 items-center gap-2 font-semibold leading-5 text-white">
-                          {item.label}
-                          <ExternalLink
-                            className="size-3.5 shrink-0 text-slate-500"
-                            aria-hidden="true"
-                          />
+                      <div className="flex items-start gap-3">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-fuchsia-300/10 text-fuchsia-100">
+                          <Icon className="size-4" aria-hidden="true" />
                         </span>
-                        <span className="mt-1 hidden break-words leading-6 text-slate-400 sm:block">
-                          {item.description}
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-2 text-sm font-semibold text-white">
+                            {item.label}
+                            <ExternalLink
+                              className="size-3.5 text-slate-500"
+                              aria-hidden="true"
+                            />
+                          </span>
+                          <span className="mt-1 block text-sm leading-6 text-slate-400">
+                            {item.description}
+                          </span>
                         </span>
-                      </span>
+                      </div>
                     </a>
                   );
                 })}
