@@ -137,7 +137,7 @@ export default function HomePage() {
                       href={item.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="rounded-2xl border border-[#20263a] bg-[#0a0f22] p-4"
+                      className="rounded-2xl border border-[#20263a] bg-[#0a0f22] p-4 hover:border-[#f0abfc] hover:bg-[#111833]"
                     >
                       <div className="flex items-start gap-3">
                         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#25163f] text-fuchsia-100">

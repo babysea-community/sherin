@@ -286,10 +286,10 @@ export default function ImagesGallery() {
     >
       <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10">
         <div className="relative pb-14 pt-4 text-center">
-          <h2 className="text-4xl font-semibold tracking-tight text-white sm:text-5xl md:text-6xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
             <span>Explore my</span>
             <span className="mx-4 text-slate-500">×</span>
-            <span className="font-normal text-slate-400">creative Works</span>
+            <span className="font-normal text-slate-400">creative works</span>
           </h2>
 
           <div className="mx-auto mt-12 flex max-w-4xl flex-wrap items-center justify-center gap-3">
