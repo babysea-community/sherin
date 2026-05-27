@@ -286,7 +286,7 @@ export default function ImagesGallery() {
     >
       <div className="mx-auto w-full max-w-7xl px-6 sm:px-8 lg:px-10">
         <div className="relative pb-14 pt-4 text-center">
-          <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
+          <h2 className="text-2xl font-semibold tracking-tight text-white md:text-5xl lg:text-6xl">
             <span>Explore my</span>
             <span className="mx-4 text-slate-500">×</span>
             <span className="font-normal text-slate-400">creative works</span>
@@ -302,7 +302,7 @@ export default function ImagesGallery() {
                   href={item.href}
                   aria-label={item.label}
                   title={item.label}
-                  className="inline-flex size-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-slate-200 transition hover:-translate-y-0.5 hover:border-fuchsia-200/40 hover:bg-fuchsia-300/10 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-fuchsia-200/70"
+                  className="inline-flex size-11 items-center justify-center rounded-full border border-[#20263a] bg-[#0a0f22] text-slate-200 hover:border-[#f0abfc] hover:bg-[#111833] hover:text-white focus:outline-none focus-visible:border-[#f0abfc]"
                 >
                   <Icon className="size-5" aria-hidden="true" />
                 </Link>
