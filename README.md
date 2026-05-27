@@ -42,6 +42,7 @@
 
 <strong>Checks</strong>
 
+[![Netlify Status](https://img.shields.io/netlify/32751bb0-9997-4fa8-bd2e-2cbb7af4263c?style=for-the-badge&logo=netlify&logoColor=white&label=netlify&color=BEF9C6)](https://app.netlify.com/projects/sherin-hazel/deploys)
 [![GitLabCI](https://img.shields.io/gitlab/pipeline-status/babysea/sherin?branch=main&style=for-the-badge&label=gitlabci&logo=gitlab&logoColor=white&color=FC6D26)](https://gitlab.com/babysea/sherin/-/commits/main)
 [![CircleCI](https://img.shields.io/badge/circleci-passed-003740?style=for-the-badge&logo=circleci&logoColor=white)](https://dl.circleci.com/status-badge/redirect/circleci/2uTLcwc4naeNuKDP41es88/UVW4ijtkbzrFah5yHrnaQ2/tree/main)
 [![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
