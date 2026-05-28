@@ -194,6 +194,19 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 | Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                          |
 | Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                     |
 
+## Security and Compliance
+
+Sherin publishes its trust signals through public GitLab and GitHub checks so contributors can inspect the actual CI configuration, jobs, and reports.
+
+| Signal                      | Coverage                                                                                                                                                          |
+| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitLab application security | SAST, Advanced SAST, IaC scanning, Dependency Scanning, Secret Detection, Code Quality, guarded Container Scanning, package audit, and redacted Gitleaks.         |
+| Runtime scan                | Scheduled/manual GitLab DAST runs against the public demo target.                                                                                                 |
+| License compliance          | Dependency license inventory is reviewed against [LICENSES.md](LICENSES.md); approval policies are deferred until the GitLab group has enough eligible reviewers. |
+| Repository guards           | GitHub CodeQL, Package Check, Sentry Project Check, CircleCI, and Codecov stay public for cross-provider verification.                                            |
+
+Container scanning is present in CI but only runs when `CS_IMAGE` is configured for a repository that publishes a container image.
+
 ## Community
 
 Sherin is an Apache-2.0 open-source starter in [`babysea-community/sherin`](https://github.com/babysea-community/sherin). Issues, pull requests, design discussion, and security reports should follow [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), and [`SECURITY.md`](SECURITY.md).

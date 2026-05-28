@@ -4,10 +4,15 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## Unreleased
 
+### Added
+
+- Added `LICENSES.md` and a README security/compliance section documenting public GitLab and GitHub trust signals.
+
 ### Changed
 
 - Expanded the homepage gallery to 36 mosaic images plus a full-width final image, keeping visible rendition-size suffixes in the bundled demo asset URLs.
 - Swapped the gallery creator/social shortcut buttons to Simple Icons SVG paths for more accurate brand icons while keeping existing fallback icons for LinkedIn and Website.
+- Standardized GitLab application security coverage with SAST-IaC, guarded Container Scanning, shared security variables, and license-compliance documentation.
 
 ## [0.2.9] - 2026-05-27
 
