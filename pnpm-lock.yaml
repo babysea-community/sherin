@@ -46,8 +46,8 @@ catalogs:
       specifier: 19.2.3
       version: 19.2.3
     '@vercel/blob':
-      specifier: 2.0.1
-      version: 2.0.1
+      specifier: 2.4.0
+      version: 2.4.0
     babel-plugin-react-compiler:
       specifier: 1.0.0
       version: 1.0.0
@@ -219,7 +219,7 @@ importers:
         version: 3.1047.0
       '@vercel/blob':
         specifier: 'catalog:'
-        version: 2.0.1
+        version: 2.4.0
 
 packages:
 
@@ -2104,8 +2104,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@vercel/blob@2.0.1':
-    resolution: {integrity: sha512-DeJmC/B5oH1ExazYh/UvjbN6Mg0q0wlDz29GPIPNhi4COjVzqYRkyPYjOcAZd+RgXVzWqGXholZWtGcLCPuL8A==}
+  '@vercel/blob@2.4.0':
+    resolution: {integrity: sha512-ncQ8CRb6XoEAYJwjOTRGpACRT6h/AeY+/33gLyeVxG5BIes27OPm1jmqreF+JHjcTmGhClTP+kBpmyLfbV0xew==}
     engines: {node: '>=20.0.0'}
 
   '@vitest/coverage-v8@4.0.7':
@@ -6124,7 +6124,7 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.11.1':
     optional: true
 
-  '@vercel/blob@2.0.1':
+  '@vercel/blob@2.4.0':
     dependencies:
       async-retry: 1.3.3
       is-buffer: 2.0.5
