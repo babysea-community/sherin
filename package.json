@@ -24,11 +24,7 @@
     "supabase",
     "cloudflare",
     "aws",
-    "sentry",
-    "netlify",
-    "railway",
-    "render",
-    "vercel"
+    "sentry"
   ],
   "engines": {
     "node": "24.x"

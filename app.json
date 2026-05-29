@@ -1,0 +1,76 @@
+{
+  "name": "Sherin",
+  "description": "Private workspace for generative media with own key, domain, and storage.",
+  "repository": "https://github.com/babysea-community/sherin",
+  "website": "https://demo.sherin.babysea.live",
+  "keywords": [
+    "babysea",
+    "open-source",
+    "ai-infrastructure",
+    "control-plane",
+    "execution-layer",
+    "inference-providers",
+    "developer-tools",
+    "creative-tools",
+    "generative-ai",
+    "generative-media",
+    "black-forest-labs",
+    "supabase",
+    "cloudflare",
+    "aws",
+    "sentry"
+  ],
+  "stack": "heroku-24",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_SITE_URL": {
+      "description": "The public HTTPS URL for this Sherin deployment."
+    },
+    "OWNER_EMAIL": {
+      "description": "The single Google account email allowed into the Sherin dashboard."
+    },
+    "NEXT_PUBLIC_SUPABASE_URL": {
+      "description": "Your Supabase project URL."
+    },
+    "NEXT_PUBLIC_SUPABASE_PUBLIC_KEY": {
+      "description": "Your Supabase anon public key."
+    },
+    "SUPABASE_SECRET_KEY": {
+      "description": "Your Supabase service-role key."
+    },
+    "INFERENCE_PROVIDER": {
+      "description": "Use bfl for Black Forest Labs direct execution, or babysea for BabySea SDK execution.",
+      "value": "bfl"
+    },
+    "BFL_API_KEY": {
+      "description": "Black Forest Labs API key, required when INFERENCE_PROVIDER=bfl."
+    },
+    "BFL_API_BASE_URL": {
+      "description": "Black Forest Labs API base URL.",
+      "value": "https://api.bfl.ai",
+      "required": false
+    },
+    "BABYSEA_API_KEY": {
+      "description": "BabySea API key, required when INFERENCE_PROVIDER=babysea.",
+      "required": false
+    },
+    "BABYSEA_API_BASE_URL": {
+      "description": "BabySea API base URL.",
+      "value": "https://api.us.babysea.ai",
+      "required": false
+    },
+    "STORAGE_PROVIDER": {
+      "description": "Storage backend for generated media and references.",
+      "value": "supabase-storage"
+    },
+    "CUSTOM_USER_STORAGE_QUOTA_GB": {
+      "description": "Per-owner stored image quota in GB.",
+      "value": "10",
+      "required": false
+    }
+  }
+}

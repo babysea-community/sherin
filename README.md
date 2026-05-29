@@ -22,7 +22,7 @@ Private workspace for generative media with own key, domain, and storage.
 
 <strong>Checks</strong>
 
-[![Netlify Status](https://img.shields.io/netlify/32751bb0-9997-4fa8-bd2e-2cbb7af4263c?style=for-the-badge&logo=netlify&logoColor=white&label=netlify&color=BEF9C6)](https://app.netlify.com/projects/sherin-hazel/deploys)
+[![Vercel Status](https://img.shields.io/github/deployments/babysea-community/sherin/production?style=for-the-badge&label=vercel&logo=vercel&logoColor=white&color=000000)](https://sherin-hazel.vercel.app)
 [![GitLabCI](https://img.shields.io/gitlab/pipeline-status/babysea/sherin?branch=main&style=for-the-badge&label=gitlabci&logo=gitlab&logoColor=white&color=FC6D26)](https://gitlab.com/babysea/sherin/-/commits/main)
 [![CircleCI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcircleci.com%2Fapi%2Fv1.1%2Fproject%2Fcircleci%2F2uTLcwc4naeNuKDP41es88%2FUVW4ijtkbzrFah5yHrnaQ2%2Ftree%2Fmain%3Flimit%3D1&query=%24%5B0%5D.status&style=for-the-badge&logo=circleci&logoColor=white&label=circleci&color=003740)](https://dl.circleci.com/status-badge/redirect/circleci/2uTLcwc4naeNuKDP41es88/UVW4ijtkbzrFah5yHrnaQ2/tree/main)
 [![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
@@ -42,18 +42,16 @@ Private workspace for generative media with own key, domain, and storage.
 [![AWS](https://custom-icon-badges.demolab.com/badge/aws-252F3E?style=for-the-badge&logo=aws&logoColor=white)](https://aws.amazon.com)
 [![Cloudflare](https://img.shields.io/badge/cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com)
 [![Sentry](https://img.shields.io/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
-[![Netlify](https://img.shields.io/badge/netlify-05BDBA?style=for-the-badge&logo=netlify&logoColor=white)](https://www.netlify.com)
-[![Railway](https://img.shields.io/badge/railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.com)
-[![Render](https://img.shields.io/badge/render-000000?style=for-the-badge&logo=render&logoColor=white)](https://render.com)
-[![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
 <br/>
 
 <strong>One-click deploy</strong>
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)  
+[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/babysea-community/sherin/tree/main)
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy?template=https://github.com/babysea-community/sherin)  
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/l9ntR_?referralCode=_FJpRb)  
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)  
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
 
 <br />
@@ -156,6 +154,14 @@ Supported model names and provider fields are registered in [`lib/app-config.ts`
 
 Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with the final Vercel domain or custom domain, then redeploy after changing env values.
 
+### DigitalOcean
+
+[`.do/deploy.template.yaml`](.do/deploy.template.yaml) defines the DigitalOcean App Platform service, build command, start command, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the DigitalOcean or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, Cloudflare R2, or AWS S3 for generated media.
+
+### Heroku
+
+[`app.json`](app.json) declares the Heroku Button manifest, Node.js buildpack, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the Heroku or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, Cloudflare R2, or AWS S3 for generated media.
+
 ### Netlify
 
 [`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
@@ -183,7 +189,7 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 | Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql` |
 | Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                |
 | Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                 |
-| Deploy     | `.env.example`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`                                                      |
+| Deploy     | `.do/deploy.template.yaml`, `.env.example`, `app.json`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`              |
 
 ## Troubleshooting
 

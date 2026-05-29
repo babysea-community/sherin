@@ -17,6 +17,8 @@ const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
   'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
+const SHERIN_DIGITALOCEAN_DEPLOY_URL = `https://cloud.digitalocean.com/apps/new?repo=${SHERIN_REPOSITORY_URL}/tree/main`;
+const SHERIN_HEROKU_DEPLOY_URL = `https://www.heroku.com/deploy?template=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_RAILWAY_DEPLOY_URL =
   'https://railway.com/deploy/l9ntR_?referralCode=_FJpRb';
 const SHERIN_RENDER_DEPLOY_URL = `https://render.com/deploy?repo=${SHERIN_REPOSITORY_URL}`;
@@ -446,12 +448,16 @@ function fail(message) {
 
 function checkDeployButtons() {
   let ok = true;
+  const appJson = JSON.parse(readRequiredFile('app.json'));
   const homePage = readRequiredFile('app/page.tsx');
   const readme = readRequiredFile('README.md');
+  const digitalOcean = readRequiredFile('.do/deploy.template.yaml');
   const netlify = readRequiredFile('netlify.toml');
   const render = readRequiredFile('render.yaml');
   const vercel = JSON.parse(readRequiredFile('vercel.json'));
   const expectedVercelButton = `[![Deploy with Vercel](https://vercel.com/button)](${SHERIN_VERCEL_DEPLOY_URL})`;
+  const expectedDigitalOceanButton = `[![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](${SHERIN_DIGITALOCEAN_DEPLOY_URL})`;
+  const expectedHerokuButton = `[![Deploy](https://www.herokucdn.com/deploy/button.svg)](${SHERIN_HEROKU_DEPLOY_URL})`;
   const expectedNetlifyButton = `[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](${SHERIN_NETLIFY_DEPLOY_URL})`;
   const expectedRailwayButton = `[![Deploy on Railway](https://railway.com/button.svg)](${SHERIN_RAILWAY_DEPLOY_URL})`;
   const expectedRenderButton = `[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](${SHERIN_RENDER_DEPLOY_URL})`;
@@ -460,6 +466,20 @@ function checkDeployButtons() {
   if (!readme.includes(expectedVercelButton)) {
     ok = false;
     fail('README Vercel deploy button must clone babysea-community/sherin.');
+  }
+
+  if (!readme.includes(expectedDigitalOceanButton)) {
+    ok = false;
+    fail(
+      'README DigitalOcean deploy button must clone babysea-community/sherin from main.',
+    );
+  }
+
+  if (!readme.includes(expectedHerokuButton)) {
+    ok = false;
+    fail(
+      'README Heroku deploy button must use the babysea-community/sherin template.',
+    );
   }
 
   if (!readme.includes(expectedNetlifyButton)) {
@@ -487,6 +507,16 @@ function checkDeployButtons() {
   ) {
     ok = false;
     fail('README Railway deployment guidance is missing.');
+  }
+
+  for (const [heading, description] of [
+    ['### DigitalOcean', 'DigitalOcean App Platform service'],
+    ['### Heroku', 'Heroku Button manifest'],
+  ]) {
+    if (!readme.includes(heading) || !readme.includes(description)) {
+      ok = false;
+      fail(`${heading.replace('### ', '')} deployment guidance is missing.`);
+    }
   }
 
   if (
@@ -519,6 +549,25 @@ function checkDeployButtons() {
     }
   }
 
+  for (const expected of [
+    'spec:',
+    'name: sherin',
+    'environment_slug: node-js',
+    'repo_clone_url: https://github.com/babysea-community/sherin.git',
+    'build_command: corepack enable && pnpm install --frozen-lockfile && pnpm build',
+    'run_command: pnpm start -- -p $PORT',
+  ]) {
+    if (!digitalOcean.includes(expected)) {
+      ok = false;
+      fail(`.do/deploy.template.yaml must include ${expected}.`);
+    }
+  }
+
+  if (appJson.repository !== SHERIN_REPOSITORY_URL) {
+    ok = false;
+    fail('app.json repository must point to babysea-community/sherin.');
+  }
+
   for (const name of SHERIN_NETLIFY_TEMPLATE_ENV) {
     if (!netlify.includes(`${name} =`)) {
       ok = false;
@@ -529,11 +578,21 @@ function checkDeployButtons() {
       ok = false;
       fail(`render.yaml environment must include ${name}.`);
     }
+
+    if (!digitalOcean.includes(`key: ${name}`)) {
+      ok = false;
+      fail(`.do/deploy.template.yaml environment must include ${name}.`);
+    }
+
+    if (!appJson.env?.[name]) {
+      ok = false;
+      fail(`app.json environment must include ${name}.`);
+    }
   }
 
   if (ok) {
     pass(
-      'Netlify, Railway, Render, and Vercel deploy buttons, Railway guidance, and the homepage backlink are wired.',
+      'DigitalOcean, Heroku, Netlify, Railway, Render, and Vercel deploy buttons, deployment guidance, and the homepage backlink are wired.',
     );
   }
 }
