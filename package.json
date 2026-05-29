@@ -1,7 +1,7 @@
 {
   "name": "sherin",
   "version": "0.2.9",
-  "description": "Self-hosted private workspace for generative media with own key, domain, and storage.",
+  "description": "Private workspace for generative media with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
   "homepage": "https://demo.sherin.babysea.live",

@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/sonner';
 
 const title = 'Sherin';
 const description =
-  'Self-hosted private workspace for generative media with own key, domain, and storage.';
+  'Private workspace for generative media with own key, domain, and storage.';
 const socialImageUrl = 'https://cdn.babysea.live/assets/oss/sherin-card.png';
 
 export const metadata: Metadata = {
