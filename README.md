@@ -113,7 +113,7 @@ cp .env.example .env.local
 
 Fill `.env.local` from [`.env.example`](.env.example), apply [`001_sherin.sql`](supabase/migrations/001_sherin.sql), then start the app:
 
-For local sign-in, add `http://localhost:3012/auth/callback` to Supabase Auth Redirect URLs. For deployed sign-in, add `https://<your-domain>/auth/callback` for every domain you use to open Sherin, including preview domains and custom domains.
+For local sign-in, add `http://localhost:3012/auth/callback` to Supabase Auth Redirect URLs.
 
 ```bash
 pnpm run doctor
@@ -154,11 +154,11 @@ Supported model names and provider fields are registered in [`lib/app-config.ts`
 
 ### Vercel
 
-Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with every Vercel domain you use to sign in and any custom domain, then redeploy after changing env values.
+Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with the final Vercel domain or custom domain, then redeploy after changing env values.
 
 ### Netlify
 
-[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Set `NEXT_PUBLIC_SITE_URL` to the canonical Netlify or custom domain, and add both the Netlify subdomain and custom domain callback URLs in Supabase if you sign in from both. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
 
 ### Render
 
@@ -187,18 +187,17 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 
 ## Troubleshooting
 
-| Symptom                             | Fix                                                                                                                                  |
-| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
-| `doctor` fails                      | Read the missing env var or file printed by `doctor`; env names live in [`.env.example`](.env.example).                              |
-| Sign-in works but access is denied  | Check that `OWNER_EMAIL` exactly matches your Google account email.                                                                  |
-| Supabase redirects to the wrong URL | Add `https://<current-domain>/auth/callback` to Supabase Redirect URLs and set `NEXT_PUBLIC_SITE_URL` to the canonical deployed URL. |
-| Sign-in callback is invalid         | Start and finish OAuth on the same domain; add each Vercel, Netlify, and custom-domain callback URL to Supabase Redirect URLs.       |
-| Image generation does not start     | Verify `INFERENCE_PROVIDER` and the matching `BFL_API_KEY` or `BABYSEA_API_KEY`.                                                     |
-| Image shows as unavailable          | Generation succeeded but the stored file URL cannot be resolved; check `STORAGE_PROVIDER` and storage credentials.                   |
-| Jobs stay queued or running         | Open Studio, Gallery, References, or Usage to trigger processing, or configure cron for `/api/generations/process`.                  |
-| Worker returns 401                  | Send `Authorization: Bearer <CRON_SECRET>` and rotate the token if it may have leaked.                                               |
-| Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                                           |
-| Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                                      |
+| Symptom                             | Fix                                                                                                                 |
+| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| `doctor` fails                      | Read the missing env var or file printed by `doctor`; env names live in [`.env.example`](.env.example).             |
+| Sign-in works but access is denied  | Check that `OWNER_EMAIL` exactly matches your Google account email.                                                 |
+| Supabase redirects to the wrong URL | Align `NEXT_PUBLIC_SITE_URL`, Supabase Site URL, and Supabase Redirect URLs.                                        |
+| Image generation does not start     | Verify `INFERENCE_PROVIDER` and the matching `BFL_API_KEY` or `BABYSEA_API_KEY`.                                    |
+| Image shows as unavailable          | Generation succeeded but the stored file URL cannot be resolved; check `STORAGE_PROVIDER` and storage credentials.  |
+| Jobs stay queued or running         | Open Studio, Gallery, References, or Usage to trigger processing, or configure cron for `/api/generations/process`. |
+| Worker returns 401                  | Send `Authorization: Bearer <CRON_SECRET>` and rotate the token if it may have leaked.                              |
+| Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                          |
+| Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                     |
 
 ## Security and compliance
 
