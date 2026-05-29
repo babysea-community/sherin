@@ -4,15 +4,23 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## Unreleased
 
+## [0.3.0] - 2026-05-29
+
 ### Added
 
+- Added Railway and Render deployment paths, including the published Railway template button, Render deploy button, Render blueprint, README guidance, and doctor checks for the expanded deploy-button set.
 - Added `LICENSES.md` and a README security/compliance section documenting public GitLab and GitHub trust signals.
 
 ### Changed
 
+- Bumped the starter release metadata to `0.3.0` for the deploy-host expansion.
 - Expanded the homepage gallery to 36 mosaic images plus a full-width final image, keeping visible rendition-size suffixes in the bundled demo asset URLs.
 - Swapped the gallery creator/social shortcut buttons to Simple Icons SVG paths for more accurate brand icons while keeping existing fallback icons for LinkedIn and Website.
 - Standardized GitLab application security coverage with SAST-IaC, guarded Container Scanning, shared security variables, and license-compliance documentation.
+
+### Notes
+
+- Cloudflare Workers deploy support was evaluated and intentionally left out for this starter because the OpenNext Cloudflare adapter does not support the Next.js Node middleware required by the Supabase auth-refresh proxy.
 
 ## [0.2.9] - 2026-05-27
 
