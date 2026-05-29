@@ -5,8 +5,8 @@ import { cn } from '../../lib/utils';
 // -------------------------------------------------------
 // INFERENCE PROVIDERS
 // -------------------------------------------------------
-// 1. Black Forest Labs
-// 2. BabySea
+// 1. BabySea
+// 2. Black Forest Labs
 // -------------------------------------------------------
 
 export function InlineBlackForestLabs({

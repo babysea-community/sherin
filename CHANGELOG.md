@@ -84,7 +84,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Added
 
-- Added doctor validation for the README Vercel and Netlify deploy buttons and Netlify template environment prompts.
+- Added doctor validation for the README Netlify and Vercel deploy buttons and Netlify template environment prompts.
 
 ### Fixed
 
@@ -217,7 +217,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 - Black Forest Labs direct inference and BabySea managed inference adapters.
 - Supabase Storage, Vercel Blob, Cloudflare R2, and AWS S3 storage adapters.
 - Local `pnpm-workspace.yaml` catalog so dependency monitors can track package versions from one workspace manifest.
-- Vercel and Netlify deployment configuration.
+- Netlify and Vercel deployment configuration.
 - Per-owner storage quota tracking through `generations.storage_bytes`, included in `supabase/migrations/001_sherin.sql`, and enforced before object writes. `CUSTOM_USER_STORAGE_QUOTA_GB` defaults to 10 GB and can be raised or lowered per deployment.
 
 ### Changed

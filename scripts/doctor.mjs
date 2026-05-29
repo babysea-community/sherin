@@ -17,6 +17,9 @@ const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
   'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
+const SHERIN_RAILWAY_DEPLOY_URL =
+  'https://railway.com/deploy/l9ntR_?referralCode=_FJpRb';
+const SHERIN_RENDER_DEPLOY_URL = `https://render.com/deploy?repo=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'NEXT_PUBLIC_SITE_URL',
   'OWNER_EMAIL',
@@ -446,9 +449,12 @@ function checkDeployButtons() {
   const homePage = readRequiredFile('app/page.tsx');
   const readme = readRequiredFile('README.md');
   const netlify = readRequiredFile('netlify.toml');
+  const render = readRequiredFile('render.yaml');
   const vercel = JSON.parse(readRequiredFile('vercel.json'));
   const expectedVercelButton = `[![Deploy with Vercel](https://vercel.com/button)](${SHERIN_VERCEL_DEPLOY_URL})`;
   const expectedNetlifyButton = `[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](${SHERIN_NETLIFY_DEPLOY_URL})`;
+  const expectedRailwayButton = `[![Deploy on Railway](https://railway.com/button.svg)](${SHERIN_RAILWAY_DEPLOY_URL})`;
+  const expectedRenderButton = `[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](${SHERIN_RENDER_DEPLOY_URL})`;
   const expectedNetlifyHomeLink = 'This site is powered by Netlify';
 
   if (!readme.includes(expectedVercelButton)) {
@@ -459,6 +465,28 @@ function checkDeployButtons() {
   if (!readme.includes(expectedNetlifyButton)) {
     ok = false;
     fail('README Netlify deploy button must clone babysea-community/sherin.');
+  }
+
+  if (!readme.includes(expectedRailwayButton)) {
+    ok = false;
+    fail(
+      'README Railway deploy button must use the published Sherin template.',
+    );
+  }
+
+  if (!readme.includes(expectedRenderButton)) {
+    ok = false;
+    fail('README Render deploy button must clone babysea-community/sherin.');
+  }
+
+  if (
+    !readme.includes('### Railway') ||
+    !readme.includes(
+      'Use the Deploy on Railway button above to start from the published Sherin template',
+    )
+  ) {
+    ok = false;
+    fail('README Railway deployment guidance is missing.');
   }
 
   if (
@@ -479,16 +507,33 @@ function checkDeployButtons() {
     fail('netlify.toml must include template environment prompts.');
   }
 
+  for (const expected of [
+    'runtime: node',
+    'autoDeploy: false',
+    'buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build',
+    'startCommand: pnpm start -- -p $PORT',
+  ]) {
+    if (!render.includes(expected)) {
+      ok = false;
+      fail(`render.yaml must include ${expected}.`);
+    }
+  }
+
   for (const name of SHERIN_NETLIFY_TEMPLATE_ENV) {
     if (!netlify.includes(`${name} =`)) {
       ok = false;
       fail(`netlify.toml template environment must include ${name}.`);
     }
+
+    if (!render.includes(`key: ${name}`)) {
+      ok = false;
+      fail(`render.yaml environment must include ${name}.`);
+    }
   }
 
   if (ok) {
     pass(
-      'Vercel and Netlify deploy buttons plus the homepage backlink are wired.',
+      'Netlify, Railway, Render, and Vercel deploy buttons, Railway guidance, and the homepage backlink are wired.',
     );
   }
 }

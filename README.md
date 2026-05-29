@@ -43,6 +43,8 @@ Private workspace for generative media with own key, domain, and storage.
 [![Cloudflare](https://img.shields.io/badge/cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com)
 [![Sentry](https://img.shields.io/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
 [![Netlify](https://img.shields.io/badge/netlify-05BDBA?style=for-the-badge&logo=netlify&logoColor=white)](https://www.netlify.com)
+[![Railway](https://img.shields.io/badge/railway-0B0D0E?style=for-the-badge&logo=railway&logoColor=white)](https://railway.com)
+[![Render](https://img.shields.io/badge/render-000000?style=for-the-badge&logo=render&logoColor=white)](https://render.com)
 [![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 
 <br/>
@@ -50,6 +52,8 @@ Private workspace for generative media with own key, domain, and storage.
 <strong>One-click deploy</strong>
 
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/l9ntR_?referralCode=_FJpRb)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
 
 <br />
@@ -109,7 +113,7 @@ cp .env.example .env.local
 
 Fill `.env.local` from [`.env.example`](.env.example), apply [`001_sherin.sql`](supabase/migrations/001_sherin.sql), then start the app:
 
-For local sign-in, add `http://localhost:3012/auth/callback` to Supabase Auth Redirect URLs.
+For local sign-in, add `http://localhost:3012/auth/callback` to Supabase Auth Redirect URLs. For deployed sign-in, add `https://<your-domain>/auth/callback` for every domain you use to open Sherin, including preview domains and custom domains.
 
 ```bash
 pnpm run doctor
@@ -150,11 +154,19 @@ Supported model names and provider fields are registered in [`lib/app-config.ts`
 
 ### Vercel
 
-Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with the final Vercel domain or custom domain, then redeploy after changing env values.
+Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with every Vercel domain you use to sign in and any custom domain, then redeploy after changing env values.
 
 ### Netlify
 
-[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Set `NEXT_PUBLIC_SITE_URL` to the canonical Netlify or custom domain, and add both the Netlify subdomain and custom domain callback URLs in Supabase if you sign in from both. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+
+### Render
+
+[`render.yaml`](render.yaml) builds with `pnpm build` and runs `pnpm start -- -p $PORT`. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Render; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+
+### Railway
+
+Use the Deploy on Railway button above to start from the published Sherin template, or create a new Railway project from the public repository. Add every runtime variable from [`.env.example`](.env.example), and set `NEXT_PUBLIC_SITE_URL` to the Railway or custom domain. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Railway; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
 
 ### Scheduler
 
@@ -171,21 +183,22 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 | Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql` |
 | Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                |
 | Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                 |
-| Deploy     | `.env.example`, `netlify.toml`, `vercel.json`, `scripts/doctor.mjs`                                                                     |
+| Deploy     | `.env.example`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`                                                      |
 
 ## Troubleshooting
 
-| Symptom                             | Fix                                                                                                                 |
-| :---------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
-| `doctor` fails                      | Read the missing env var or file printed by `doctor`; env names live in [`.env.example`](.env.example).             |
-| Sign-in works but access is denied  | Check that `OWNER_EMAIL` exactly matches your Google account email.                                                 |
-| Supabase redirects to the wrong URL | Align `NEXT_PUBLIC_SITE_URL`, Supabase Site URL, and Supabase Redirect URLs.                                        |
-| Image generation does not start     | Verify `INFERENCE_PROVIDER` and the matching `BFL_API_KEY` or `BABYSEA_API_KEY`.                                    |
-| Image shows as unavailable          | Generation succeeded but the stored file URL cannot be resolved; check `STORAGE_PROVIDER` and storage credentials.  |
-| Jobs stay queued or running         | Open Studio, Gallery, References, or Usage to trigger processing, or configure cron for `/api/generations/process`. |
-| Worker returns 401                  | Send `Authorization: Bearer <CRON_SECRET>` and rotate the token if it may have leaked.                              |
-| Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                          |
-| Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                     |
+| Symptom                             | Fix                                                                                                                                  |
+| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `doctor` fails                      | Read the missing env var or file printed by `doctor`; env names live in [`.env.example`](.env.example).                              |
+| Sign-in works but access is denied  | Check that `OWNER_EMAIL` exactly matches your Google account email.                                                                  |
+| Supabase redirects to the wrong URL | Add `https://<current-domain>/auth/callback` to Supabase Redirect URLs and set `NEXT_PUBLIC_SITE_URL` to the canonical deployed URL. |
+| Sign-in callback is invalid         | Start and finish OAuth on the same domain; add each Vercel, Netlify, and custom-domain callback URL to Supabase Redirect URLs.       |
+| Image generation does not start     | Verify `INFERENCE_PROVIDER` and the matching `BFL_API_KEY` or `BABYSEA_API_KEY`.                                                     |
+| Image shows as unavailable          | Generation succeeded but the stored file URL cannot be resolved; check `STORAGE_PROVIDER` and storage credentials.                   |
+| Jobs stay queued or running         | Open Studio, Gallery, References, or Usage to trigger processing, or configure cron for `/api/generations/process`.                  |
+| Worker returns 401                  | Send `Authorization: Bearer <CRON_SECRET>` and rotate the token if it may have leaked.                                               |
+| Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                                           |
+| Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                                      |
 
 ## Security and compliance
 
