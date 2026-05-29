@@ -14,6 +14,7 @@ import { ClientGallery } from '@/components/gallery/client';
 import { ProtectedImage } from '@/components/protected-image';
 
 const repositoryUrl = 'https://github.com/babysea-community/sherin';
+const templatesUrl = 'https://babysea.ai/templates/sherin';
 
 const communityLinks = [
   {
@@ -97,15 +98,24 @@ export default function HomePage() {
               ownership over their creative workflow.
             </p>
 
-            <div className="mt-10 flex flex-wrap items-center gap-3">
+            <div className="mt-10 flex flex-row flex-nowrap items-center gap-2 sm:gap-3">
               <a
                 href={repositoryUrl}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="inline-flex items-center gap-2 rounded-full bg-fuchsia-300 px-6 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-[#4a044e66] transition hover:bg-fuchsia-200"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-fuchsia-300 px-4 py-3 text-xs font-semibold text-slate-950 shadow-lg shadow-[#4a044e66] transition hover:bg-fuchsia-200 sm:px-6 sm:text-sm"
               >
                 <Github className="size-4" aria-hidden="true" />
                 View source
+              </a>
+              <a
+                href={templatesUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-[#f0abfc66] px-4 py-3 text-xs font-semibold text-fuchsia-100 transition hover:bg-[#f0abfc1a] sm:px-6 sm:text-sm"
+              >
+                See templates
+                <ExternalLink className="size-4" aria-hidden="true" />
               </a>
             </div>
           </div>
