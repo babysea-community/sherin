@@ -112,14 +112,14 @@ cp .env.example .env.local
 
 Fill `.env.local` from [`.env.example`](.env.example), apply [`001_sherin.sql`](supabase/migrations/001_sherin.sql), then start the app:
 
-For local sign-in, add `http://localhost:3012/auth/callback` to Supabase Auth Redirect URLs.
+For local sign-in, add `http://localhost:3011/auth/callback` to Supabase Auth Redirect URLs.
 
 ```bash
 pnpm run doctor
 pnpm dev
 ```
 
-Open <http://localhost:3012>.
+Open <http://localhost:3011>.
 
 ## Inference and storage
 

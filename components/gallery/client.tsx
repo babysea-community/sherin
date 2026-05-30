@@ -1,5 +1,5 @@
 'use client';
 
-import ImagesGallery from './images-gallery';
+import ImageGallery from './image-gallery';
 
-export { ImagesGallery as ClientGallery };
+export { ImageGallery as ClientGallery };

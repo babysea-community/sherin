@@ -22,8 +22,8 @@ pop3_port = 54346
 file_size_limit = "50MiB"
 
 [auth]
-site_url = "http://localhost:3012"
-additional_redirect_urls = ["http://localhost:3012/auth/callback"]
+site_url = "http://localhost:3011"
+additional_redirect_urls = ["http://localhost:3011/auth/callback"]
 jwt_expiry = 3600
 enable_signup = true
 

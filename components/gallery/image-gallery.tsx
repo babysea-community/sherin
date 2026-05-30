@@ -377,7 +377,7 @@ const creatorSocialLinks: Array<{
   { label: 'Website', href: '/', Icon: Globe2 },
 ];
 
-export default function ImagesGallery() {
+export default function ImageGallery() {
   const galleryRef = useGalleryTouchEvents();
 
   return (

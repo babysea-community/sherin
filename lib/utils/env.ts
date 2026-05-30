@@ -86,7 +86,7 @@ export function getOptionalUrlEnv(name: string, options: UrlEnvOptions = {}) {
 export function getSiteUrl() {
   return normalizeUrl(
     'NEXT_PUBLIC_SITE_URL',
-    getOptionalEnv('NEXT_PUBLIC_SITE_URL') ?? 'http://localhost:3012',
+    getOptionalEnv('NEXT_PUBLIC_SITE_URL') ?? 'http://localhost:3011',
     { allowLocalhost: true },
   );
 }

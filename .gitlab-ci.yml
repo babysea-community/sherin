@@ -36,7 +36,7 @@ variables:
   CS_DISABLE_DEPENDENCY_LIST: 'false'
   DAST_WEBSITE: https://demo.sherin.babysea.live
   DAST_BROWSER_SCAN: 'true'
-  NEXT_PUBLIC_SITE_URL: https://your-sherin.example.com
+  NEXT_PUBLIC_SITE_URL: https://your-app.example.com
   OWNER_EMAIL: owner@example.com
   NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
   NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci_supabase_public_key
