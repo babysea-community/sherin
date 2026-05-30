@@ -22,7 +22,7 @@ Private workspace for generative media with own key, domain, and storage.
 
 <strong>Checks</strong>
 
-[![Vercel Status](https://img.shields.io/github/deployments/babysea-community/sherin/production?style=for-the-badge&label=vercel&logo=vercel&logoColor=white&color=000000)](https://sherin-hazel.vercel.app)
+[![Netlify Status](https://img.shields.io/netlify/7ed9a390-7ad5-4967-b818-110863f04ebb?style=for-the-badge&logo=netlify&logoColor=white&label=netlify&color=BEF9C6)](https://app.netlify.com/projects/sherin-hazel/deploys)
 [![GitLabCI](https://img.shields.io/gitlab/pipeline-status/babysea/sherin?branch=main&style=for-the-badge&label=gitlabci&logo=gitlab&logoColor=white&color=FC6D26)](https://gitlab.com/babysea/sherin/-/commits/main)
 [![CircleCI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcircleci.com%2Fapi%2Fv1.1%2Fproject%2Fcircleci%2F2uTLcwc4naeNuKDP41es88%2FUVW4ijtkbzrFah5yHrnaQ2%2Ftree%2Fmain%3Flimit%3D1&query=%24%5B0%5D.status&style=for-the-badge&logo=circleci&logoColor=white&label=circleci&color=003740)](https://dl.circleci.com/status-badge/redirect/circleci/2uTLcwc4naeNuKDP41es88/UVW4ijtkbzrFah5yHrnaQ2/tree/main)
 [![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
@@ -39,6 +39,7 @@ Private workspace for generative media with own key, domain, and storage.
 [![BabySea](https://custom-icon-badges.demolab.com/badge/babysea-48D1CC?style=for-the-badge&logo=babysea&logoColor=white)](https://babysea.ai)
 [![Black Forest Labs](https://custom-icon-badges.demolab.com/badge/black_forest_labs-07130E?style=for-the-badge&logo=blackforestlabs&logoColor=white)](https://bfl.ai)
 [![Supabase](https://img.shields.io/badge/supabase-249361?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
 [![AWS](https://custom-icon-badges.demolab.com/badge/aws-252F3E?style=for-the-badge&logo=aws&logoColor=white)](https://aws.amazon.com)
 [![Cloudflare](https://img.shields.io/badge/cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com)
 [![Sentry](https://img.shields.io/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
