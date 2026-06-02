@@ -1,12 +1,12 @@
 <div align="center">
 
-<img src="public/icon.png" width="120" alt="Sherin icon" />
+<img src="public/icon.png" width="100" alt="Sherin icon" />
 
 # Sherin
 
 Private workspace for generative media with own key, domain, and storage.
 
-### Own key • Own domain • Own storage
+### Own key. Own domain. Own storage.
 
 <br />
 
@@ -49,9 +49,8 @@ Private workspace for generative media with own key, domain, and storage.
 <strong>One-click deploy</strong>
 
 [![Deploy to DO](https://www.deploytodo.com/do-btn-blue.svg)](https://cloud.digitalocean.com/apps/new?repo=https://github.com/babysea-community/sherin/tree/main)
-[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy?template=https://github.com/babysea-community/sherin)  
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/l9ntR_?referralCode=_FJpRb)  
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/sherin?referralCode=_FJpRb)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
 
@@ -158,10 +157,6 @@ Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure S
 ### DigitalOcean
 
 [`.do/deploy.template.yaml`](.do/deploy.template.yaml) defines the DigitalOcean App Platform service, build command, start command, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the DigitalOcean or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, Cloudflare R2, or AWS S3 for generated media.
-
-### Heroku
-
-[`app.json`](app.json) declares the Heroku Button manifest, Node.js buildpack, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the Heroku or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, Cloudflare R2, or AWS S3 for generated media.
 
 ### Netlify
 

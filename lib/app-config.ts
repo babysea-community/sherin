@@ -5,7 +5,7 @@
  * below and mapping them in each inference provider's `models.ts` file.
  */
 export const APP_NAME = 'Sherin';
-export const APP_PORT = 3012;
+export const APP_PORT = 3011;
 
 export const MODEL_OPTIONS = [
   { id: 'bfl/flux-1.1-pro', label: 'FLUX 1.1 Pro' },

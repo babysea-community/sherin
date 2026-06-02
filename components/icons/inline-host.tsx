@@ -142,9 +142,9 @@ export function InlineRender({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="800"
-      height="800"
-      viewBox="0 0 800 800"
+      width="400"
+      height="400"
+      viewBox="206 194 400 400"
       fill="none"
       className={cn(className)}
       {...props}
@@ -179,9 +179,9 @@ export function InlineRenderLight({
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="800"
-      height="800"
-      viewBox="0 0 800 800"
+      width="400"
+      height="400"
+      viewBox="206 194 400 400"
       fill="none"
       className={cn(className)}
       {...props}

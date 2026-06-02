@@ -22,6 +22,7 @@
     "generative-media",
     "black-forest-labs",
     "supabase",
+    "vercel",
     "cloudflare",
     "aws",
     "sentry"
@@ -32,7 +33,7 @@
   "scripts": {
     "build": "next build",
     "clean": "git clean -xdf .next .turbo node_modules",
-    "dev": "next dev --port=3012",
+    "dev": "next dev --port=3011",
     "doctor": "node scripts/doctor.mjs",
     "sentry:check": "node scripts/sentry-project-check.mjs",
     "format": "prettier --check \"**/*.{ts,tsx,css,md,json,mjs}\"",
