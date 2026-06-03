@@ -8,7 +8,7 @@ const description =
 const socialImageUrl = 'https://cdn.babysea.live/assets/oss/sherin-card.png';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://demo.sherin.babysea.live'),
+  metadataBase: new URL('https://sherin.babysea.live'),
   applicationName: title,
   title: {
     default: title,

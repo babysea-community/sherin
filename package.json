@@ -4,7 +4,7 @@
   "description": "Private workspace for generative media with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
-  "homepage": "https://demo.sherin.babysea.live",
+  "homepage": "https://sherin.babysea.live",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/babysea-community/sherin.git"
