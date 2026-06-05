@@ -44,7 +44,6 @@ describe('BFL provider', () => {
 
     const generationPromise = createBflProvider().generate(
       createRequest({
-        bflImagePrompt: 'base64-image',
         bflRaw: true,
         model: 'bfl/flux-1.1-pro-ultra',
         outputFormat: 'png',
@@ -67,7 +66,6 @@ describe('BFL provider', () => {
     expect(submitUrl).toBe('https://api.bfl.ai/v1/flux-pro-1.1-ultra');
     expect(submitBody).toMatchObject({
       aspect_ratio: '21:9',
-      image_prompt: 'base64-image',
       output_format: 'png',
       prompt: 'A clean regression image',
       prompt_upsampling: false,
@@ -76,7 +74,35 @@ describe('BFL provider', () => {
     });
     expect(submitBody).not.toHaveProperty('width');
     expect(submitBody).not.toHaveProperty('height');
+    expect(submitBody).not.toHaveProperty('image_prompt');
     expect(result.remoteUrl).toBe('https://assets.example.com/ultra.png');
+  });
+
+  it('rejects image prompts unsupported by current FLUX 1.1 endpoints', async () => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createBflProvider().generate(
+        createRequest({
+          bflImagePrompt: 'base64-image',
+          model: 'bfl/flux-1.1-pro',
+        }),
+      ),
+    ).rejects.toThrow('does not support image prompts');
+
+    await expect(
+      createBflProvider().generate(
+        createRequest({
+          bflImagePrompt: 'base64-image',
+          model: 'bfl/flux-1.1-pro-ultra',
+          ratio: '16:9',
+        }),
+      ),
+    ).rejects.toThrow('does not support image prompts');
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('rejects input files above the selected BFL model limit', async () => {

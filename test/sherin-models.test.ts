@@ -136,7 +136,7 @@ describe('Sherin model registry', () => {
     expect(bflConfig.ratios).toEqual(BFL_FLUX_11_PRO_ULTRA_RATIO_OPTIONS);
     expect(bflConfig.resolutions).toEqual([]);
     expect(bflConfig.sizingMode).toBe('aspectRatio');
-    expect(bflConfig.supportsImagePrompt).toBe(true);
+    expect(bflConfig.supportsImagePrompt).toBe(false);
     expect(bflConfig.supportsPromptUpsampling).toBe(true);
     expect(bflConfig.defaultPromptUpsampling).toBe(false);
     expect(bflConfig.supportsGuidance).toBe(false);
@@ -157,7 +157,7 @@ describe('Sherin model registry', () => {
     expect(bflConfig.ratios).toEqual(RATIO_OPTIONS);
     expect(bflConfig.resolutions).toEqual([]);
     expect(bflConfig.sizingMode).toBe('dimensions');
-    expect(bflConfig.supportsImagePrompt).toBe(true);
+    expect(bflConfig.supportsImagePrompt).toBe(false);
     expect(bflConfig.supportsPromptUpsampling).toBe(true);
     expect(bflConfig.defaultPromptUpsampling).toBe(false);
     expect(bflConfig.supportsRaw).toBe(false);

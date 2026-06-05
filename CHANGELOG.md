@@ -8,6 +8,10 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 - Added DigitalOcean App Platform Button deploy manifests, README buttons, deployment guidance, and doctor validation for the expanded one-click deploy set.
 
+### Fixed
+
+- Aligned the direct BFL FLUX 1.1 Pro and FLUX 1.1 Pro Ultra configuration with the current non-Redux FLUX schemas by hiding and rejecting unsupported base64 `image_prompt` input before submit.
+
 ## [0.3.0] - 2026-05-29
 
 ### Added

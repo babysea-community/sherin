@@ -19,7 +19,7 @@ const SHERIN_VERCEL_DEPLOY_URL =
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_DIGITALOCEAN_DEPLOY_URL = `https://cloud.digitalocean.com/apps/new?repo=${SHERIN_REPOSITORY_URL}/tree/main`;
 const SHERIN_RAILWAY_DEPLOY_URL =
-  'https://railway.com/deploy/l9ntR_?referralCode=_FJpRb';
+  'https://railway.com/deploy/sherin?referralCode=_FJpRb';
 const SHERIN_RENDER_DEPLOY_URL = `https://render.com/deploy?repo=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'NEXT_PUBLIC_SITE_URL',

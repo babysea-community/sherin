@@ -52,7 +52,7 @@ const BFL_FLUX_11_PRO_SHARED_CONFIG = {
     max: BFL_DIMENSION_MAX,
     step: BFL_DIMENSION_STEP,
   },
-  supportsImagePrompt: true,
+  supportsImagePrompt: false,
   supportsPromptUpsampling: true,
   defaultPromptUpsampling: false,
   supportsGuidance: false,
