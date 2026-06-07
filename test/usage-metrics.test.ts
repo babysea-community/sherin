@@ -4,14 +4,15 @@ import {
   createUsageMetrics,
   type UsageGenerationRow,
 } from '@/app/dashboard/usage/_lib/usage-metrics';
+import { BYOK_INFERENCE_PROVIDER_ID, DEFAULT_MODEL_ID } from '@/lib/app-config';
 
 function row(overrides: Partial<UsageGenerationRow> = {}): UsageGenerationRow {
   return {
     created_at: '2026-05-17T00:00:00.000Z',
     hasAsset: true,
-    inference_provider: 'bfl',
+    inference_provider: BYOK_INFERENCE_PROVIDER_ID,
     metadata: {},
-    model: 'bfl/flux-1.1-pro',
+    model: DEFAULT_MODEL_ID,
     output_format: 'jpeg',
     ratio: '1:1',
     status: 'succeeded',

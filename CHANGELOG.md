@@ -7,10 +7,21 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 ### Added
 
 - Added DigitalOcean App Platform Button deploy manifests, README buttons, deployment guidance, and doctor validation for the expanded one-click deploy set.
+- Added provider-neutral BYOK foundation wiring so future Sherin model-family starters can swap the direct inference provider through the model/provider boundary instead of shared queue, worker, and Studio runtime code.
+
+### Changed
+
+- Consolidated direct-provider naming behind BYOK-facing runtime types, form fields, dashboard summaries, usage metrics, retry/resume handling, and test fixtures; Black Forest Labs-specific TypeScript references are now confined to the model/provider boundary, excluding CSP and storage host allowlists.
+- Updated Sherin deployment prompts, CI fixtures, one-click deploy links, and doctor drift checks to default to the BYOK inference path without requiring BabySea credentials unless BabySea execution is explicitly selected.
+- Moved supported-model documentation into a standalone README section that lists only direct Black Forest Labs BYOK models and links BabySea model schemas externally.
+- Standardized security and contributing documentation to refer to `.env.example` for runtime variables instead of repeating secret inventories across human-facing docs.
+- Renamed provider-specific tests to BYOK-neutral shared coverage and kept Black Forest Labs/FLUX test references limited to the direct-provider and model-registry test files.
+- Removed the Heroku-style `app.json` deploy manifest and doctor checks because Sherin does not publish a Heroku deployment path.
 
 ### Fixed
 
-- Aligned the direct BFL FLUX 1.1 Pro and FLUX 1.1 Pro Ultra configuration with the current non-Redux FLUX schemas by hiding and rejecting unsupported base64 `image_prompt` input before submit.
+- Aligned the direct Black Forest Labs FLUX 1.1 Pro and FLUX 1.1 Pro Ultra configuration with the current non-Redux FLUX schemas by hiding and rejecting unsupported base64 `image_prompt` input before submit.
+- Fixed Sherin deployment YAML and doctor fixtures so CI/deploy validation succeeds with BYOK-only defaults and valid numeric storage quota examples.
 
 ## [0.3.0] - 2026-05-29
 
@@ -200,32 +211,32 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Added
 
-- Expanded the Sherin model registry with `bfl/flux-1.1-pro-ultra`, `bfl/flux-2-pro`, `bfl/flux-2-max`, `bfl/flux-2-flex`, `bfl/flux-2-klein-4b`, and `bfl/flux-2-klein-9b` alongside `bfl/flux-1.1-pro`.
-- Added a capability-driven direct BFL model config layer covering endpoint, ratio/resolution support, input file limits, image prompt support, prompt upsampling, raw mode, guidance, steps, safety tolerances, and sizing mode.
+- Expanded the Sherin model registry with `bfl/flux-1.1-pro-ultra`, `bfl/flux-2-flex`, `bfl/flux-2-klein-4b`, `bfl/flux-2-klein-9b`, `bfl/flux-2-max`, and `bfl/flux-2-pro` alongside `bfl/flux-1.1-pro`.
+- Added a capability-driven direct Black Forest Labs model config layer covering endpoint, ratio/resolution support, input file limits, image prompt support, prompt upsampling, raw mode, guidance, steps, safety tolerances, and sizing mode.
 - Added the References dashboard page for stored input images, with copyable reference URLs and generation id display.
 - Added durable input image storage for uploaded files and URL inputs under `user-upload/<user_id>/<generation_id>/input-N.<ext>` before inference submission.
-- Added Studio model selector icons using the inline Black Forest Labs icon for BFL models.
-- Added registry and provider regression tests for BabySea model id derivation, BFL model capabilities, FLUX 1.1 Pro Ultra request shape, over-limit input rejection, unsupported safety tolerance rejection, and unsupported output format rejection.
+- Added Studio model selector icons using the inline Black Forest Labs icon for Black Forest Labs models.
+- Added registry and provider regression tests for BabySea model id derivation, Black Forest Labs model capabilities, FLUX 1.1 Pro Ultra request shape, over-limit input rejection, unsupported safety tolerance rejection, and unsupported output format rejection.
 - `app/dashboard/_components/offline-indicator.tsx` client component, mounted in the dashboard layout. Subscribes to the `online` / `offline` window events and renders a `role="status"` `aria-live="polite"` banner when `navigator.onLine` is false, so the owner gets an accessible cue before submitting work that would fail mid-flight.
 - `x-request-id` correlation header on every response from `app/api/generations/process` (200, 401, 429, 500). The worker reuses an inbound `x-request-id` / `x-vercel-id` when it matches `/^[A-Za-z0-9._:-]{1,128}$/`, otherwise mints a `randomUUID()`. The same id is included in the JSON body and forwarded to `captureServerError` tags so a Sentry event can be traced back to a single cron tick or owner-triggered flush.
 - Named `ProcessOutcome` discriminated union (`succeeded | failed | unavailable | retry_scheduled | skipped`) in `generation-worker.ts`. `processClaimedGeneration()` is now typed `Promise<ProcessOutcome>` so call-sites can exhaustively switch on the outcome instead of relying on inline `as const` literals.
 - `STORAGE_SMOKE_TEST=1 pnpm run doctor` now writes, reads, verifies, and deletes a tiny object against the selected storage provider (Supabase Storage, Vercel Blob, Cloudflare R2, or AWS S3) and also verifies Supabase Storage fallback when a non-Supabase provider is primary.
 - `lib/utils/env.ts` zod-backed helpers `requireEnvSchema()`, `getOptionalEnvSchema()`, `requireEmailEnv()`, and `getOptionalPositiveIntEnv()`. `OWNER_EMAIL` now flows through `requireEmailEnv()` so a malformed address fails fast with a clear error rather than silently locking the owner out of access.
 - Pre-decode size guard on inline base64 `image_prompt` payloads in `app/dashboard/studio/_lib/server-actions.ts`. Compact-string length is checked before `Buffer.from(..., 'base64')`, and the decoded payload is rejected when it exceeds 10 MiB. Prevents a hand-crafted large `data:` URL from monopolising a server action.
-- BFL provider metadata now includes `bfl_remote_url_expires_at` (ISO timestamp, ~10 minutes after generation). Sherin still downloads to durable storage immediately, but the timestamp gives gallery/storage-fallback paths the information they need to render a stale-link warning instead of a generic broken image.
-- `INFERENCE_POLL_TIMEOUT_MS` env override for the per-invocation polling budget used by both BFL and BabySea providers. Defaults to 45_000 ms so it fits inside the 60 s worker `maxDuration`; raise it when you also raise `maxDuration` on a higher Vercel tier.
+- Black Forest Labs provider metadata now includes `bfl_remote_url_expires_at` (ISO timestamp, ~10 minutes after generation). Sherin still downloads to durable storage immediately, but the timestamp gives gallery/storage-fallback paths the information they need to render a stale-link warning instead of a generic broken image.
+- `INFERENCE_POLL_TIMEOUT_MS` env override for the per-invocation polling budget used by both Black Forest Labs and BabySea providers. Defaults to 45_000 ms so it fits inside the 60 s worker `maxDuration`; raise it when you also raise `maxDuration` on a higher Vercel tier.
 - `.github/workflows/deploy.yml`, tag- and manual-dispatch Vercel deploy workflow with separate `preview` and `production` environments, concurrency lock, and graceful no-op when `VERCEL_TOKEN` is absent. Uses `vercel pull → vercel build → vercel deploy --prebuilt`.
 - README §8 gains _Production deployment_, _Monitoring_, _Backup and disaster recovery_, and _Secret rotation_ subsections covering the new deploy workflow, Sentry env surface and sampling, Supabase PITR / object-storage mirroring guidance, and a per-secret rotation cadence table.
-- `lib/inference/errors.ts` `classifyInferenceError()`, single source of truth that maps unknown thrown errors (BFL provider errors, BabySea SDK errors `BabySeaError` / `BabySeaNetworkError` / `BabySeaTimeoutError` / `BabySeaRetryError` / `BabySeaGenerationFailedError`, `AbortError`, generic `Error`) into `{isTransient, statusCode, retryAfterSeconds, code}`. Permanent statuses (`400/401/402/403/404/409/410/413/415/422/451`) always return `retryAfterSeconds=0` even when a provider hints otherwise. `BabySeaError.rateLimit.reset` (unix seconds) is converted to a delta-from-now, capped at 600s.
+- `lib/inference/errors.ts` `classifyInferenceError()`, single source of truth that maps unknown thrown errors (Black Forest Labs provider errors, BabySea SDK errors `BabySeaError` / `BabySeaNetworkError` / `BabySeaTimeoutError` / `BabySeaRetryError` / `BabySeaGenerationFailedError`, `AbortError`, generic `Error`) into `{isTransient, statusCode, retryAfterSeconds, code}`. Permanent statuses (`400/401/402/403/404/409/410/413/415/422/451`) always return `retryAfterSeconds=0` even when a provider hints otherwise. `BabySeaError.rateLimit.reset` (unix seconds) is converted to a delta-from-now, capped at 600s.
 - Bounded inference retry in `app/dashboard/studio/_lib/generation-worker.ts`: when an inference call throws a transient error and `attempt < MAX_GENERATION_ATTEMPTS`, the job is re-queued with `sherin_stage: 'retry_scheduled'` and `sherin_retry_not_before` so the next cron tick respects the provider's `Retry-After`. Storage / DB failures remain terminal (side-effect risk).
-- Live progress stage indicator on the Studio result panel. `studio/page.tsx` reads `metadata.sherin_stage` and passes it to `StudioResultPanel`; `GeneratingPreview` renders a humanized label (e.g. "Submitting to BFL…", "Resuming after worker restart…", "Transient error, retry scheduled…") with `aria-live="polite"` so screen readers announce transitions. Combined with the existing 2.5s auto-refresh, the owner sees stage changes in near-real-time.
+- Live progress stage indicator on the Studio result panel. `studio/page.tsx` reads `metadata.sherin_stage` and passes it to `StudioResultPanel`; `GeneratingPreview` renders a humanized label (e.g. "Submitting to Black Forest Labs…", "Resuming after worker restart…", "Transient error, retry scheduled…") with `aria-live="polite"` so screen readers announce transitions. Combined with the existing 2.5s auto-refresh, the owner sees stage changes in near-real-time.
 - Vitest 4 test harness with stub for the `server-only` package (`test/stubs/server-only.ts`, alias in `vitest.config.ts`). 19 unit tests colocated in `test/` (`test/inference-errors.test.ts`, `test/sentry-config.test.ts`, `test/rate-limit.test.ts`). Scripts: `pnpm test`, `pnpm test:run`.
 - ESLint 10 flat config (`eslint.config.mjs`) with `@typescript-eslint/no-restricted-imports` enforcing server-only boundaries, direct imports of `@/lib/database/admin`, `@/lib/inference/*/server`, `@/lib/inference/errors`, `@/lib/storage{,/*}`, `@/lib/monitoring/sentry-server`, and `@/lib/security/rate-limit` from client components are blocked at lint time. Type-only imports are allowed. Server allowlist covers `app/**/route.ts`, `app/**/page.tsx`, `app/**/_lib/**`, `app/**/_actions/**`, `lib/**`, `proxy.ts`, `instrumentation.ts`, and tests. Scripts: `pnpm lint`, `pnpm lint:fix`.
 - `pnpm audit --prod --audit-level=high` and `gitleaks/gitleaks-action@v2` jobs in `.github/workflows/publish-check.yml`. The starter job also now runs `lint` and `test:run` alongside `format`, `typecheck`, and `build`.
 - Conditional Sentry initialization for Node.js, Edge, and browser runtimes via `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring/sentry-config.ts`, and `lib/monitoring/sentry-server.ts`. All paths are no-ops when `NEXT_PUBLIC_SENTRY_DSN` is unset, so the starter still runs cleanly on developer machines and free deploys.
 - `lib/security/rate-limit.ts` in-memory token-bucket limiter with auto-sweep, applied to the worker endpoint with separate ceilings for bearer-token callers (12/min), the owner session (30/min), and anonymous IP fingerprints. 429 responses include `Retry-After` and `X-RateLimit-*` headers.
-- `onPreSubmit` hook on the inference provider contract. The BFL adapter now fires it immediately before the non-idempotent submit so the worker can persist a `bfl_submit_attempts` counter and `bfl_submit_attempted_at` timestamp, eliminating the silent crash-resume hole.
-- Bounded BFL crash-resume: a single resubmit is allowed when no `bfl_request_id` was persisted, flagged with `bfl_duplicate_risk: true` and `sherin_stage: 'bfl_resubmit_after_crash'` for operator audit; further gaps fail loudly.
+- `onPreSubmit` hook on the inference provider contract. The Black Forest Labs adapter now fires it immediately before the non-idempotent submit so the worker can persist a `bfl_submit_attempts` counter and `bfl_submit_attempted_at` timestamp, eliminating the silent crash-resume hole.
+- Bounded Black Forest Labs crash-resume: a single resubmit is allowed when no `bfl_request_id` was persisted, flagged with `bfl_duplicate_risk: true` and `sherin_stage: 'bfl_resubmit_after_crash'` for operator audit; further gaps fail loudly.
 - `.env.example` `OBSERVABILITY` and `WORKER` sections documenting the Sentry variables (`NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`) and the optional `CRON_SECRET` shared secrets.
 - Initial public Sherin starter release for a private, owner-only generative media workspace.
 - Studio, Gallery, Usage, and Profile dashboard surfaces for image generation workflows.
@@ -239,14 +250,14 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 ### Changed
 
 - BabySea model mapping is now derived from the Sherin model id registry, so matching BabySea identifiers do not need duplicated per-model entries.
-- Direct BFL request construction now reads model capabilities instead of relying on model-specific ad hoc branches. FLUX 1.1 Pro Ultra sends `aspect_ratio` and optional `raw`; dimension-based BFL models continue to send `width` and `height`.
-- Studio BFL fields now hide unsupported dimensions for aspect-ratio models and show only the controls supported by the selected model.
-- Prompt upsampling defaults are resolved on the server from the selected BFL model config when the form field is absent.
+- Direct Black Forest Labs request construction now reads model capabilities instead of relying on model-specific ad hoc branches. FLUX 1.1 Pro Ultra sends `aspect_ratio` and optional `raw`; dimension-based Black Forest Labs models continue to send `width` and `height`.
+- Studio Black Forest Labs fields now hide unsupported dimensions for aspect-ratio models and show only the controls supported by the selected model.
+- Prompt upsampling defaults are resolved on the server from the selected Black Forest Labs model config when the form field is absent.
 - Gallery and References cards now surface the Supabase generation id for easier operator support and storage tracing.
 - README, security, contribution, and community docs now describe References, durable input references, the current model list, and the version deployment surface.
 - Owner sign-out (`app/dashboard/_lib/server-actions.ts`) now passes `{ scope: 'local' }` to `supabase.auth.signOut()` so signing out of the dashboard does not invalidate the owner's session on other devices. Inline JSDoc documents the Next.js Server Actions CSRF posture (POST-only, `Origin` must match `Host`) so future contributors do not paper an unnecessary CSRF token over the framework guarantee.
 - `app/api/generations/process/route.ts` has a top-of-file comment block explaining the GET vs POST split: GET is a bearer-only idempotent cron poke, POST accepts bearer or owner session for an owner-triggered flush. Both share the same queue and per-caller rate limit.
-- BFL and BabySea provider polling budgets now read `INFERENCE_POLL_TIMEOUT_MS` from the environment, with a 45_000 ms fallback that matches the previous hardcoded value. Comments on both adapters now explicitly link the budget to the worker `maxDuration`.
+- Black Forest Labs and BabySea provider polling budgets now read `INFERENCE_POLL_TIMEOUT_MS` from the environment, with a 45_000 ms fallback that matches the previous hardcoded value. Comments on both adapters now explicitly link the budget to the worker `maxDuration`.
 - Reorganized `lib/` into topic folders. Loose modules now live under intent-revealing parents:
   - `lib/sentry/config.ts` → `lib/monitoring/sentry-config.ts`
   - `lib/sentry/server.ts` → `lib/monitoring/sentry-server.ts`
@@ -262,12 +273,12 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 - `pnpm-workspace.yaml` catalog gained `@eslint/js`, `eslint`, and `eslint-config-next` entries so the lint toolchain is monitored alongside the rest of the dependency tree.
 - `_components/studio-result-panel.tsx` `GeneratingPreview` now accepts an optional `stage` prop and maps known stages through a label table with a graceful underscore-to-space fallback for unknown values.
 - `app/api/generations/process/route.ts` `maxDuration` reduced from 300s to 60s for compatibility with all Vercel tiers (Hobby/Pro/Enterprise). Long generations resume on the next cron tick via persisted `bfl_request_id` / `idempotencyKey`. Worker errors are now forwarded to `captureServerError`.
-- BFL and BabySea provider poll budgets tightened to 45s with a 20s per-request timeout to fit inside the new function ceiling.
+- Black Forest Labs and BabySea provider poll budgets tightened to 45s with a 20s per-request timeout to fit inside the new function ceiling.
 - Stale-running generation reclaim window shortened from 20 minutes to 90 seconds, in line with the new worker budget.
-- BFL provider error handling now classifies transient (408/425/429/5xx) vs permanent failures and surfaces `Retry-After`, status code, and `isTransient` metadata on thrown errors.
+- Black Forest Labs provider error handling now classifies transient (408/425/429/5xx) vs permanent failures and surfaces `Retry-After`, status code, and `isTransient` metadata on thrown errors.
 - Standardized internal asset component paths under `lib/icons`.
 - Named the shared object storage adapter `s3-compatible-storage.ts` for clearer Cloudflare R2 and AWS S3 ownership.
-- BFL poll-budget timeouts now throw a typed timeout so long-running generations are re-queued and resumed by the next worker tick instead of being marked permanently failed.
+- Black Forest Labs poll-budget timeouts now throw a typed timeout so long-running generations are re-queued and resumed by the next worker tick instead of being marked permanently failed.
 - Retry scheduling now honors `metadata.sherin_retry_not_before` when selecting queued work, so provider `Retry-After` hints are not bypassed by browser or cron pokes.
 - `STORAGE_SMOKE_TEST=1 pnpm run doctor` now performs Put/Get/Delete verification against the selected storage provider and Supabase fallback instead of only checking Supabase bucket reachability.
 - Studio and Gallery queue polling now skips network work while the tab is hidden, reducing background load from inactive creator sessions.
@@ -275,7 +286,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Security
 
-- Direct BFL provider submission now rejects unsupported output formats, unsupported safety tolerances, unsupported raw mode, unsupported image prompts, unsupported guidance/steps, custom dimensions on aspect-ratio models, and input files above the selected model limit before making a provider network call.
+- Direct Black Forest Labs provider submission now rejects unsupported output formats, unsupported safety tolerances, unsupported raw mode, unsupported image prompts, unsupported guidance/steps, custom dimensions on aspect-ratio models, and input files above the selected model limit before making a provider network call.
 - Input URL and upload handling persists provider-facing input assets through Sherin storage first, keeping reusable references under the configured storage boundary.
 - Documented and exercised the Next.js Server Actions built-in CSRF guard (POST-only, `Origin` must match `Host`) on the owner sign-out path; combined with `SameSite=Lax` Supabase cookies this removes the need for a hand-rolled CSRF token without weakening the boundary.
 - Per-request correlation ids (`x-request-id`) on the worker endpoint make it possible to triage a 401/429/500 reported by a cron runner against the exact Sentry event, closing a forensic gap when investigating suspected abuse or replay.

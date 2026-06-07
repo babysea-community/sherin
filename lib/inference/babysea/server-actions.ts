@@ -15,7 +15,7 @@ import {
   requireEnv,
 } from '@/lib/utils/env';
 
-import { BABYSEA_PROVIDER_ORDER_OPTIONS } from '@/lib/app-config';
+import { getBabySeaProviderOrderOverride } from '@/lib/app-config';
 import {
   resolveBabySeaModelIdentifier,
   resolveBabySeaOutputFormat,
@@ -88,16 +88,19 @@ export async function getBabySeaStudioModelSchemas<
   TModel extends InferenceRequest['model'],
 >(models: readonly TModel[]) {
   const libraryModels = await getBabySeaLibraryModels();
-  const entries = models.map((model) => {
+  const entries = models.flatMap((model) => {
     const modelIdentifier = resolveBabySeaModelIdentifier(model);
-    const sdkModel = findBabySeaModel(libraryModels, modelIdentifier);
+    const sdkModel = findOptionalBabySeaModel(libraryModels, modelIdentifier);
 
-    return [model, toBabySeaStudioModelSchema(sdkModel)] as const;
+    if (!sdkModel) {
+      return [];
+    }
+
+    return [[model, toBabySeaStudioModelSchema(sdkModel)] as const];
   });
 
-  return Object.fromEntries(entries) as Record<
-    TModel,
-    BabySeaStudioModelSchema
+  return Object.fromEntries(entries) as Partial<
+    Record<TModel, BabySeaStudioModelSchema>
   >;
 }
 
@@ -257,15 +260,22 @@ const getBabySeaLibraryModels = unstable_cache(
 );
 
 function findBabySeaModel(models: readonly Model[], modelIdentifier: string) {
-  const sdkModel = models.find(
-    (candidate) => candidate.model_identifier === modelIdentifier,
-  );
+  const sdkModel = findOptionalBabySeaModel(models, modelIdentifier);
 
   if (!sdkModel) {
     throw new Error(`BabySea model not found: ${modelIdentifier}.`);
   }
 
   return sdkModel;
+}
+
+function findOptionalBabySeaModel(
+  models: readonly Model[],
+  modelIdentifier: string,
+) {
+  return models.find(
+    (candidate) => candidate.model_identifier === modelIdentifier,
+  );
 }
 
 function assertSupportedBabySeaModelInput(
@@ -377,8 +387,12 @@ function assertNoCoreFieldOverrides(
 }
 
 function toProviderOrderOptions(model: Model) {
-  if (model.model_identifier === 'bfl/flux-1.1-pro') {
-    return [...BABYSEA_PROVIDER_ORDER_OPTIONS];
+  const configuredOptions = getBabySeaProviderOrderOverride(
+    model.model_identifier,
+  );
+
+  if (configuredOptions) {
+    return [...configuredOptions];
   }
 
   const concreteOrder = model.model_supported_provider

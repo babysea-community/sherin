@@ -51,3 +51,6 @@ export function InlineBlackForestLabsLight({
     </svg>
   );
 }
+
+export const InlineByokModelProvider = InlineBlackForestLabs;
+export const InlineByokModelProviderLight = InlineBlackForestLabsLight;

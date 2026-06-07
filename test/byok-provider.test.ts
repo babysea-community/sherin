@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createBflProvider } from '@/lib/inference/bfl/server-actions';
+import {
+  createBflProvider,
+  isBflApiHost,
+  normalizeBflApiBaseUrl,
+  validateBflPollingUrl,
+} from '@/lib/inference/bfl/server-actions';
 import type { InferenceRequest } from '@/lib/inference/types';
 
 describe('BFL provider', () => {
@@ -44,7 +49,7 @@ describe('BFL provider', () => {
 
     const generationPromise = createBflProvider().generate(
       createRequest({
-        bflRaw: true,
+        byokParams: { raw: true },
         model: 'bfl/flux-1.1-pro-ultra',
         outputFormat: 'png',
         ratio: '21:9',
@@ -78,6 +83,50 @@ describe('BFL provider', () => {
     expect(result.remoteUrl).toBe('https://assets.example.com/ultra.png');
   });
 
+  it('resumes polling without resubmitting direct provider work', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          result: { sample: 'https://assets.example.com/resumed.png' },
+          status: 'Ready',
+        }),
+        { headers: { 'content-type': 'application/json' }, status: 200 },
+      ),
+    );
+    const onPreSubmit = vi.fn();
+    const onStarted = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generationPromise = createBflProvider().generate(createRequest(), {
+      onPreSubmit,
+      onStarted,
+      providerGenerationId: 'req_resume',
+    });
+
+    await vi.advanceTimersByTimeAsync(1_500);
+
+    const result = await generationPromise;
+    const [pollUrl, pollInit] = fetchMock.mock.calls[0] as [
+      string,
+      RequestInit,
+    ];
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(pollUrl).toBe('https://api.bfl.ai/v1/get_result?id=req_resume');
+    expect(pollInit.method).toBe('GET');
+    expect(onPreSubmit).not.toHaveBeenCalled();
+    expect(onStarted).toHaveBeenCalledWith(
+      expect.objectContaining({
+        bfl_request_id: 'req_resume',
+        bfl_resumed: true,
+      }),
+    );
+    expect(result.remoteUrl).toBe('https://assets.example.com/resumed.png');
+  });
+
   it('rejects image prompts unsupported by current FLUX 1.1 endpoints', async () => {
     const fetchMock = vi.fn();
 
@@ -86,7 +135,7 @@ describe('BFL provider', () => {
     await expect(
       createBflProvider().generate(
         createRequest({
-          bflImagePrompt: 'base64-image',
+          byokParams: { imagePrompt: 'base64-image' },
           model: 'bfl/flux-1.1-pro',
         }),
       ),
@@ -95,7 +144,7 @@ describe('BFL provider', () => {
     await expect(
       createBflProvider().generate(
         createRequest({
-          bflImagePrompt: 'base64-image',
+          byokParams: { imagePrompt: 'base64-image' },
           model: 'bfl/flux-1.1-pro-ultra',
           ratio: '16:9',
         }),
@@ -134,7 +183,7 @@ describe('BFL provider', () => {
     await expect(
       createBflProvider().generate(
         createRequest({
-          bflSafetyTolerance: 6,
+          byokParams: { safetyTolerance: 6 },
           model: 'bfl/flux-2-pro',
         }),
       ),
@@ -158,6 +207,27 @@ describe('BFL provider', () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it('accepts BFL API shard hosts for returned polling URLs', () => {
+    expect(
+      validateBflPollingUrl(
+        'https://api.eu1.bfl.ai/v1/get_result?id=request-123#ignored',
+      ),
+    ).toBe('https://api.eu1.bfl.ai/v1/get_result?id=request-123');
+  });
+
+  it('rejects non-API BFL delivery hosts for polling URLs', () => {
+    expect(isBflApiHost('delivery-eu.bfl.ai')).toBe(false);
+    expect(() =>
+      validateBflPollingUrl('https://delivery-eu.bfl.ai/result.png'),
+    ).toThrow('BFL polling_url must be a BFL API host.');
+  });
+
+  it('normalizes BFL API base URLs with an optional v1 path', () => {
+    expect(normalizeBflApiBaseUrl('https://api.us.bfl.ai/v1')).toBe(
+      'https://api.us.bfl.ai',
+    );
+  });
 });
 
 function createRequest(
@@ -165,9 +235,11 @@ function createRequest(
 ): InferenceRequest {
   return {
     babyseaSpecificParams: {},
-    bflPromptUpsampling: false,
-    bflRaw: false,
-    bflSafetyTolerance: 2,
+    byokParams: {
+      promptUpsampling: false,
+      raw: false,
+      safetyTolerance: 2,
+    },
     inputFiles: [],
     model: 'bfl/flux-1.1-pro',
     outputFormat: 'jpeg',

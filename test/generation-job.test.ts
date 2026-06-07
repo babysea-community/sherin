@@ -5,6 +5,7 @@ import {
   readQueuedGenerationJob,
 } from '@/app/dashboard/studio/_lib/generation-job';
 import type { Json } from '@/lib/database.types';
+import { DEFAULT_MODEL_ID } from '@/lib/app-config';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -52,17 +53,15 @@ function createGenerationInput(
   overrides: Partial<Parameters<typeof createQueuedGenerationJob>[0]> = {},
 ): Parameters<typeof createQueuedGenerationJob>[0] {
   return {
-    bfl_prompt_upsampling: false,
-    bfl_safety_tolerance: 2,
+    byok_params: {},
     generation_input_file: [],
     generation_output_number: 1,
     generation_provider_order: 'fastest',
     generation_resolution: '1MP',
-    model: 'bfl/flux-1.1-pro',
+    model: DEFAULT_MODEL_ID,
     output_format: 'jpeg',
     prompt: 'A calm editorial image of a glass sculpture',
     ratio: '1:1',
     ...overrides,
-    bfl_raw: overrides.bfl_raw ?? false,
   };
 }

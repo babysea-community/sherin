@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
 import type { Database, Json } from '@/lib/database.types';
 import { BABYSEA_IDEMPOTENCY_IN_PROGRESS_CODE } from '@/lib/inference/errors';
 
@@ -9,22 +10,22 @@ type ProviderResumeRow = Pick<
   'created_at' | 'inference_provider' | 'metadata' | 'provider_generation_id'
 >;
 
-const MAX_BFL_POLL_RESUME_AGE_MS = 2 * 60 * 60 * 1000;
+const MAX_BYOK_POLL_RESUME_AGE_MS = 2 * 60 * 60 * 1000;
 const MAX_BABYSEA_RESUME_AGE_MS = 2 * 60 * 60 * 1000;
 
 export function canResumeProviderWorkload(generation: ProviderResumeRow) {
   return (
-    canResumeBflPolling(generation) ||
+    canResumeByokProviderPolling(generation) ||
     canResumeBabySeaGenerationPolling(generation) ||
     canResumeBabySeaIdempotency(generation)
   );
 }
 
-export function canResumeBflPolling(generation: ProviderResumeRow) {
+export function canResumeByokProviderPolling(generation: ProviderResumeRow) {
   return (
-    generation.inference_provider === 'bfl' &&
+    generation.inference_provider === BYOK_INFERENCE_PROVIDER_ID &&
     hasProviderGenerationId(generation) &&
-    isWithinResumeWindow(generation, MAX_BFL_POLL_RESUME_AGE_MS)
+    isWithinResumeWindow(generation, MAX_BYOK_POLL_RESUME_AGE_MS)
   );
 }
 

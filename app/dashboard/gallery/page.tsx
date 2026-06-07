@@ -19,13 +19,15 @@ import {
 } from '@/lib/generation/display';
 import { SHERIN_SAMPLE_RESULT } from '@/lib/generation/sample-result';
 import { getInferenceProviderStatus } from '@/lib/inference';
+import {
+  BYOK_INFERENCE_PROVIDER_ID,
+  BYOK_INFERENCE_PROVIDER_LABEL,
+} from '@/lib/app-config';
 import { getStorageProviderStatus } from '@/lib/storage';
 import { getUser } from '@/lib/database/server-actions';
 import { formatDate } from '@/lib/utils';
-import {
-  InlineBabySea,
-  InlineBlackForestLabsLight,
-} from '@/components/icons/inline-inference';
+import { InlineBabySea } from '@/components/icons/inline-babysea';
+import { InlineByokInferenceProviderLight } from '@/components/icons/inline-inference';
 import {
   InlineAwsS3Storage,
   InlineCloudflareR2Storage,
@@ -319,15 +321,15 @@ function inferenceProviderSummaryValue(provider: string): ProviderSummaryValue {
     };
   }
 
-  if (provider === 'bfl') {
+  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
     return {
       content: (
         <>
-          <InlineBlackForestLabsLight
+          <InlineByokInferenceProviderLight
             className="h-3.5 w-5 shrink-0"
             aria-hidden="true"
           />
-          <span>Black Forest Labs</span>
+          <span>{BYOK_INFERENCE_PROVIDER_LABEL}</span>
         </>
       ),
       key: provider,
@@ -445,8 +447,8 @@ function formatInferenceProvider(provider: string) {
     return 'BabySea';
   }
 
-  if (provider === 'bfl') {
-    return 'Black Forest Labs';
+  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
+    return BYOK_INFERENCE_PROVIDER_LABEL;
   }
 
   return provider;

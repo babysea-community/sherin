@@ -3,14 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import {
-  BFL_DIMENSION_MIN,
-  BFL_FLUX_2_DIMENSION_MIN,
-  BFL_SAFETY_TOLERANCES,
-  DEFAULT_BFL_SAFETY_TOLERANCE,
   DEFAULT_GENERATION_OUTPUT_NUMBER,
   MODEL_IDS,
   SHERIN_INPUT_FILE_LIMIT,
-  type BflSafetyTolerance,
 } from '@/lib/app-config';
 import type { Json } from '@/lib/database.types';
 import type { StoredInputFileAsset } from './input-file-uploads';
@@ -32,6 +27,7 @@ const BabySeaSpecificValueSchema = z.union([
   z.number(),
   z.boolean(),
 ]);
+const ByokParamValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
 const InputFilesSchema = z.array(z.string().trim().min(1)).max(MAX_INPUT_FILES);
 const InputFileUploadPathsSchema = z
@@ -75,43 +71,15 @@ const GenerationInputShape = {
     .max(16),
   generation_provider_order: z.string().trim().min(1).max(160),
   generation_input_file: InputFilesSchema,
-  bfl_image_prompt: optionalTrimmedString(),
-  bfl_width: optionalBflDimension(),
-  bfl_height: optionalBflDimension(),
-  bfl_prompt_upsampling: z.boolean(),
-  bfl_guidance_scale: z.preprocess(
-    emptyStringToUndefined,
-    z.coerce.number().min(1.5).max(10).optional(),
-  ),
-  bfl_num_inference_steps: z.preprocess(
-    emptyStringToUndefined,
-    z.coerce.number().int().min(1).max(50).optional(),
-  ),
-  bfl_raw: z.boolean().default(false),
-  bfl_seed: z.preprocess(
-    emptyStringToUndefined,
-    z.coerce.number().int().min(0).max(2_147_483_647).optional(),
-  ),
-  bfl_safety_tolerance: z.coerce
-    .number()
-    .default(DEFAULT_BFL_SAFETY_TOLERANCE)
-    .pipe(
-      z.custom<BflSafetyTolerance>((value) =>
-        BFL_SAFETY_TOLERANCES.includes(value as BflSafetyTolerance),
-      ),
-    ),
+  byok_params: z.record(ByokParamValueSchema).default({}),
 };
 
-export const GenerationInputSchema = z
-  .object(GenerationInputShape)
-  .superRefine(validateBflDimensions);
+export const GenerationInputSchema = z.object(GenerationInputShape);
 
-export const GenerateFormSchema = z
-  .object({
-    ...GenerationInputShape,
-    generation_input_file: z.preprocess(parseInputFiles, InputFilesSchema),
-  })
-  .superRefine(validateBflDimensions);
+export const GenerateFormSchema = z.object({
+  ...GenerationInputShape,
+  generation_input_file: z.preprocess(parseInputFiles, InputFilesSchema),
+});
 
 export const QueuedGenerationJobSchema = z.object({
   version: z.literal(1),
@@ -216,40 +184,6 @@ export function mergeGenerationMetadata(...values: Array<unknown>): Json {
   }
 
   return metadata as Json;
-}
-
-function validateBflDimensions(
-  values: { bfl_width?: number; bfl_height?: number },
-  context: z.RefinementCtx,
-) {
-  const hasWidth = values.bfl_width !== undefined;
-  const hasHeight = values.bfl_height !== undefined;
-
-  if (hasWidth !== hasHeight) {
-    context.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: 'BFL width and height must be set together.',
-      path: hasWidth ? ['bfl_height'] : ['bfl_width'],
-    });
-  }
-}
-
-function optionalBflDimension() {
-  return z.preprocess(
-    emptyStringToUndefined,
-    z.coerce
-      .number()
-      .int()
-      .min(Math.min(BFL_DIMENSION_MIN, BFL_FLUX_2_DIMENSION_MIN))
-      .optional(),
-  );
-}
-
-function optionalTrimmedString() {
-  return z.preprocess(
-    emptyStringToUndefined,
-    z.string().trim().min(1).optional(),
-  );
 }
 
 function emptyStringToUndefined(value: unknown) {

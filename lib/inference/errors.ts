@@ -4,10 +4,9 @@
  * The worker uses this to decide whether to re-queue (transient) or fail
  * permanently (non-transient). Classification is deliberately defensive:
  *
- * - BFL provider throws plain `Error` objects with `statusCode`,
- *   `retryAfterSeconds`, and `isTransient` properties already attached (see
- *   `buildBflHttpError` in `lib/inference/bfl/server.ts`). We re-use those
- *   verbatim when present.
+ * - Direct BYOK providers may throw plain `Error` objects with `statusCode`,
+ *   `retryAfterSeconds`, and `isTransient` properties already attached. We
+ *   re-use those verbatim when present.
  * - BabySea SDK throws typed errors (`BabySeaError`, `BabySeaNetworkError`,
  *   `BabySeaTimeoutError`, `BabySeaGenerationTimeoutError`,
  *   `BabySeaRetryError`, `BabySeaGenerationFailedError`)
@@ -69,19 +68,17 @@ export function classifyInferenceError(
   const message = errorMessageOf(error);
   const name = errorName(error);
 
-  // BFL provider errors (see `buildBflHttpError`) and any other thrower that
-  // attaches the same shape.
-  const bflLike = readBflLikeShape(error);
-  if (bflLike) {
-    const status = bflLike.statusCode;
+  const httpLike = readHttpLikeShape(error);
+  if (httpLike) {
+    const status = httpLike.statusCode;
     const permanent = status !== null && PERMANENT_STATUS_CODES.has(status);
-    const isTransient = !permanent && bflLike.isTransient;
+    const isTransient = !permanent && httpLike.isTransient;
     return {
       isTransient,
       statusCode: status,
       retryAfterSeconds: isTransient
         ? clampRetryAfter(
-            bflLike.retryAfterSeconds ?? defaultRetryAfterFor(status, true),
+            httpLike.retryAfterSeconds ?? defaultRetryAfterFor(status, true),
           )
         : 0,
       message,
@@ -192,7 +189,7 @@ export function classifyInferenceError(
   };
 }
 
-function readBflLikeShape(error: object): {
+function readHttpLikeShape(error: object): {
   statusCode: number | null;
   retryAfterSeconds: number | null;
   isTransient: boolean;

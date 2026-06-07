@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { CircleStop } from 'lucide-react';
-import { MODEL_IDS, type SherinModelId } from '@/lib/app-config';
+import {
+  type ByokInferenceProviderId,
+  getModelIdsForInferenceProvider,
+  isSherinModelId,
+  type SherinModelId,
+} from '@/lib/app-config';
 import { Button } from '@/components/ui/button';
 import {
   getBabySeaStudioModelSchemas,
@@ -33,7 +38,7 @@ export const revalidate = 0;
 export const maxDuration = 180;
 
 const INFERENCE_UNCONFIGURED_COPY =
-  'Set BABYSEA_API_KEY or BFL_API_KEY before generating.';
+  'Set a BabySea or BYOK provider API key before generating.';
 const BABYSEA_SCHEMA_UNAVAILABLE_COPY =
   'BabySea model schema could not be loaded. Check the API key and region before generating.';
 
@@ -44,7 +49,7 @@ const STUDIO_TOASTS: Record<string, Omit<StudioToast, 'id'>> = {
   },
   inference_unconfigured: {
     type: 'warning',
-    message: 'Set BABYSEA_API_KEY or BFL_API_KEY before generating.',
+    message: INFERENCE_UNCONFIGURED_COPY,
   },
   schema_unavailable: {
     type: 'warning',
@@ -95,8 +100,11 @@ export default async function StudioPage({ searchParams }: PageProps) {
   const babySeaSchemas =
     babySeaSchemaResult instanceof Error ? null : babySeaSchemaResult;
   const babySeaSchemaUnavailable = babySeaSchemaResult instanceof Error;
+  const hasBabySeaModels = babySeaSchemas
+    ? Object.keys(babySeaSchemas).length > 0
+    : false;
   const canGenerate =
-    activeProvider !== null && (!isBabySea || babySeaSchemas !== null);
+    activeProvider !== null && (!isBabySea || hasBabySeaModels);
 
   const errorParam = typeof params.error === 'string' ? params.error : null;
   const successId = typeof params.created === 'string' ? params.created : null;
@@ -299,9 +307,7 @@ function getStringValue(value: unknown) {
 }
 
 function toSherinModelId(value: unknown): SherinModelId | undefined {
-  return typeof value === 'string' && MODEL_IDS.includes(value as SherinModelId)
-    ? (value as SherinModelId)
-    : undefined;
+  return isSherinModelId(value) ? value : undefined;
 }
 
 function createStudioToasts({
@@ -310,7 +316,7 @@ function createStudioToasts({
   errorParam,
   successId,
 }: {
-  activeProvider: 'babysea' | 'bfl' | null;
+  activeProvider: 'babysea' | ByokInferenceProviderId | null;
   babySeaSchemaUnavailable: boolean;
   errorParam: string | null;
   successId: string | null;
@@ -356,7 +362,7 @@ function createStudioToasts({
 }
 
 async function loadBabySeaSchemas() {
-  return getBabySeaStudioModelSchemas(MODEL_IDS) as Promise<
-    Record<SherinModelId, BabySeaStudioModelSchema>
-  >;
+  return getBabySeaStudioModelSchemas(
+    getModelIdsForInferenceProvider('babysea'),
+  ) as Promise<Partial<Record<SherinModelId, BabySeaStudioModelSchema>>>;
 }

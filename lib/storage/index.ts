@@ -56,7 +56,7 @@ const ASSET_FETCH_TIMEOUT_MS = 30_000;
 const ASSET_DOWNLOAD_RETRY_DELAYS_MS = [0, 750, 2_000] as const;
 const STORAGE_WRITE_RETRY_DELAYS_MS = [0, 750, 2_000] as const;
 const ALLOWED_ASSET_HOST_SUFFIXES = [
-  // BFL
+  // Black Forest Labs
   'delivery-us.bfl.ai',
   'delivery-eu.bfl.ai',
   'bfl.ai',

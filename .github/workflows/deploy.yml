@@ -143,8 +143,18 @@ jobs:
 
           const inferenceProvider = (env.INFERENCE_PROVIDER || 'bfl').trim().toLowerCase();
 
+          if (!['babysea', 'bfl'].includes(inferenceProvider)) {
+            console.error('::error::INFERENCE_PROVIDER must be babysea or bfl.');
+            process.exit(1);
+          }
+
           if (inferenceProvider === 'bfl' && !env.BFL_API_KEY?.trim()) {
             console.error('::error::BFL_API_KEY is required when INFERENCE_PROVIDER is "bfl".');
+            process.exit(1);
+          }
+
+          if (inferenceProvider === 'babysea' && !env.BABYSEA_API_KEY?.trim()) {
+            console.error('::error::BABYSEA_API_KEY is required when INFERENCE_PROVIDER is "babysea".');
             process.exit(1);
           }
 

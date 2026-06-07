@@ -9,6 +9,9 @@ node_modules
 dist
 *.tsbuildinfo
 .vercel
+.wrangler
+.open-next
+cloudflare-env.d.ts
 .env*.local
 coverage
 supabase/.temp

@@ -1,9 +1,9 @@
 import { Fragment, type ReactNode } from 'react';
 
 import {
-  DEFAULT_BFL_SAFETY_TOLERANCE,
-  DEFAULT_BFL_FLUX_2_FLEX_GUIDANCE,
-  DEFAULT_BFL_FLUX_2_FLEX_STEPS,
+  DEFAULT_BYOK_GUIDANCE,
+  DEFAULT_BYOK_SAFETY_TOLERANCE,
+  DEFAULT_BYOK_STEPS,
   DEFAULT_GENERATION_OUTPUT_NUMBER,
 } from '@/lib/app-config';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,7 @@ import {
   getFieldDescription,
 } from './form-controls';
 
-type BflFormFieldsProps = {
+type ByokFormFieldsProps = {
   defaultDimensions?: { width: number; height: number };
   defaultOutputFormat: string;
   defaultPromptUpsampling: boolean;
@@ -47,7 +47,7 @@ type BflFormFieldsProps = {
   showSteps: boolean;
 };
 
-export function BflFormFields({
+export function ByokFormFields({
   defaultDimensions,
   defaultOutputFormat,
   defaultPromptUpsampling,
@@ -67,19 +67,19 @@ export function BflFormFields({
   showPromptUpsampling,
   showRaw,
   showSteps,
-}: BflFormFieldsProps) {
+}: ByokFormFieldsProps) {
   const remainingFields: ExtraField[] = [
     {
-      key: 'bfl_safety_tolerance',
+      key: 'byok_safety_tolerance',
       label: 'Safety tolerance',
       node: (
         <Field
           label="Safety tolerance"
-          description={getFieldDescription('bfl_safety_tolerance')}
+          description={getFieldDescription('byok_safety_tolerance')}
         >
           <Select
-            name="bfl_safety_tolerance"
-            defaultValue={String(DEFAULT_BFL_SAFETY_TOLERANCE)}
+            name="byok_safety_tolerance"
+            defaultValue={String(DEFAULT_BYOK_SAFETY_TOLERANCE)}
             options={safetyToleranceOptions.map((value) => ({
               value: String(value),
             }))}
@@ -88,13 +88,13 @@ export function BflFormFields({
       ),
     },
     {
-      key: 'bfl_seed',
+      key: 'byok_seed',
       label: 'Seed',
       node: (
         <NumberField
-          description={getFieldDescription('bfl_seed')}
+          description={getFieldDescription('byok_seed')}
           label="Seed"
-          name="bfl_seed"
+          name="byok_seed"
           min={0}
           max={2_147_483_647}
         />
@@ -104,15 +104,15 @@ export function BflFormFields({
 
   if (showPromptUpsampling) {
     remainingFields.push({
-      key: 'bfl_prompt_upsampling',
+      key: 'byok_prompt_upsampling',
       label: 'Prompt upsampling',
       node: (
         <Field
           label="Prompt upsampling"
-          description={getFieldDescription('bfl_prompt_upsampling')}
+          description={getFieldDescription('byok_prompt_upsampling')}
         >
           <Select
-            name="bfl_prompt_upsampling"
+            name="byok_prompt_upsampling"
             defaultValue={String(defaultPromptUpsampling)}
             options={[
               { value: 'false', label: 'Off' },
@@ -126,12 +126,12 @@ export function BflFormFields({
 
   if (showRaw) {
     remainingFields.push({
-      key: 'bfl_raw',
+      key: 'byok_raw',
       label: 'Raw mode',
       node: (
-        <Field label="Raw mode" description={getFieldDescription('bfl_raw')}>
+        <Field label="Raw mode" description={getFieldDescription('byok_raw')}>
           <Select
-            name="bfl_raw"
+            name="byok_raw"
             defaultValue="false"
             options={[
               { value: 'false', label: 'Off' },
@@ -145,14 +145,14 @@ export function BflFormFields({
 
   if (showGuidance) {
     remainingFields.push({
-      key: 'bfl_guidance_scale',
+      key: 'byok_guidance_scale',
       label: 'Guidance scale',
       node: (
         <NumberField
-          defaultValue={DEFAULT_BFL_FLUX_2_FLEX_GUIDANCE}
-          description={getFieldDescription('bfl_guidance_scale')}
+          defaultValue={DEFAULT_BYOK_GUIDANCE}
+          description={getFieldDescription('byok_guidance_scale')}
           label="Guidance scale"
-          name="bfl_guidance_scale"
+          name="byok_guidance_scale"
           min={1.5}
           max={10}
           step="0.1"
@@ -163,14 +163,14 @@ export function BflFormFields({
 
   if (showSteps) {
     remainingFields.push({
-      key: 'bfl_num_inference_steps',
+      key: 'byok_num_inference_steps',
       label: 'Inference steps',
       node: (
         <NumberField
-          defaultValue={DEFAULT_BFL_FLUX_2_FLEX_STEPS}
-          description={getFieldDescription('bfl_num_inference_steps')}
+          defaultValue={DEFAULT_BYOK_STEPS}
+          description={getFieldDescription('byok_num_inference_steps')}
           label="Inference steps"
-          name="bfl_num_inference_steps"
+          name="byok_num_inference_steps"
           min={1}
           max={50}
         />
@@ -218,9 +218,12 @@ export function BflFormFields({
 
         {showDimensions ? (
           <>
-            <Field label="Width" description={getFieldDescription('bfl_width')}>
+            <Field
+              label="Width"
+              description={getFieldDescription('byok_width')}
+            >
               <Input
-                name="bfl_width"
+                name="byok_width"
                 type="number"
                 min={dimension.min}
                 max={dimension.max}
@@ -232,10 +235,10 @@ export function BflFormFields({
 
             <Field
               label="Height"
-              description={getFieldDescription('bfl_height')}
+              description={getFieldDescription('byok_height')}
             >
               <Input
-                name="bfl_height"
+                name="byok_height"
                 type="number"
                 min={dimension.min}
                 max={dimension.max}
@@ -249,14 +252,14 @@ export function BflFormFields({
 
         {showImagePrompt ? (
           <Base64ImagePromptField
-            descriptionKey="bfl_image_prompt"
-            name="bfl_image_prompt"
+            descriptionKey="byok_image_prompt"
+            name="byok_image_prompt"
           />
         ) : null}
 
         {inputFileLimit > 0 ? (
           <InputImageUrlsField
-            descriptionKey="bfl_image_input_urls"
+            descriptionKey="byok_image_input_urls"
             maxUrls={inputFileLimit}
             name="generation_input_file"
           />

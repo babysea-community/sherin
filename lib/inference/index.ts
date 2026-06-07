@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
 import { getOptionalEnv } from '@/lib/utils/env';
 import type { InferenceProvider, InferenceProviderId } from './types';
 import { createBflProvider, isBflConfigured } from './bfl/server-actions';
@@ -14,7 +15,7 @@ export type { InferenceRequest, InferenceResult } from './types';
 /**
  * Resolve the active inference provider. Sherin auto-detects which provider
  * is configured. If both are present, INFERENCE_PROVIDER decides; otherwise
- * BFL takes precedence because it is Sherin's default stack.
+ * Inference takes precedence because it is Sherin's default stack.
  */
 export function resolveInferenceProvider(): InferenceProvider {
   const configuredPreference = getOptionalEnv('INFERENCE_PROVIDER');
@@ -35,9 +36,11 @@ export function resolveInferenceProvider(): InferenceProvider {
     return createBabySeaProvider();
   }
 
-  if (preferred === 'bfl') {
+  if (preferred === BYOK_INFERENCE_PROVIDER_ID) {
     if (!bflReady) {
-      throw new Error('INFERENCE_PROVIDER=bfl but BFL_API_KEY is not set.');
+      throw new Error(
+        `INFERENCE_PROVIDER=${BYOK_INFERENCE_PROVIDER_ID} but BFL_API_KEY is not set.`,
+      );
     }
     return createBflProvider();
   }
@@ -51,7 +54,7 @@ export function resolveInferenceProvider(): InferenceProvider {
   }
 
   throw new Error(
-    'No inference provider configured. Set BABYSEA_API_KEY or BFL_API_KEY.',
+    'No inference provider configured. Set BFL_API_KEY or BABYSEA_API_KEY.',
   );
 }
 
@@ -68,10 +71,10 @@ export function resolveInferenceProviderById(
     return createBabySeaProvider();
   }
 
-  if (providerId === 'bfl') {
+  if (providerId === BYOK_INFERENCE_PROVIDER_ID) {
     if (!isBflConfigured()) {
       throw new Error(
-        'Queued generation requires BFL, but BFL_API_KEY is not set.',
+        'Queued generation requires the configured BYOK provider, but its API key is not set.',
       );
     }
 
@@ -103,7 +106,7 @@ function normalizePreference(
     return null;
   }
   const lower = value.trim().toLowerCase();
-  if (lower === 'bfl' || lower === 'babysea') {
+  if (lower === BYOK_INFERENCE_PROVIDER_ID || lower === 'babysea') {
     return lower;
   }
   return null;

@@ -3,6 +3,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 
+import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
 import type { Database, Json } from '@/lib/database.types';
 import {
   resolveInferenceProviderById,
@@ -77,11 +78,6 @@ const GENERATION_UPDATE_RETRY_DELAYS_MS = [0, 250, 1_000] as const;
 // Keeping it tight allows the next cron tick to reclaim and resume.
 const STALE_RUNNING_GENERATION_MS = 90 * 1000;
 const MAX_GENERATION_ATTEMPTS = 3;
-// BFL has no server-side idempotency. When a worker crashes between submit
-// and bfl_request_id persistence we allow at most ONE blind resubmit, marked
-// with bfl_duplicate_risk so the operator can audit potential duplicate
-// charges. Subsequent gaps fail loudly rather than silently double-charging.
-const MAX_BFL_SUBMIT_ATTEMPTS = 2;
 
 export async function processGenerationQueue(
   options: ProcessQueueOptions = {},
@@ -288,12 +284,12 @@ async function processClaimedGeneration(
     const job = readQueuedGenerationJob(claimed.row.metadata);
     providerId = toInferenceProviderId(claimed.row.inference_provider);
     const activeProviderId = providerId;
+    const provider = resolveInferenceProviderById(activeProviderId);
     const resumeMetadata = toMetadataRecord(claimed.row.metadata);
-    const hasAcceptedBflRequest =
-      activeProviderId === 'bfl' && hasProviderGenerationId(claimed.row);
+    const hasAcceptedProviderRequest = hasProviderGenerationId(claimed.row);
     let inferenceJob = job;
 
-    if (!hasAcceptedBflRequest) {
+    if (!hasAcceptedProviderRequest) {
       const prepared = await prepareInferenceJob({
         admin,
         generationId: claimed.row.id,
@@ -309,25 +305,29 @@ async function processClaimedGeneration(
 
     if (
       claimed.retry &&
-      activeProviderId === 'bfl' &&
+      provider.submitPolicy &&
       !hasProviderGenerationId(claimed.row)
     ) {
-      const submitAttempts = getBflSubmitAttempts(resumeMetadata);
+      const submitAttempts = getProviderSubmitAttempts(resumeMetadata);
 
-      if (submitAttempts >= MAX_BFL_SUBMIT_ATTEMPTS) {
+      if (
+        submitAttempts >=
+        provider.submitPolicy.maxSubmitAttemptsWithoutProviderId
+      ) {
         throw new Error(
-          'BFL submit state was not persisted after the maximum allowed resubmit. Refusing to resubmit again because BFL is not idempotent and further attempts would risk duplicate charges.',
+          'Provider submit state was not persisted after the maximum allowed resubmit. Refusing to resubmit again because this provider is not idempotent and further attempts would risk duplicate charges.',
         );
       }
 
-      console.warn('[sherin:bfl] resubmitting after worker crash', {
+      console.warn('[sherin:worker] resubmitting after worker crash', {
         generationId: claimed.row.id,
+        providerId: activeProviderId,
         submitAttempts,
       });
 
       generationMetadata = mergeGenerationMetadata(generationMetadata, {
-        bfl_duplicate_risk: true,
-        sherin_stage: 'bfl_resubmit_after_crash',
+        sherin_provider_duplicate_risk: true,
+        sherin_stage: 'provider_resubmit_after_crash',
       });
 
       await updateGenerationMetadata(
@@ -338,8 +338,6 @@ async function processClaimedGeneration(
       );
     }
 
-    const provider = resolveInferenceProviderById(activeProviderId);
-
     const result = await provider.generate(toInferenceRequest(inferenceJob), {
       idempotencyKey: idempotencyKeyForGeneration(
         activeProviderId,
@@ -348,18 +346,17 @@ async function processClaimedGeneration(
       ),
       providerGenerationId: currentProviderGenerationId ?? undefined,
       onPreSubmit: async (metadata) => {
-        const submitAttempts =
-          activeProviderId === 'bfl'
-            ? getBflSubmitAttempts(toMetadataRecord(generationMetadata)) + 1
-            : undefined;
+        const submitAttempts = provider.submitPolicy
+          ? getProviderSubmitAttempts(toMetadataRecord(generationMetadata)) + 1
+          : undefined;
 
         generationMetadata = mergeGenerationMetadata(
           generationMetadata,
           metadata,
-          activeProviderId === 'bfl' && submitAttempts !== undefined
+          submitAttempts !== undefined
             ? {
-                bfl_submit_attempts: submitAttempts,
-                bfl_submit_attempted_at: new Date().toISOString(),
+                sherin_provider_submit_attempts: submitAttempts,
+                sherin_provider_submit_attempted_at: new Date().toISOString(),
               }
             : {},
         );
@@ -373,7 +370,7 @@ async function processClaimedGeneration(
       },
       onStarted: async (metadata) => {
         const providerGenerationId = providerGenerationIdFromMetadata(
-          activeProviderId,
+          provider,
           metadata,
         );
         currentProviderGenerationId =
@@ -403,7 +400,7 @@ async function processClaimedGeneration(
 
     const providerGenerationId =
       currentProviderGenerationId ??
-      providerGenerationIdFromMetadata(activeProviderId, result.metadata);
+      providerGenerationIdFromMetadata(provider, result.metadata);
     currentProviderGenerationId =
       providerGenerationId ?? currentProviderGenerationId;
 
@@ -558,8 +555,9 @@ async function processClaimedGeneration(
           provider_generation_id: currentProviderGenerationId,
         }
       : claimed.row;
-    const isBflPollBudgetYield =
-      providerId === 'bfl' &&
+    const isByokPollBudgetYield =
+      providerId !== null &&
+      providerId !== 'babysea' &&
       classification.code === 'timeout' &&
       canResumeProviderWorkload(resumeGeneration);
     const isBabySeaPollBudgetYield =
@@ -577,7 +575,7 @@ async function processClaimedGeneration(
       generationStage === 'inference' &&
       classification.isTransient &&
       (attempt < MAX_GENERATION_ATTEMPTS ||
-        isBflPollBudgetYield ||
+        isByokPollBudgetYield ||
         isBabySeaPollBudgetYield ||
         isBabySeaIdempotencyYield);
 
@@ -870,15 +868,7 @@ function toInferenceRequest({
 }) {
   return {
     babyseaSpecificParams,
-    bflGuidanceScale: values.bfl_guidance_scale,
-    bflHeight: values.bfl_height,
-    bflImagePrompt: values.bfl_image_prompt,
-    bflNumInferenceSteps: values.bfl_num_inference_steps,
-    bflPromptUpsampling: values.bfl_prompt_upsampling,
-    bflRaw: values.bfl_raw,
-    bflSafetyTolerance: values.bfl_safety_tolerance,
-    bflSeed: values.bfl_seed,
-    bflWidth: values.bfl_width,
+    byokParams: values.byok_params,
     inputFiles: values.generation_input_file,
     model: values.model,
     outputFormat: values.output_format,
@@ -891,7 +881,7 @@ function toInferenceRequest({
 }
 
 function toInferenceProviderId(value: string): InferenceProviderId {
-  if (value === 'babysea' || value === 'bfl') {
+  if (value === 'babysea' || value === BYOK_INFERENCE_PROVIDER_ID) {
     return value;
   }
 
@@ -906,8 +896,8 @@ function toMetadataRecord(metadata: unknown) {
   return metadata as Record<string, unknown>;
 }
 
-function getBflSubmitAttempts(metadata: Record<string, unknown> | null) {
-  const value = metadata?.bfl_submit_attempts;
+function getProviderSubmitAttempts(metadata: Record<string, unknown> | null) {
+  const value = metadata?.sherin_provider_submit_attempts;
 
   return typeof value === 'number' && Number.isFinite(value) && value > 0
     ? Math.trunc(value)
@@ -929,13 +919,11 @@ function getProcessingAttempt(metadata: Json | null) {
 }
 
 function providerGenerationIdFromMetadata(
-  providerId: InferenceProviderId,
+  provider: ReturnType<typeof resolveInferenceProviderById>,
   metadata: unknown,
 ) {
   const record = toMetadataRecord(metadata);
-  const key =
-    providerId === 'babysea' ? 'babysea_generation_id' : 'bfl_request_id';
-  const value = record?.[key];
+  const value = record ? provider.extractProviderGenerationId?.(record) : null;
 
   return typeof value === 'string' && value.length > 0 ? value : null;
 }

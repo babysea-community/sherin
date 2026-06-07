@@ -18,7 +18,7 @@ Sherin is a self-hosted private workspace for generative media, built for creato
    cp .env.example .env.local
    ```
 
-3. Configure Supabase, Google sign-in, one inference provider, and storage using the README.
+3. Configure Supabase, Google sign-in, one inference provider, and storage using [`.env.example`](.env.example) and the README.
 
    Start with Supabase Storage and Black Forest Labs unless your change specifically needs another adapter.
 
@@ -59,7 +59,7 @@ STORAGE_SMOKE_TEST=1 pnpm run doctor
 
 - Keep the starter public-repo friendly: no secrets, private project ids, local-only URLs, personal generated media, or storage object URLs.
 - Keep Sherin owner-only unless a change explicitly updates the product boundary, database policy, UI, README, and tests together.
-- Keep `SUPABASE_SECRET_KEY`, `BFL_API_KEY`, `BABYSEA_API_KEY`, storage credentials, Sentry auth tokens, and cron secrets server-side.
+- Keep every secret described in [`.env.example`](.env.example) server-side unless that template explicitly marks the value as public.
 - Keep the creators and artists path approachable: defaults should work before optional infrastructure is introduced.
 - Keep the developers path explicit: schema, worker, inference, storage, and monitoring changes should be traceable from code to docs.
 - Keep Supabase Storage as the fallback save path when adding or changing primary storage adapters.
@@ -73,7 +73,7 @@ STORAGE_SMOKE_TEST=1 pnpm run doctor
 Sherin docs are part of the release contract. Keep them factual, operator-ready, and tied to behavior that exists in the repository.
 
 - Start from the README contract: what the starter is, what it is not, how to deploy it, how to validate it, and how to recover it.
-- Use exact environment variable names, commands, route paths, provider names, and file paths.
+- Use [`.env.example`](.env.example) as the source of truth for environment variable names; use exact commands, route paths, provider names, and file paths elsewhere.
 - Document validation steps beside operational claims. If a feature says it is production-ready, include the check or workflow that proves it.
 - Keep security guidance concrete: where secrets live, which values are browser-visible, how to rotate keys, and what should never be posted publicly.
 - Update `CHANGELOG.md` for user-visible docs, configuration, security, or operations changes.
@@ -83,7 +83,7 @@ When a change touches these areas, update the matching docs before opening a PR:
 
 | Change area                       | Required docs to review                                                            |
 | :-------------------------------- | :--------------------------------------------------------------------------------- |
-| Required or optional env values   | README, `.env.example`, `scripts/doctor.mjs` messaging                             |
+| Required or optional env values   | `.env.example`, README, `scripts/doctor.mjs` messaging                             |
 | Auth, owner access, or callbacks  | README quick start, README production readiness, SECURITY.md                       |
 | Inference behavior or model list  | README core capabilities, README customization guide, `test/sherin-models.test.ts` |
 | Storage behavior or fallback path | README storage sections, References behavior, SECURITY.md, doctor smoke test docs  |
@@ -102,4 +102,4 @@ See [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md). Be respectful, assume good faith
 
 ## Security-sensitive changes
 
-Open security fixes privately through the process in [SECURITY.md](SECURITY.md). Do not include real keys, real user data, private generated media, live production URLs, prompts, reference images, deployment details, or storage object URLs in public issues, pull requests, test fixtures, logs, or screenshots.
+Open security fixes privately through the process in [SECURITY.md](SECURITY.md). Do not include secrets described in [`.env.example`](.env.example), real user data, private generated media, live production URLs, prompts, reference images, deployment details, or storage object URLs in public issues, pull requests, test fixtures, logs, or screenshots.

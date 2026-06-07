@@ -16,7 +16,7 @@ import { getStorageProviderStatus } from '@/lib/storage';
 import { resolveAssetUrl } from '@/lib/storage/asset-url';
 import { getUser } from '@/lib/database/server-actions';
 import { getGenerationRequestSnapshot } from '@/lib/generation/display';
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-model';
+import { InlineByokModelProviderLight } from '@/components/icons/inline-model';
 import {
   InlineAwsS3Storage,
   InlineCloudflareR2Storage,
@@ -363,7 +363,7 @@ function FavoriteModelValue({ model }: { model: string }) {
   return (
     <span className="inline-flex w-full max-w-full min-w-0 items-center gap-3">
       {hasModel ? (
-        <InlineBlackForestLabsLight
+        <InlineByokModelProviderLight
           className="h-5 w-7 shrink-0"
           aria-hidden="true"
         />

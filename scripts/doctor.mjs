@@ -15,7 +15,7 @@ const STORAGE_PROVIDERS = new Set([
 ]);
 const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
-  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
+  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_DIGITALOCEAN_DEPLOY_URL = `https://cloud.digitalocean.com/apps/new?repo=${SHERIN_REPOSITORY_URL}/tree/main`;
 const SHERIN_RAILWAY_DEPLOY_URL =
@@ -30,8 +30,6 @@ const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'INFERENCE_PROVIDER',
   'BFL_API_KEY',
   'BFL_API_BASE_URL',
-  'BABYSEA_API_KEY',
-  'BABYSEA_API_BASE_URL',
   'STORAGE_PROVIDER',
   'CUSTOM_USER_STORAGE_QUOTA_GB',
 ];
@@ -447,7 +445,6 @@ function fail(message) {
 
 function checkDeployButtons() {
   let ok = true;
-  const appJson = JSON.parse(readRequiredFile('app.json'));
   const homePage = readRequiredFile('app/page.tsx');
   const readme = readRequiredFile('README.md');
   const digitalOcean = readRequiredFile('.do/deploy.template.yaml');
@@ -553,11 +550,6 @@ function checkDeployButtons() {
     }
   }
 
-  if (appJson.repository !== SHERIN_REPOSITORY_URL) {
-    ok = false;
-    fail('app.json repository must point to babysea-community/sherin.');
-  }
-
   for (const name of SHERIN_NETLIFY_TEMPLATE_ENV) {
     if (!netlify.includes(`${name} =`)) {
       ok = false;
@@ -572,11 +564,6 @@ function checkDeployButtons() {
     if (!digitalOcean.includes(`key: ${name}`)) {
       ok = false;
       fail(`.do/deploy.template.yaml environment must include ${name}.`);
-    }
-
-    if (!appJson.env?.[name]) {
-      ok = false;
-      fail(`app.json environment must include ${name}.`);
     }
   }
 

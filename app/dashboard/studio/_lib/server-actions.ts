@@ -1,6 +1,5 @@
 'use server';
 
-import { Buffer } from 'node:buffer';
 import { randomUUID } from 'node:crypto';
 
 import { revalidatePath } from 'next/cache';
@@ -8,18 +7,20 @@ import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 
 import {
-  DEFAULT_BFL_SAFETY_TOLERANCE,
   DEFAULT_GENERATION_OUTPUT_NUMBER,
-  DEFAULT_MODEL_ID,
   DEFAULT_OUTPUT_FORMAT,
   DEFAULT_RATIO,
+  getDefaultModelIdForInferenceProvider,
   getBabySeaInputFileLimit,
   type SherinModelId,
 } from '@/lib/app-config';
 import type { Database } from '@/lib/database.types';
-import { resolveInferenceProvider } from '@/lib/inference';
+import {
+  resolveInferenceProvider,
+  type InferenceProvider,
+  type InferenceRequest,
+} from '@/lib/inference';
 import { getBabySeaStudioModelSchema } from '@/lib/inference/babysea/server-actions';
-import { resolveBflModelConfig } from '@/lib/inference/bfl/models';
 import { isOwnerEmail } from '@/lib/auth/owner';
 import { getStorageProviderStatus, removeStoredAssets } from '@/lib/storage';
 import { createSupabaseAdminClient } from '@/lib/database/admin';
@@ -36,7 +37,6 @@ import {
 import { processGenerationQueue } from './generation-worker';
 import {
   InvalidInputFileUploadError,
-  MAX_INPUT_FILE_UPLOAD_BYTES,
   type StoredInputFileAsset,
   cleanupInputFileUploads,
   persistUploadedInputFile,
@@ -52,13 +52,6 @@ const STALE_QUEUED_GENERATION_MS = 5 * 60 * 1000;
 const STALE_RUNNING_GENERATION_MS = 20 * 60 * 1000;
 const INPUT_FILE_SOURCE_FIELD = 'generation_input_file_source';
 const INPUT_FILE_UPLOAD_FIELD = 'generation_input_file_upload';
-// Decoded byte ceiling for inline base64 image prompts. 10 MiB matches
-// BFL's documented input image limit and keeps a malicious large data: URL
-// from monopolising the server action.
-const MAX_BFL_IMAGE_PROMPT_BYTES = MAX_INPUT_FILE_UPLOAD_BYTES;
-// Pre-decode character ceiling that maps to MAX_BFL_IMAGE_PROMPT_BYTES.
-const MAX_BFL_IMAGE_PROMPT_BASE64_CHARS =
-  Math.ceil(MAX_BFL_IMAGE_PROMPT_BYTES / 3) * 4;
 
 export async function generateImage(formData: FormData) {
   const { user } = await getUser();
@@ -74,8 +67,17 @@ export async function generateImage(formData: FormData) {
   const inputFileSource = readInputFileSource(formData);
   const inputFileUploads = readInputFileUploads(formData);
 
+  let provider;
+  try {
+    provider = resolveInferenceProvider();
+  } catch {
+    redirect('/dashboard/studio?error=inference_unconfigured');
+  }
+
   const parsed = GenerateFormSchema.safeParse({
-    model: formData.get('model') ?? DEFAULT_MODEL_ID,
+    model:
+      formData.get('model') ??
+      getDefaultModelIdForInferenceProvider(provider.id),
     prompt: formData.get('prompt'),
     ratio: formData.get('ratio') ?? DEFAULT_RATIO,
     generation_resolution: formData.get('generation_resolution'),
@@ -87,28 +89,10 @@ export async function generateImage(formData: FormData) {
       formData.get('generation_provider_order') ?? 'fastest',
     generation_input_file:
       inputFileSource === 'url' ? formData.get('generation_input_file') : null,
-    bfl_image_prompt: formData.get('bfl_image_prompt'),
-    bfl_width: formData.get('bfl_width'),
-    bfl_height: formData.get('bfl_height'),
-    bfl_prompt_upsampling: formData.get('bfl_prompt_upsampling') === 'true',
-    bfl_guidance_scale: formData.get('bfl_guidance_scale'),
-    bfl_num_inference_steps: formData.get('bfl_num_inference_steps'),
-    bfl_raw: formData.get('bfl_raw') === 'true',
-    bfl_seed: formData.get('bfl_seed'),
-    bfl_safety_tolerance:
-      formData.get('bfl_safety_tolerance') ??
-      String(DEFAULT_BFL_SAFETY_TOLERANCE),
   });
 
   if (!parsed.success) {
     redirect('/dashboard/studio?error=invalid_input');
-  }
-
-  let provider;
-  try {
-    provider = resolveInferenceProvider();
-  } catch {
-    redirect('/dashboard/studio?error=inference_unconfigured');
   }
 
   const admin = createSupabaseAdminClient();
@@ -127,58 +111,6 @@ export async function generateImage(formData: FormData) {
   const generationId = randomUUID();
   let babyseaSpecificParams: Record<string, string | number | boolean> = {};
   let inputFileAssets: StoredInputFileAsset[] = [];
-
-  if (provider.id === 'bfl') {
-    const bflConfig = resolveBflModelConfig(parsed.data.model);
-    let bflImagePrompt: string | undefined;
-
-    if (parsed.data.bfl_image_prompt) {
-      const normalizedBflImagePrompt = normalizeBflImagePromptBase64(
-        parsed.data.bfl_image_prompt,
-      );
-
-      if (!normalizedBflImagePrompt) {
-        redirect('/dashboard/studio?error=invalid_input');
-      }
-
-      bflImagePrompt = normalizedBflImagePrompt;
-    }
-
-    generationInput = {
-      ...parsed.data,
-      bfl_image_prompt: bflImagePrompt,
-      bfl_prompt_upsampling: formData.has('bfl_prompt_upsampling')
-        ? parsed.data.bfl_prompt_upsampling
-        : bflConfig.defaultPromptUpsampling,
-      generation_input_file: inputFilesForPreflight(
-        inputFileSource,
-        parsed.data.generation_input_file,
-        inputFileUploads,
-      ),
-      generation_resolution:
-        parsed.data.generation_resolution ?? bflConfig.defaultResolution,
-    };
-
-    if (!isValidBflGenerationInput(generationInput, bflConfig)) {
-      redirect('/dashboard/studio?error=invalid_input');
-    }
-
-    const resolvedInputFiles = await resolveGenerationInputFilesOrRedirect({
-      admin,
-      generationId,
-      maxFiles: bflConfig.inputFileLimit,
-      source: inputFileSource,
-      uploadFiles: inputFileUploads,
-      urls: parsed.data.generation_input_file,
-      userId: user.id,
-    });
-    inputFileAssets = resolvedInputFiles.assets;
-
-    generationInput = {
-      ...generationInput,
-      generation_input_file: resolvedInputFiles.urls,
-    };
-  }
 
   if (provider.id === 'babysea') {
     const schema = await loadBabySeaSchemaOrRedirect(parsed.data.model);
@@ -264,6 +196,40 @@ export async function generateImage(formData: FormData) {
       ...generationInput,
       generation_input_file: resolvedInputFiles.urls,
     };
+  }
+
+  if (provider.id !== 'babysea') {
+    const preflightRequest = toInferenceRequest({
+      babyseaSpecificParams: {},
+      values: {
+        ...parsed.data,
+        generation_input_file: inputFilesForPreflight(
+          inputFileSource,
+          parsed.data.generation_input_file,
+          inputFileUploads,
+        ),
+      },
+    });
+    const prepared = await prepareByokRequestOrRedirect(
+      provider,
+      formData,
+      preflightRequest,
+    );
+    const resolvedInputFiles = await resolveGenerationInputFilesOrRedirect({
+      admin,
+      generationId,
+      maxFiles: prepared.inputFileLimit,
+      source: inputFileSource,
+      uploadFiles: inputFileUploads,
+      urls: parsed.data.generation_input_file,
+      userId: user.id,
+    });
+    inputFileAssets = resolvedInputFiles.assets;
+
+    generationInput = fromInferenceRequest({
+      ...prepared.request,
+      inputFiles: resolvedInputFiles.urls,
+    });
   }
 
   const storageStatus = getStorageProviderStatus();
@@ -631,6 +597,56 @@ function isUploadedFile(value: FormDataEntryValue): value is File {
   );
 }
 
+async function prepareByokRequestOrRedirect(
+  provider: InferenceProvider,
+  formData: FormData,
+  request: InferenceRequest,
+) {
+  try {
+    return provider.prepareRequest
+      ? await provider.prepareRequest({ formData, request })
+      : { inputFileLimit: request.inputFiles.length, request };
+  } catch (error) {
+    console.error('Could not prepare BYOK generation input', error);
+    redirect('/dashboard/studio?error=invalid_input');
+  }
+}
+
+function toInferenceRequest({
+  babyseaSpecificParams,
+  values,
+}: {
+  babyseaSpecificParams: Record<string, string | number | boolean>;
+  values: GenerationInput;
+}): InferenceRequest {
+  return {
+    babyseaSpecificParams,
+    byokParams: values.byok_params,
+    inputFiles: values.generation_input_file,
+    model: values.model,
+    outputFormat: values.output_format,
+    outputNumber: values.generation_output_number,
+    prompt: values.prompt,
+    providerOrder: values.generation_provider_order,
+    ratio: values.ratio,
+    resolution: values.generation_resolution,
+  };
+}
+
+function fromInferenceRequest(request: InferenceRequest): GenerationInput {
+  return {
+    byok_params: request.byokParams,
+    generation_input_file: request.inputFiles,
+    generation_output_number: request.outputNumber,
+    generation_provider_order: request.providerOrder,
+    generation_resolution: request.resolution,
+    model: request.model,
+    output_format: request.outputFormat,
+    prompt: request.prompt,
+    ratio: request.ratio,
+  };
+}
+
 function inputFilesForPreflight(
   source: InputFileSource,
   urls: string[],
@@ -762,93 +778,6 @@ async function cleanupStoredInputFileAssets(assets: StoredInputFileAsset[]) {
   }
 }
 
-function isValidBflGenerationInput(
-  input: GenerationInput,
-  config: ReturnType<typeof resolveBflModelConfig>,
-) {
-  if (!includesString(config.outputFormats, input.output_format)) {
-    return false;
-  }
-
-  if (!includesNumber(config.safetyTolerances, input.bfl_safety_tolerance)) {
-    return false;
-  }
-
-  if (input.generation_input_file.length > config.inputFileLimit) {
-    return false;
-  }
-
-  if (input.generation_input_file.length > 0 && config.inputFileLimit === 0) {
-    return false;
-  }
-
-  if (!input.generation_input_file.every(isHttpsUrl)) {
-    return false;
-  }
-
-  if (input.bfl_image_prompt && !config.supportsImagePrompt) {
-    return false;
-  }
-
-  if (input.bfl_prompt_upsampling && !config.supportsPromptUpsampling) {
-    return false;
-  }
-
-  if (input.bfl_guidance_scale !== undefined && !config.supportsGuidance) {
-    return false;
-  }
-
-  if (input.bfl_num_inference_steps !== undefined && !config.supportsSteps) {
-    return false;
-  }
-
-  if (input.bfl_raw && !config.supportsRaw) {
-    return false;
-  }
-
-  if (
-    config.resolutions.length > 0 &&
-    !includesString(config.resolutions, input.generation_resolution)
-  ) {
-    return false;
-  }
-
-  if (input.generation_resolution && config.resolutions.length === 0) {
-    return false;
-  }
-
-  if (input.bfl_width !== undefined || input.bfl_height !== undefined) {
-    if (config.sizingMode !== 'dimensions') {
-      return false;
-    }
-
-    if (input.bfl_width === undefined || input.bfl_height === undefined) {
-      return false;
-    }
-
-    return (
-      isBflDimension(input.bfl_width, config.dimension) &&
-      isBflDimension(input.bfl_height, config.dimension)
-    );
-  }
-
-  return includesString(config.ratios, input.ratio);
-}
-
-function isBflDimension(
-  value: number,
-  dimension: ReturnType<typeof resolveBflModelConfig>['dimension'],
-) {
-  const max = 'max' in dimension ? dimension.max : undefined;
-  const step = 'step' in dimension ? dimension.step : undefined;
-
-  return (
-    value >= dimension.min &&
-    (max === undefined || value <= max) &&
-    (step === undefined || value % step === 0)
-  );
-}
-
 function isHttpsUrl(value: string) {
   try {
     const url = new URL(value);
@@ -857,57 +786,6 @@ function isHttpsUrl(value: string) {
   } catch {
     return false;
   }
-}
-
-function normalizeBflImagePromptBase64(value: string) {
-  if (isHttpsUrl(value)) {
-    return null;
-  }
-
-  const trimmed = value.trim();
-  const dataUrlMatch =
-    /^data:image\/(?:jpeg|jpg|png|gif|webp);base64,(.+)$/is.exec(trimmed);
-  const unwrapped = dataUrlMatch?.[1] ?? trimmed;
-  const compact = unwrapped.replace(/\s+/g, '');
-
-  // Reject obviously-large payloads before base64 decoding. Each 4 base64
-  // characters decode to 3 bytes, so this caps the decoded image-prompt size
-  // at ~10 MiB and prevents a runaway server-action allocation from a
-  // hand-crafted large data: URL.
-  if (compact.length > MAX_BFL_IMAGE_PROMPT_BASE64_CHARS) {
-    return null;
-  }
-
-  if (!compact || !/^[A-Za-z0-9+/]+={0,2}$/.test(compact)) {
-    return null;
-  }
-
-  const remainder = compact.length % 4;
-
-  if (remainder === 1) {
-    return null;
-  }
-
-  const normalized =
-    remainder === 0
-      ? compact
-      : compact.padEnd(compact.length + 4 - remainder, '=');
-
-  const decoded = Buffer.from(normalized, 'base64');
-
-  if (decoded.length === 0 || decoded.length > MAX_BFL_IMAGE_PROMPT_BYTES) {
-    return null;
-  }
-
-  return normalized;
-}
-
-function includesString(values: readonly string[], value: string | undefined) {
-  return typeof value === 'string' && values.includes(value);
-}
-
-function includesNumber(values: readonly number[], value: number) {
-  return values.includes(value);
 }
 
 async function loadBabySeaSchemaOrRedirect(model: SherinModelId) {

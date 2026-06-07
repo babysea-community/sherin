@@ -19,7 +19,7 @@ const SERVER_ONLY_PATTERNS = [
   },
   {
     // Block direct imports of inference provider server entry points and
-    // related modules. Pure config (e.g. `@/lib/inference/bfl/models`) and
+    // related modules. Pure config (e.g. `@/lib/inference/<inference>/models`) and
     // the public re-export entry (`@/lib/inference`) remain accessible
     // because the underlying server modules already guard themselves with
     // `import 'server-only'`, which throws when bundled into client code.

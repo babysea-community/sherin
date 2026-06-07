@@ -3,9 +3,9 @@
  *
  * Inputs come from the failed-generation row:
  *
- * - `message`: raw `generations.error` string. For BFL this is shaped like
- *   `"BFL request failed (402): {\"detail\":\"Insufficient credits\"}"`. For
- *   BabySea the worker captures the SDK's `BabySeaError.message` directly, or
+ * - `message`: raw `generations.error` string. For direct BYOK providers this
+ *   can include a provider HTTP error body. For BabySea the worker captures the
+ *   SDK's `BabySeaError.message` directly, or
  *   for transport blips it captures `BabySeaRetryError.message` which looks
  *   like `"All 3 attempts failed. Last error: HTTP 502"`.
  * - `code`: `metadata.sherin_error_code` set by `classifyInferenceError`. Known
@@ -20,6 +20,11 @@
  * a description with the suggested next step. The raw `message` is rendered
  * separately by the caller as a collapsible technical detail.
  */
+import {
+  BYOK_INFERENCE_PROVIDER_ID,
+  BYOK_INFERENCE_PROVIDER_LABEL,
+} from '@/lib/app-config';
+
 export type HumanizedGenerationError = {
   title: string;
   description: string;
@@ -123,13 +128,14 @@ export function humanizeGenerationError(input: {
 }
 
 function providerDisplayName(provider: string | null | undefined): string {
-  if (provider === 'bfl') return 'BFL';
+  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
+    return BYOK_INFERENCE_PROVIDER_LABEL;
+  }
   if (provider === 'babysea') return 'BabySea';
   return 'the inference provider';
 }
 
 function parseStatusFromMessage(message: string): number | null {
-  // BFL: "BFL request failed (402): ..."
   const paren = message.match(/\((\d{3})\)/);
   if (paren) return Number(paren[1]);
   // BabySea retry wrapper: "Last error: HTTP 502"

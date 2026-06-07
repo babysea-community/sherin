@@ -22,10 +22,6 @@ services:
         sync: false
       - key: BFL_API_BASE_URL
         value: https://api.bfl.ai
-      - key: BABYSEA_API_KEY
-        sync: false
-      - key: BABYSEA_API_BASE_URL
-        value: https://api.us.babysea.ai
       - key: STORAGE_PROVIDER
         value: supabase-storage
       - key: CUSTOM_USER_STORAGE_QUOTA_GB

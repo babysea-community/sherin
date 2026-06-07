@@ -1,25 +1,29 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
-  DEFAULT_MODEL_ID,
+  BYOK_INFERENCE_PROVIDER_ID,
+  BYOK_MODEL_CONFIGS,
   DEFAULT_OUTPUT_FORMAT,
   DEFAULT_RATIO,
-  MODEL_OPTIONS,
   RATIOS,
+  getDefaultModelIdForInferenceProvider,
   getBabySeaInputFileLimit,
+  getModelOptionsForInferenceProvider,
+  hasByokModelConfig,
+  isSherinModelId,
+  type ByokInferenceProviderId,
   type SherinModelId,
 } from '@/lib/app-config';
-import { BFL_MODEL_CONFIGS } from '@/lib/inference/bfl/models';
 import type { BabySeaStudioModelSchema } from '@/lib/inference/babysea/server-actions';
 
 import { BabySeaFormFields } from './babysea-form-fields';
-import { BflFormFields } from './bfl-form-fields';
+import { ByokFormFields } from './byok-form-fields';
 import { ModelField } from './form-controls';
 
 type StudioModelFieldsProps = {
-  activeProvider: 'babysea' | 'bfl' | null;
+  activeProvider: 'babysea' | ByokInferenceProviderId | null;
   babySeaSchemas: Partial<Record<SherinModelId, BabySeaStudioModelSchema>>;
   initialModel?: SherinModelId;
   initialPrompt?: string;
@@ -34,25 +38,46 @@ export function StudioModelFields({
   initialModel,
   initialPrompt,
 }: StudioModelFieldsProps) {
+  const modelOptions = useMemo(() => {
+    const providerOptions = getModelOptionsForInferenceProvider(activeProvider);
+
+    if (activeProvider !== 'babysea') {
+      return providerOptions;
+    }
+
+    const babySeaModelIds = new Set(Object.keys(babySeaSchemas));
+
+    return providerOptions.filter((option) => babySeaModelIds.has(option.id));
+  }, [activeProvider, babySeaSchemas]);
+  const fallbackModel =
+    modelOptions[0]?.id ??
+    getDefaultModelIdForInferenceProvider(activeProvider);
   const [model, setModel] = useState<SherinModelId>(
-    initialModel ?? DEFAULT_MODEL_ID,
+    initialModel && isModelOption(initialModel, modelOptions)
+      ? initialModel
+      : fallbackModel,
   );
   const [prompt, setPrompt] = useState(initialPrompt ?? '');
   const [draftReady, setDraftReady] = useState(false);
-  const bflConfig = BFL_MODEL_CONFIGS[model];
-  const babySeaSchema = babySeaSchemas[model];
-  const showBflDimensions = bflConfig.sizingMode === 'dimensions';
-  const bflDefaultDimensions =
-    showBflDimensions && bflConfig.resolutions.length === 0
+  const selectedModel = isModelOption(model, modelOptions)
+    ? model
+    : fallbackModel;
+  const byokConfig = hasByokModelConfig(selectedModel)
+    ? BYOK_MODEL_CONFIGS[selectedModel]
+    : null;
+  const babySeaSchema = babySeaSchemas[selectedModel];
+  const showByokDimensions = byokConfig?.sizingMode === 'dimensions';
+  const byokDefaultDimensions =
+    showByokDimensions && byokConfig?.resolutions.length === 0
       ? RATIOS[
-          defaultValue(bflConfig.ratios, DEFAULT_RATIO) as keyof typeof RATIOS
+          defaultValue(byokConfig.ratios, DEFAULT_RATIO) as keyof typeof RATIOS
         ]
       : undefined;
 
   useEffect(() => {
     const draft = readStudioFormDraft();
 
-    if (draft?.model) {
+    if (draft?.model && isModelOption(draft.model, modelOptions)) {
       setModel(draft.model);
     }
 
@@ -61,23 +86,27 @@ export function StudioModelFields({
     }
 
     setDraftReady(true);
-  }, []);
+  }, [modelOptions]);
 
   useEffect(() => {
     if (!draftReady) {
       return;
     }
 
-    writeStudioFormDraft({ model, prompt });
-  }, [draftReady, model, prompt]);
+    writeStudioFormDraft({ model: selectedModel, prompt });
+  }, [draftReady, selectedModel, prompt]);
 
   return (
     <div className="space-y-5">
-      <ModelField model={model} onModelChange={setSelectedModel} />
+      <ModelField
+        model={selectedModel}
+        modelOptions={modelOptions}
+        onModelChange={setSelectedModel}
+      />
 
       {activeProvider === 'babysea' && babySeaSchema ? (
         <BabySeaFormFields
-          key={`babysea-${model}`}
+          key={`babysea-${selectedModel}`}
           defaultOutputFormat={defaultValue(
             babySeaSchema.outputFormats,
             DEFAULT_OUTPUT_FORMAT,
@@ -88,7 +117,7 @@ export function StudioModelFields({
           defaultRatio={defaultValue(babySeaSchema.ratios, DEFAULT_RATIO)}
           defaultResolution={babySeaSchema.defaultResolution}
           inputFile={Boolean(babySeaSchema.inputFile)}
-          inputFileLimit={getBabySeaInputFileLimit(model)}
+          inputFileLimit={getBabySeaInputFileLimit(selectedModel)}
           onPromptChange={setPrompt}
           outputFormatOptions={babySeaSchema.outputFormats}
           outputNumber={babySeaSchema.outputNumber}
@@ -100,42 +129,39 @@ export function StudioModelFields({
         />
       ) : null}
 
-      {activeProvider === 'bfl' || !activeProvider ? (
-        <BflFormFields
-          key={`bfl-${model}`}
-          defaultDimensions={bflDefaultDimensions}
+      {(activeProvider === BYOK_INFERENCE_PROVIDER_ID || !activeProvider) &&
+      byokConfig ? (
+        <ByokFormFields
+          key={`byok-${selectedModel}`}
+          defaultDimensions={byokDefaultDimensions}
           defaultOutputFormat={defaultValue(
-            bflConfig.outputFormats,
+            byokConfig.outputFormats,
             DEFAULT_OUTPUT_FORMAT,
           )}
-          defaultPromptUpsampling={bflConfig.defaultPromptUpsampling}
-          defaultRatio={defaultValue(bflConfig.ratios, DEFAULT_RATIO)}
-          defaultResolution={bflConfig.defaultResolution}
-          dimension={bflConfig.dimension}
-          inputFileLimit={bflConfig.inputFileLimit}
+          defaultPromptUpsampling={byokConfig.defaultPromptUpsampling}
+          defaultRatio={defaultValue(byokConfig.ratios, DEFAULT_RATIO)}
+          defaultResolution={byokConfig.defaultResolution}
+          dimension={byokConfig.dimension}
+          inputFileLimit={byokConfig.inputFileLimit}
           onPromptChange={setPrompt}
-          outputFormatOptions={[...bflConfig.outputFormats]}
+          outputFormatOptions={[...byokConfig.outputFormats]}
           prompt={prompt}
-          ratioOptions={[...bflConfig.ratios]}
-          resolutionOptions={[...bflConfig.resolutions]}
-          safetyToleranceOptions={bflConfig.safetyTolerances}
-          showDimensions={showBflDimensions}
-          showGuidance={bflConfig.supportsGuidance}
-          showImagePrompt={bflConfig.supportsImagePrompt}
-          showPromptUpsampling={bflConfig.supportsPromptUpsampling}
-          showRaw={bflConfig.supportsRaw}
-          showSteps={bflConfig.supportsSteps}
+          ratioOptions={[...byokConfig.ratios]}
+          resolutionOptions={[...byokConfig.resolutions]}
+          safetyToleranceOptions={byokConfig.safetyTolerances}
+          showDimensions={showByokDimensions}
+          showGuidance={byokConfig.supportsGuidance}
+          showImagePrompt={byokConfig.supportsImagePrompt}
+          showPromptUpsampling={byokConfig.supportsPromptUpsampling}
+          showRaw={byokConfig.supportsRaw}
+          showSteps={byokConfig.supportsSteps}
         />
       ) : null}
     </div>
   );
 
-  function setSelectedModel(value: string) {
-    const nextModel = toSherinModelId(value);
-
-    if (nextModel) {
-      setModel(nextModel);
-    }
+  function setSelectedModel(nextModel: SherinModelId) {
+    setModel(nextModel);
   }
 }
 
@@ -194,9 +220,14 @@ function writeStudioFormDraft({
 }
 
 function toSherinModelId(value: unknown): SherinModelId | undefined {
-  return typeof value === 'string'
-    ? MODEL_OPTIONS.find((option) => option.id === value)?.id
-    : undefined;
+  return isSherinModelId(value) ? value : undefined;
+}
+
+function isModelOption(
+  value: SherinModelId,
+  modelOptions: readonly { id: SherinModelId }[],
+) {
+  return modelOptions.some((option) => option.id === value);
 }
 
 function defaultValue(values: readonly string[], preferred: string) {

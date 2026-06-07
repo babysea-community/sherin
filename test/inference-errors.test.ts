@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { classifyInferenceError } from '@/lib/inference/errors';
 
 describe('classifyInferenceError', () => {
-  it('marks BFL transient errors with retry-after as retryable', () => {
-    const error = Object.assign(new Error('BFL request failed (429): rate'), {
-      statusCode: 429,
-      retryAfterSeconds: 12,
-      isTransient: true,
-    });
+  it('marks HTTP provider transient errors with retry-after as retryable', () => {
+    const error = Object.assign(
+      new Error('Provider request failed (429): rate'),
+      {
+        statusCode: 429,
+        retryAfterSeconds: 12,
+        isTransient: true,
+      },
+    );
 
     const result = classifyInferenceError(error);
 
@@ -32,8 +35,8 @@ describe('classifyInferenceError', () => {
     expect(result.retryAfterSeconds).toBe(0);
   });
 
-  it('marks BFL 5xx as transient with a default back-off', () => {
-    const error = Object.assign(new Error('BFL request failed (503)'), {
+  it('marks HTTP provider 5xx as transient with a default back-off', () => {
+    const error = Object.assign(new Error('Provider request failed (503)'), {
       statusCode: 503,
       retryAfterSeconds: null,
       isTransient: true,
@@ -213,8 +216,8 @@ describe('classifyInferenceError', () => {
     expect(result.code).toBe('timeout');
   });
 
-  it('classifies BFL poll-budget timeouts as transient', () => {
-    const error = Object.assign(new Error('BFL generation timed out'), {
+  it('classifies provider poll-budget timeouts as transient', () => {
+    const error = Object.assign(new Error('Provider generation timed out'), {
       name: 'TimeoutError',
     });
 

@@ -54,7 +54,7 @@ Private workspace for generative media with own key, domain, and storage.
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)  
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/sherin?referralCode=_FJpRb)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)  
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,BABYSEA_API_KEY,BABYSEA_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
 
 <br />
 
@@ -124,13 +124,25 @@ Open <http://localhost:3011>.
 
 ## Inference and storage
 
-Set `OWNER_EMAIL` to the one Google account allowed into the dashboard.
+Use [`.env.example`](.env.example) as the source of truth for owner access, inference mode, provider credentials, storage provider, quota, worker, and monitoring configuration.
 
-Set `INFERENCE_PROVIDER=bfl` for direct Black Forest Labs execution, or `INFERENCE_PROVIDER=babysea` for BabySea SDK execution. Provide the matching `BFL_API_KEY` or `BABYSEA_API_KEY` server-side.
+Supabase Storage is the default and fallback storage path.
 
-Set `STORAGE_PROVIDER=supabase-storage`, `vercel-blob`, `cloudflare-r2`, or `aws-s3`. Supabase Storage is the default and fallback path.
+BabySea model schemas are published at [babysea.ai/model-schema](https://babysea.ai/model-schema).
 
-Supported model names and provider fields are registered in [`lib/app-config.ts`](lib/app-config.ts), [`lib/inference/bfl/models.ts`](lib/inference/bfl/models.ts), and [`lib/inference/babysea/models.ts`](lib/inference/babysea/models.ts).
+## Supported models
+
+Supported model names and provider fields are registered in [`lib/model-family.ts`](lib/model-family.ts), [`lib/inference/bfl/models.ts`](lib/inference/bfl/models.ts), and [`lib/inference/babysea/models.ts`](lib/inference/babysea/models.ts).
+
+| Model              | Sherin model ID          | Black Forest Labs BYOK endpoint |
+| :----------------- | :----------------------- | :------------------------------ |
+| FLUX 1.1 Pro       | `bfl/flux-1.1-pro`       | `flux-pro-1.1`                  |
+| FLUX 1.1 Pro Ultra | `bfl/flux-1.1-pro-ultra` | `flux-pro-1.1-ultra`            |
+| FLUX 2 Flex        | `bfl/flux-2-flex`        | `flux-2-flex`                   |
+| FLUX 2 Klein 4B    | `bfl/flux-2-klein-4b`    | `flux-2-klein-4b`               |
+| FLUX 2 Klein 9B    | `bfl/flux-2-klein-9b`    | `flux-2-klein-9b`               |
+| FLUX 2 Max         | `bfl/flux-2-max`         | `flux-2-max`                    |
+| FLUX 2 Pro         | `bfl/flux-2-pro`         | `flux-2-pro`                    |
 
 ## Workspace
 
@@ -144,10 +156,10 @@ Supported model names and provider fields are registered in [`lib/app-config.ts`
 
 ## Runtime
 
-- Sherin is owner-only. Supabase Google OAuth signs users in, and `OWNER_EMAIL` gates dashboard access.
+- Sherin is owner-only. Supabase Google OAuth signs users in, and the configured owner allowlist gates dashboard access.
 - Provider credentials, storage credentials, Supabase service role keys, Sentry auth tokens, and cron secrets stay server-side.
 - Generation records, prompts, statuses, provider metadata, storage URLs, reference images, and profile state persist in Supabase Postgres.
-- Studio, Gallery, References, and Usage can process queued/running generations. `/api/generations/process` can also be called by cron with `Authorization: Bearer CRON_SECRET`.
+- Studio, Gallery, References, and Usage can process queued/running generations. `/api/generations/process` can also be called by cron with the worker bearer secret configured from [`.env.example`](.env.example).
 - Sherin is not a managed BabySea service, commercial support package, hosting service, billing starter, credit ledger, provider marketplace, or multi-tenant team workspace.
 
 ## Deployment
@@ -174,34 +186,34 @@ Use the Deploy on Railway button above to start from the published Sherin templa
 
 ### Scheduler
 
-Use an external scheduler for `GET /api/generations/process` when you want background recovery without opening the dashboard. Send `Authorization: Bearer <CRON_SECRET>` and keep the frequency low enough to avoid `429` responses.
+Use an external scheduler for `GET /api/generations/process` when you want background recovery without opening the dashboard. Send the worker bearer secret configured from [`.env.example`](.env.example) and keep the frequency low enough to avoid `429` responses.
 
 ## Customize
 
-| Change     | Files                                                                                                                                   |
-| :--------- | :-------------------------------------------------------------------------------------------------------------------------------------- |
-| UI         | `app/page.tsx`, `app/access/page.tsx`, `app/dashboard/**`                                                                               |
-| Auth       | `lib/auth/owner.ts`, `app/access/_lib/server-actions.ts`, `supabase/migrations/001_sherin.sql`                                          |
-| Models     | `lib/app-config.ts`, `lib/inference/bfl/models.ts`, `lib/inference/babysea/models.ts`, `test/sherin-models.test.ts`                     |
-| Inference  | `lib/inference/index.ts`, `lib/inference/bfl/server-actions.ts`, `lib/inference/babysea/server-actions.ts`                              |
-| Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql` |
-| Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                |
-| Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                 |
-| Deploy     | `.do/deploy.template.yaml`, `.env.example`, `app.json`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`              |
+| Change     | Files                                                                                                                                      |
+| :--------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
+| UI         | `app/page.tsx`, `app/access/page.tsx`, `app/dashboard/**`                                                                                  |
+| Auth       | `lib/auth/owner.ts`, `app/access/_lib/server-actions.ts`, `supabase/migrations/001_sherin.sql`                                             |
+| Models     | `lib/model-family.ts`, `lib/app-config.ts`, `lib/inference/bfl/models.ts`, `lib/inference/babysea/models.ts`, `test/sherin-models.test.ts` |
+| Inference  | `lib/inference/index.ts`, `lib/inference/bfl/server-actions.ts`, `lib/inference/babysea/server-actions.ts`                                 |
+| Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql`    |
+| Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                   |
+| Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                    |
+| Deploy     | `.do/deploy.template.yaml`, `.env.example`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`                             |
 
 ## Troubleshooting
 
 | Symptom                             | Fix                                                                                                                 |
 | :---------------------------------- | :------------------------------------------------------------------------------------------------------------------ |
 | `doctor` fails                      | Read the missing env var or file printed by `doctor`; env names live in [`.env.example`](.env.example).             |
-| Sign-in works but access is denied  | Check that `OWNER_EMAIL` exactly matches your Google account email.                                                 |
+| Sign-in works but access is denied  | Check that the owner allowlist value from [`.env.example`](.env.example) exactly matches your Google account email. |
 | Supabase redirects to the wrong URL | Align `NEXT_PUBLIC_SITE_URL`, Supabase Site URL, and Supabase Redirect URLs.                                        |
-| Image generation does not start     | Verify `INFERENCE_PROVIDER` and the matching `BFL_API_KEY` or `BABYSEA_API_KEY`.                                    |
+| Image generation does not start     | Verify the inference values configured from [`.env.example`](.env.example).                                         |
 | Image shows as unavailable          | Generation succeeded but the stored file URL cannot be resolved; check `STORAGE_PROVIDER` and storage credentials.  |
 | Jobs stay queued or running         | Open Studio, Gallery, References, or Usage to trigger processing, or configure cron for `/api/generations/process`. |
-| Worker returns 401                  | Send `Authorization: Bearer <CRON_SECRET>` and rotate the token if it may have leaked.                              |
+| Worker returns 401                  | Send the worker bearer secret configured from [`.env.example`](.env.example) and rotate it if it may have leaked.   |
 | Worker returns 429                  | Reduce cron frequency or owner-triggered flushes; honor the `Retry-After` response header.                          |
-| Sentry source maps are not uploaded | Confirm `SENTRY_ORG`, `SENTRY_PROJECT`, and `SENTRY_AUTH_TOKEN` exist only in build/CI secrets.                     |
+| Sentry source maps are not uploaded | Confirm the Sentry build variables from [`.env.example`](.env.example) exist only in build/CI secrets.              |
 
 ## Security and compliance
 

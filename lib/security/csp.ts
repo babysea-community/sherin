@@ -54,16 +54,16 @@ function buildContentSecurityPolicy() {
     'https://app.us.babysea.ai', // us-region
     'https://app.eu.babysea.ai', // eu-region
     'https://app.jp.babysea.ai', // apac-region
-    BABYSEA_CDN_ORIGIN, // app assets
-    'https://imagedelivery.net', // app assets
     'https://delivery-us.bfl.ai', // us-region
     'https://delivery-eu.bfl.ai', // eu-region
     'https://lh3.googleusercontent.com', // Google profile photos from Google OAuth
+    BABYSEA_CDN_ORIGIN, // app assets
+    'https://imagedelivery.net', // app assets
   ]);
   const scriptHosts = new Set<string>([
     "'self'",
     "'unsafe-inline'",
-    BABYSEA_CDN_ORIGIN, // Goo background package
+    BABYSEA_CDN_ORIGIN, // app assets
   ]);
 
   appendSupabaseConnectHosts(

@@ -260,8 +260,8 @@ function GeneratingPreview({ stage }: { stage: string | null }) {
 const STAGE_LABELS: Record<string, string> = {
   queued: 'Queued',
   worker_claimed: 'Starting worker…',
-  bfl_submitting: 'Submitting to BFL…',
-  bfl_resubmit_after_crash: 'Resuming after worker restart…',
+  provider_submitting: 'Submitting to provider…',
+  provider_resubmit_after_crash: 'Resuming after worker restart…',
   inference_started: 'Generating image…',
   inference_completed: 'Finalizing…',
   storage_completed: 'Storing result…',

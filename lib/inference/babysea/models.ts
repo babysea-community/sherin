@@ -1,15 +1,9 @@
-import { MODEL_IDS, type SherinModelId } from '@/lib/app-config';
+import { BABYSEA_MODEL_CONFIGS, type SherinModelId } from '@/lib/app-config';
 
-type BabySeaModelConfig = {
-  identifier: SherinModelId;
-};
-
-export const BABYSEA_MODELS = Object.fromEntries(
-  MODEL_IDS.map((identifier) => [identifier, { identifier }]),
-) as Record<SherinModelId, BabySeaModelConfig>;
+export { BABYSEA_MODEL_CONFIGS as BABYSEA_MODELS } from '@/lib/app-config';
 
 export function resolveBabySeaModel(model: SherinModelId) {
-  const config = BABYSEA_MODELS[model];
+  const config = BABYSEA_MODEL_CONFIGS[model];
 
   if (!config) {
     throw new Error(`BabySea does not support model ${model}.`);
@@ -26,7 +20,7 @@ export function resolveBabySeaOutputFormat(
   model: SherinModelId,
   outputFormat: string,
 ) {
-  resolveBabySeaModel(model);
-
-  return outputFormat === 'jpeg' ? 'jpg' : outputFormat;
+  return (
+    resolveBabySeaModel(model).outputFormatMap[outputFormat] ?? outputFormat
+  );
 }

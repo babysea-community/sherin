@@ -29,12 +29,6 @@ spec:
         - key: BFL_API_BASE_URL
           scope: RUN_TIME
           value: https://api.bfl.ai
-        - key: BABYSEA_API_KEY
-          scope: RUN_TIME
-          type: SECRET
-        - key: BABYSEA_API_BASE_URL
-          scope: RUN_TIME
-          value: https://api.us.babysea.ai
         - key: STORAGE_PROVIDER
           scope: RUN_TIME
           value: supabase-storage

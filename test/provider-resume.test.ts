@@ -3,9 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   canResumeBabySeaGenerationPolling,
   canResumeBabySeaIdempotency,
-  canResumeBflPolling,
+  canResumeByokProviderPolling,
   canResumeProviderWorkload,
 } from '@/app/dashboard/studio/_lib/provider-resume';
+import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
 
 const now = new Date().toISOString();
 const withinExtendedWindow = new Date(
@@ -63,21 +64,21 @@ describe('provider resume helpers', () => {
     ).toBe(false);
   });
 
-  it('resumes BFL polling only from the server-owned provider id column', () => {
+  it('resumes BYOK provider polling only from the server-owned provider id column', () => {
     expect(
-      canResumeBflPolling({
+      canResumeByokProviderPolling({
         created_at: now,
-        inference_provider: 'bfl',
-        metadata: { bfl_request_id: 'forged-metadata-id' },
-        provider_generation_id: 'bfl-123',
+        inference_provider: BYOK_INFERENCE_PROVIDER_ID,
+        metadata: { provider_request_id: 'forged-metadata-id' },
+        provider_generation_id: 'provider-123',
       }),
     ).toBe(true);
 
     expect(
       canResumeProviderWorkload({
         created_at: now,
-        inference_provider: 'bfl',
-        metadata: { bfl_request_id: 'forged-metadata-id' },
+        inference_provider: BYOK_INFERENCE_PROVIDER_ID,
+        metadata: { provider_request_id: 'forged-metadata-id' },
         provider_generation_id: null,
       }),
     ).toBe(false);

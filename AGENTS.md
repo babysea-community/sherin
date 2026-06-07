@@ -30,7 +30,7 @@ Use this guide for changes inside the Sherin starter, especially owner auth, inf
 | `app/dashboard/profile`                | Owner and deployment settings                                                |
 | `app/api/generations/process/route.ts` | Owner/cron generation recovery endpoint                                      |
 | `lib/auth/owner.ts`                    | Owner email authorization                                                    |
-| `lib/inference`                        | BFL and BabySea inference adapters                                           |
+| `lib/inference`                        | Black Forest Labs and BabySea inference adapters                             |
 | `lib/storage`                          | Supabase Storage, Vercel Blob, Cloudflare R2, and AWS S3 storage adapters    |
 | `lib/security/csp.ts`                  | CSP and remote image/script allowlists                                       |
 | `supabase/migrations`                  | Owner workspace schema, storage metadata, references, and generation records |
@@ -38,14 +38,14 @@ Use this guide for changes inside the Sherin starter, especially owner auth, inf
 
 ## Conventions
 
-- Sherin is owner-only. `OWNER_EMAIL` gates dashboard access after Supabase Google OAuth.
+- Sherin is owner-only. The owner allowlist configured in `.env.example` gates dashboard access after Supabase Google OAuth.
 - `INFERENCE_PROVIDER=bfl` uses direct Black Forest Labs execution; `INFERENCE_PROVIDER=babysea` uses the BabySea SDK.
-- Keep `BFL_API_KEY`, `BABYSEA_API_KEY`, `SUPABASE_SECRET_KEY`, storage credentials, Sentry auth tokens, and cron secrets server-side.
+- Keep every secret described in `.env.example` server-side unless the template explicitly marks it as public.
 - Storage provider choices are `supabase-storage`, `vercel-blob`, `cloudflare-r2`, and `aws-s3`; Supabase Storage is the default and fallback path.
 - Use `ProtectedImage` for public homepage, dashboard screenshot, icon, and gallery image rendering. Do not reintroduce `next/image` for those assets unless explicitly requested.
 - On the public homepage, prefer solid paint for compact mobile cards, icon buttons, and link surfaces. Avoid stacking translucent backgrounds, rings, shadows, backdrop blur, transforms, or transitions on Android-sensitive surfaces.
 - Generation records, prompts, statuses, provider metadata, storage URLs, references, and profile state persist in Supabase behind RLS.
-- `/api/generations/process` can be called by owner-triggered dashboard flows or cron with `Authorization: Bearer CRON_SECRET`.
+- `/api/generations/process` can be called by owner-triggered dashboard flows or cron with the configured worker bearer secret from `.env.example`.
 - `pnpm run doctor` must validate wiring without printing secrets.
 
 ## Verification

@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   BFL_FLUX_11_PRO_ULTRA_RATIO_OPTIONS,
+  BFL_MODEL_IDS,
+  DEFAULT_MODEL_ID,
   BFL_FLUX_2_MODEL_IDS,
   MODEL_IDS,
   MODEL_OPTIONS,
   RATIO_OPTIONS,
   RESOLUTION_OPTIONS,
+  getDefaultModelIdForInferenceProvider,
   getBabySeaInputFileLimit,
   getBflFlux2InputFileLimit,
+  getModelIdsForInferenceProvider,
+  getModelOptionsForInferenceProvider,
   isBflFlux2Model,
   type BflFlux2ModelId,
 } from '@/lib/app-config';
@@ -30,26 +35,6 @@ type Flux2ModelExpectation = {
 };
 
 const FLUX_2_MODEL_EXPECTATIONS: Flux2ModelExpectation[] = [
-  {
-    id: 'bfl/flux-2-pro',
-    label: 'FLUX 2 Pro',
-    endpoint: 'flux-2-pro',
-    inputFileLimit: 8,
-    supportsPromptUpsampling: false,
-    defaultPromptUpsampling: false,
-    supportsGuidance: false,
-    supportsSteps: false,
-  },
-  {
-    id: 'bfl/flux-2-max',
-    label: 'FLUX 2 Max',
-    endpoint: 'flux-2-max',
-    inputFileLimit: 8,
-    supportsPromptUpsampling: false,
-    defaultPromptUpsampling: false,
-    supportsGuidance: false,
-    supportsSteps: false,
-  },
   {
     id: 'bfl/flux-2-flex',
     label: 'FLUX 2 Flex',
@@ -80,9 +65,41 @@ const FLUX_2_MODEL_EXPECTATIONS: Flux2ModelExpectation[] = [
     supportsGuidance: false,
     supportsSteps: false,
   },
+  {
+    id: 'bfl/flux-2-max',
+    label: 'FLUX 2 Max',
+    endpoint: 'flux-2-max',
+    inputFileLimit: 8,
+    supportsPromptUpsampling: false,
+    defaultPromptUpsampling: false,
+    supportsGuidance: false,
+    supportsSteps: false,
+  },
+  {
+    id: 'bfl/flux-2-pro',
+    label: 'FLUX 2 Pro',
+    endpoint: 'flux-2-pro',
+    inputFileLimit: 8,
+    supportsPromptUpsampling: false,
+    defaultPromptUpsampling: false,
+    supportsGuidance: false,
+    supportsSteps: false,
+  },
 ];
 
 describe('Sherin model registry', () => {
+  it('derives provider model options from the central registry', () => {
+    expect(getModelOptionsForInferenceProvider('babysea')).toEqual(
+      MODEL_OPTIONS,
+    );
+    expect(getModelIdsForInferenceProvider('babysea')).toEqual(MODEL_IDS);
+    expect(getModelIdsForInferenceProvider('bfl')).toEqual(BFL_MODEL_IDS);
+    expect(getDefaultModelIdForInferenceProvider('babysea')).toBe(
+      DEFAULT_MODEL_ID,
+    );
+    expect(getDefaultModelIdForInferenceProvider('bfl')).toBe(DEFAULT_MODEL_ID);
+  });
+
   it('registers the BFL FLUX 2 family across the Studio providers', () => {
     expect(BFL_FLUX_2_MODEL_IDS).toEqual(
       FLUX_2_MODEL_EXPECTATIONS.map((model) => model.id),

@@ -2,14 +2,16 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-model';
+import { InlineByokModelProviderLight } from '@/components/icons/inline-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+  BYOK_MODEL_ID_PREFIX,
   GENERATION_PROMPT_PLACEHOLDER,
   MODEL_OPTIONS,
   RATIOS,
+  type SherinModelId,
 } from '@/lib/app-config';
 import generationDescriptions from '@/lib/generation/descriptions.json';
 
@@ -21,6 +23,11 @@ const fieldDescriptions = generationDescriptions.fields as Record<
 type SelectOption = {
   label?: string;
   value: string;
+};
+
+type ModelOption = {
+  readonly id: SherinModelId;
+  readonly label: string;
 };
 
 type InputImageSource = 'url' | 'upload';
@@ -62,13 +69,15 @@ export function PromptField({
 export function ModelField({
   model,
   onModelChange,
+  modelOptions = MODEL_OPTIONS,
 }: {
-  model: string;
-  onModelChange: (model: string) => void;
+  model: SherinModelId;
+  onModelChange: (model: SherinModelId) => void;
+  modelOptions?: readonly ModelOption[];
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLSpanElement>(null);
-  const selectedOption = MODEL_OPTIONS.find((option) => option.id === model);
+  const selectedOption = modelOptions.find((option) => option.id === model);
 
   useEffect(() => {
     if (!open) {
@@ -137,7 +146,7 @@ export function ModelField({
             aria-label="Model"
             className="absolute left-0 right-0 top-full z-50 mt-2 block max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-slate-950 p-1 text-sm text-slate-100 shadow-2xl"
           >
-            {MODEL_OPTIONS.map((option) => (
+            {modelOptions.map((option) => (
               <button
                 key={option.id}
                 type="button"
@@ -161,13 +170,13 @@ export function ModelField({
 }
 
 function ModelVendorIcon({ modelId }: { modelId: string }) {
-  if (!modelId.startsWith('bfl/')) {
+  if (!modelId.startsWith(BYOK_MODEL_ID_PREFIX)) {
     return null;
   }
 
   return (
     <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#48d1cc1a]">
-      <InlineBlackForestLabsLight
+      <InlineByokModelProviderLight
         className="h-2.5 w-3.5 shrink-0"
         aria-hidden="true"
       />
