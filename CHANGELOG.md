@@ -20,6 +20,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Fixed
 
+- Fixed owner sign-in being dropped on hosts that do not merge `next/headers` cookies into a returned redirect (such as Netlify) by writing the Supabase session cookies directly onto the auth callback redirect response and anchoring redirects to `NEXT_PUBLIC_SITE_URL`, so the freshly minted session persists and the owner reaches the dashboard instead of bouncing back to `/access`.
 - Aligned the direct Black Forest Labs FLUX 1.1 Pro and FLUX 1.1 Pro Ultra configuration with the current non-Redux FLUX schemas by hiding and rejecting unsupported base64 `image_prompt` input before submit.
 - Fixed Sherin deployment YAML and doctor fixtures so CI/deploy validation succeeds with BYOK-only defaults and valid numeric storage quota examples.
 
