@@ -1,87 +1,68 @@
 # Security policy
 
+This project is a public BabySea OSS repository. Its security boundary, runtime model, supported deployment mode, and expected validation steps are defined in [README.md](README.md).
+
 ## Reporting vulnerabilities
 
-Please report vulnerabilities privately through GitHub's **Report a vulnerability** flow on the public `babysea-community/sherin` repository. If that flow is unavailable, contact the maintainers at `dev@babysea.ai`.
+Please report vulnerabilities privately through GitHub's **Report a vulnerability** flow on this project's public repository. If that flow is unavailable, contact the maintainers at `dev@babysea.ai`.
 
-Do not open public issues for suspected vulnerabilities, exposed secrets, private generated media, or account access problems that include sensitive details.
+Do not open public issues for suspected vulnerabilities or exposed secrets.
 
-## Supported versions
+Useful reports include the affected route, package, workflow, file, command, schema, or deployment mode; reproduction steps; expected impact; and whether any secret, private data, prompt, generated media, or signed URL may have been exposed. Do not include real API keys, private prompts, reference media, generated media, customer data, signed URLs, or exploit payloads in public spaces.
 
-Sherin is versioned from the public `main` branch. Security fixes target the latest public source and the latest tagged release when tags are available.
+## What to report
 
-## Runtime security model
+Please report issues such as:
 
-Sherin is an owner-only starter. The dashboard is protected by Supabase Auth and the configured owner allowlist from [`.env.example`](.env.example), while the home page and access page remain public.
-
-Generation records, stored input references, and dashboard access are private to the configured owner. Supabase Postgres stores durable generation records, and Supabase Storage remains the private signed-URL fallback save path even when Vercel Blob, Cloudflare R2, or AWS S3 is selected as primary storage. External object URL visibility follows the selected provider, bucket, and custom-domain policy, so treat storage URLs as sensitive deployment data.
-
-The worker route `/api/generations/process` is method-specific. External cron callers should use `GET /api/generations/process` with the worker bearer secret configured from [`.env.example`](.env.example). The app can use same-origin `POST /api/generations/process`; POST accepts a valid bearer token, or the signed-in owner session when the request origin matches the host. Keep cron callers private, rotate the worker secret when the caller changes, and avoid exposing worker responses that include operational metadata.
-
-## Security ownership matrix
-
-| Surface         | Boundary in Sherin                                                                                                        | Operator responsibility                                                            |
-| :-------------- | :------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------- |
-| Owner access    | Supabase Google OAuth and the configured owner allowlist gate dashboard routes.                                           | Keep OAuth ownership current and rotate Google OAuth secrets on ownership change.  |
-| Database        | Supabase Postgres stores prompts, status, metadata, storage paths, and profile state.                                     | Enable backups, restrict service-role key access, and review RLS before changes.   |
-| Generated media | Active storage provider persists completed images and input reference assets; Supabase fallback uses private signed URLs. | Configure external bucket/domain visibility intentionally and test fallback saves. |
-| Inference       | Inference provider and BabySea credentials are read only on the server.                                                   | Monitor provider usage and rotate keys after access or billing anomalies.          |
-| Worker endpoint | Cron GET requires the configured worker bearer secret; owner POST requires same-origin owner session or bearer token.     | Keep cron headers out of logs and honor rate-limit responses.                      |
-| Observability   | Sentry is optional; source-map upload uses build/CI-only secrets.                                                         | Treat Sentry auth tokens as sensitive and keep event links out of public issues.   |
-| Supply chain    | CI includes package checks, production audit, CodeQL, and gitleaks.                                                       | Keep checks green and review dependency updates before production deployment.      |
-
-## Sentry and code guard
-
-Sherin includes optional runtime Sentry error capture for server and browser paths. Sentry initializes only when `NEXT_PUBLIC_SENTRY_DSN` is set, so local development and forked deployments can run without telemetry configured.
-
-The public starter also ships `scripts/sentry-project-check.mjs` and a scheduled `Sentry Project Check` workflow that verifies the configured Sentry project wiring and ownership rules. The workflow uses GitHub Actions secrets. Local runs may read ignored `.sentryclirc` defaults for org/project/url, but the Sentry auth token named in [`.env.example`](.env.example) must stay in an environment variable or secret store.
-
-Build-time sourcemap upload uses the Sentry auth token named in [`.env.example`](.env.example). Treat that token as a secret even though the public Sentry browser DSN is safe to expose to the browser.
+- Authentication, authorization, tenancy, or scope bypass.
+- Exposure of provider credentials, platform tokens, database secrets, webhook secrets, callback secrets, npm tokens, GitHub or GitLab tokens, Sentry tokens, signing keys, or other deployment secrets.
+- Webhook signature bypass, replay, or delivery deduplication failures.
+- Unsafe callback signing, callback payload tampering, or untrusted redirect behavior.
+- Cross-user disclosure of prompts, reference media, generated media, request metadata, logs, account data, or private operational details.
+- Server-side request forgery, unsafe URL handling, path traversal, command injection, template injection, or unsafe file handling.
+- Provider-mode, region, endpoint, or adapter confusion that could send data to the wrong external service or leak raw provider parameters.
+- Supply-chain issues involving dependencies, generated artifacts, CI workflows, release scripts, or package contents.
 
 ## Secret handling
 
-- Never commit `.env`, `.env.local`, `.env.production`, `.vercel`, `.sentryclirc`, exported dashboard secrets, or provider keys.
-- Use [`.env.example`](.env.example) as the source of truth for every runtime, build, CI, provider, storage, worker, and monitoring variable.
-- Keep every secret described in [`.env.example`](.env.example) server-side unless that template explicitly marks the value as public.
-- Only intentionally public values should use the public environment prefix. Never expose service-role keys, provider keys, storage write keys, or worker secrets with that prefix.
-- Rotate any secret that appears in logs, screenshots, chat, issues, pull requests, or generated media metadata.
-- Use separate keys for local, preview, and production deployments when the provider supports it.
+- Use `.env.example` as the source of truth for runtime, build, CI, provider, webhook, callback, cron, rate-limit, analytics, and monitoring variables when this project has environment configuration.
+- Keep every secret server-side unless `.env.example` explicitly marks the value as public.
+- Keep provider keys, deployment tokens, database credentials, webhook secrets, signed URLs, private prompts, private media, and customer data out of logs, screenshots, chats, issues, pull requests, fixtures, generated files, and package artifacts.
+- Treat provider region, base URL, model routing, storage, queue, and integration settings as deployment configuration unless [README.md](README.md) intentionally documents them as public behavior.
+- Rotate any key that appears in logs, screenshots, chats, issues, pull requests, deployment output, CI artifacts, or generated package contents.
 
-## Operational guardrails
+## Runtime boundary
 
-Before production deployment, run:
+This file is intentionally project-neutral. The exact runtime boundary depends on the project type:
 
-```bash
-pnpm run doctor
-pnpm format
-pnpm lint
-pnpm typecheck
-pnpm test:run
-pnpm build
-```
+| Project type | Security focus                                                                                   |
+| :----------- | :----------------------------------------------------------------------------------------------- |
+| SDK          | Package contents, exported API contract, dependency surface, local data handling, and examples.  |
+| Primitive    | Infrastructure boundary, data contracts, operational credentials, storage, queues, and services. |
+| Starter      | Application auth, route handlers, public environment values, webhooks, callbacks, and deploys.   |
+| Docs         | Public content, examples, links, generated artifacts, and secret-free publishing workflows.      |
 
-When changing storage credentials or adapters, run the opt-in storage probe against safe test buckets:
+Follow [README.md](README.md), [CONTRIBUTING.md](CONTRIBUTING.md), and any project-specific [AGENTS.md](AGENTS.md) for the concrete boundary.
 
-```bash
-STORAGE_SMOKE_TEST=1 pnpm run doctor
-```
+## Public disclosure rules
 
-The public package checks include formatting, linting, type checking, tests, build, production dependency audit, CodeQL, and a gitleaks secret scan. Keep those checks green before releasing or deploying a fork.
+- Do not post vulnerability details publicly until maintainers have confirmed a fix or disclosure plan.
+- Do not include exploit payloads that could be immediately reused against public deployments.
+- Do not include real secrets, private URLs, private prompts, private reference media, generated media, customer data, or logs containing personal data.
+- Use private maintainer channels when a reproduction requires sensitive material.
 
-## Incident response
+## Operational hardening
 
-For suspected key exposure, account misuse, public media leakage, or abnormal provider usage:
+- Run the validation commands documented in [README.md](README.md) before deploys, releases, and security-sensitive changes.
+- Keep public environment variables limited to values that are safe for browsers or public clients.
+- Prefer scoped credentials, least-privilege tokens, short-lived keys, and separate credentials per environment.
+- Validate untrusted input before storage, network calls, provider SDKs, shell commands, template rendering, or generated artifacts.
+- Keep CI logs, package previews, and release artifacts free of secrets and private data.
+- Review [LICENSES.md](LICENSES.md) when dependencies or redistributed content change.
 
-1. Revoke or rotate the exposed secret at the provider first.
-2. Update the hosting or CI secret store, then redeploy Sherin.
-3. Run `pnpm run doctor`; if storage changed, also run `STORAGE_SMOKE_TEST=1 pnpm run doctor` against safe buckets.
-4. Review Supabase Auth logs, generation records, provider usage, storage access logs, and Sentry events.
-5. Use any `x-request-id` from worker responses to correlate cron or owner-triggered processing with Sentry events.
-6. Open a private vulnerability report if the issue affects the public starter, not only one private deployment.
+## Related documents
 
-## Data handling
-
-- Treat prompts, image prompts, input reference images, generated media, storage URLs, and provider metadata as private owner data, even when an external storage adapter returns a public object URL.
-- Do not share signed storage URLs in public issues or pull requests.
-- Prefer synthetic prompts and generated test fixtures when demonstrating bugs.
-- Remove or redact `x-request-id`, Sentry event links, provider request ids, bucket names, and account ids when they could identify a private deployment.
+- [CONTRIBUTING.md](CONTRIBUTING.md) explains how to propose safe changes.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) explains expected community behavior.
+- [LICENSES.md](LICENSES.md) explains dependency license review.
+- [CHANGELOG.md](CHANGELOG.md) records user-visible security and behavior changes.

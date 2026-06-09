@@ -2,6 +2,6 @@
 .pnpm-store
 node_modules
 coverage
+dist
 next-env.d.ts
 lib/database.types.ts
-components/gallery/*

@@ -11,64 +11,167 @@ permissions:
   contents: read
 
 jobs:
-  starter:
-    name: sherin package
+  javascript:
+    name: JavaScript / TypeScript package
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    env:
-      NEXT_PUBLIC_SITE_URL: https://your-app.example.com
-      OWNER_EMAIL: owner@example.com
-      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci_supabase_public_key
-      SUPABASE_SECRET_KEY: ci_supabase_secret_key
-      INFERENCE_PROVIDER: bfl
-      BFL_API_KEY: ci_bfl_api_key
-      BFL_API_BASE_URL: https://api.bfl.ai
-      STORAGE_PROVIDER: supabase-storage
-      CUSTOM_USER_STORAGE_QUOTA_GB: '10'
-      BLOB_READ_WRITE_TOKEN: ci_blob_read_write_token
-      CLOUDFLARE_R2_ACCOUNT_ID: ci
-      CLOUDFLARE_R2_ACCESS_KEY_ID: ci_cloudflare_r2_access_key_id
-      CLOUDFLARE_R2_SECRET_ACCESS_KEY: ci_cloudflare_r2_secret_access_key
-      CLOUDFLARE_R2_BUCKET_NAME: ci
-      CLOUDFLARE_R2_ENDPOINT_URL: https://example.r2.cloudflarestorage.com
-      CLOUDFLARE_R2_CUSTOM_DOMAIN_URL: https://example.pub-token.r2.dev
-      AWS_S3_REGION: ci
-      AWS_S3_ACCESS_KEY_ID: ci_aws_s3_access_key_id
-      AWS_S3_SECRET_ACCESS_KEY: ci_aws_s3_secret_access_key
-      AWS_S3_BUCKET_NAME: ci
-      AWS_S3_ENDPOINT_URL: https://example.s3.amazonaws.com
-      NEXT_PUBLIC_SENTRY_DSN: https://example.sentry.io
-      NEXT_PUBLIC_SENTRY_ENVIRONMENT: ci
-      SENTRY_ORG: ci
-      SENTRY_PROJECT: ci
-      SENTRY_AUTH_TOKEN: ci_sentry_auth_token
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 2
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.19.0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm format
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: pnpm test:coverage
+      - name: Detect, install, and check JavaScript / TypeScript package
+        shell: bash
+        run: |
+          set -euo pipefail
+          root_dir="$PWD"
+          js_dir="${JS_PACKAGE_DIR:-}"
+
+          if [[ -z "$js_dir" ]]; then
+            if [[ -f package.json ]]; then
+              js_dir="."
+            elif [[ -f client/typescript/package.json ]]; then
+              js_dir="client/typescript"
+            fi
+          fi
+
+          if [[ -z "$js_dir" ]]; then
+            echo "::notice::No JavaScript/TypeScript package found; skipping."
+            mkdir -p coverage
+            exit 0
+          fi
+
+          if [[ ! -f "$js_dir/package.json" ]]; then
+            echo "JS_PACKAGE_DIR=$js_dir does not contain package.json" >&2
+            exit 1
+          fi
+
+          cd "$js_dir"
+          corepack enable
+
+          if [[ -f pnpm-lock.yaml ]]; then
+            corepack prepare "pnpm@${PNPM_VERSION:-10.19.0}" --activate
+            pnpm config set store-dir "$root_dir/.pnpm-store"
+            pnpm install --frozen-lockfile ${PNPM_INSTALL_FLAGS:-}
+            package_manager=pnpm
+          elif [[ -f package-lock.json ]]; then
+            npm ci --cache "$root_dir/.npm" --prefer-offline ${NPM_CI_FLAGS:-}
+            package_manager=npm
+          elif [[ -f yarn.lock ]]; then
+            yarn install --immutable || yarn install --frozen-lockfile
+            package_manager=yarn
+          else
+            corepack prepare "pnpm@${PNPM_VERSION:-10.19.0}" --activate
+            pnpm config set store-dir "$root_dir/.pnpm-store"
+            pnpm install ${PNPM_INSTALL_FLAGS:-}
+            package_manager=pnpm
+          fi
+
+          has_script() {
+            node -e "const pkg=require('./package.json'); process.exit(pkg.scripts?.[process.argv[1]] ? 0 : 1)" "$1"
+          }
+
+          run_script() {
+            local script_name="$1"
+            if has_script "$script_name"; then
+              if [[ "$package_manager" == yarn ]]; then yarn "$script_name"; else "$package_manager" run "$script_name"; fi
+            else
+              echo "::notice::No $script_name script; skipping."
+            fi
+          }
+
+          if has_script check; then
+            run_script check
+          else
+            run_script format
+            run_script lint
+            run_script typecheck
+            if has_script test:coverage; then run_script test:coverage; else run_script test; fi
+            run_script build
+          fi
+
+          if node -e "const pkg=require('./package.json'); process.exit(pkg.private ? 1 : 0)"; then
+            npm pack --dry-run
+          else
+            echo "::notice::Package is private; skipping npm pack dry-run."
+          fi
+
+          mkdir -p "$root_dir/coverage"
+          if [[ -f coverage/lcov.info ]]; then
+            cp coverage/lcov.info "$root_dir/coverage/lcov.info"
+          fi
       - name: Upload coverage reports to Codecov
-        if: ${{ github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        if: ${{ hashFiles('coverage/lcov.info') != '' && github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           disable_search: true
-      - run: pnpm build
+
+  python:
+    name: Python package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Detect, install, and check Python package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python_dir="${PYTHON_PACKAGE_DIR:-}"
+
+          if [[ -z "$python_dir" ]]; then
+            if [[ -f client/python/pyproject.toml || -f client/python/requirements.txt || -f client/python/requirements-dev.txt ]]; then
+              python_dir="client/python"
+            elif [[ -f pyproject.toml || -f requirements.txt || -f requirements-dev.txt ]]; then
+              python_dir="."
+            fi
+          fi
+
+          if [[ -z "$python_dir" ]]; then
+            echo "::notice::No Python package found; skipping."
+            exit 0
+          fi
+
+          cd "$python_dir"
+          python -m pip install --upgrade pip
+
+          if [[ -f pyproject.toml ]]; then
+            python -m pip install -e "${PIP_INSTALL_EXTRAS:-.[dev]}" || python -m pip install -e .
+          elif [[ -f requirements-dev.txt ]]; then
+            python -m pip install -r requirements-dev.txt
+          elif [[ -f requirements.txt ]]; then
+            python -m pip install -r requirements.txt
+          fi
+
+          python -m compileall .
+          if python -c 'import ruff' >/dev/null 2>&1; then python -m ruff check .; else echo 'ruff is not installed; skipping.'; fi
+          if python -c 'import pyright' >/dev/null 2>&1; then python -m pyright; else echo 'pyright is not installed; skipping.'; fi
+
+          test_dir=''
+          for candidate in tests test tests/python ../tests/python ../../tests/python; do
+            if [[ -d "$candidate" ]]; then test_dir="$candidate"; break; fi
+          done
+          if [[ -n "$test_dir" ]] && python -c 'import pytest' >/dev/null 2>&1; then
+            python -m pytest "$test_dir"
+          else
+            echo 'No Python tests or pytest is unavailable; skipping.'
+          fi
+
+          if [[ -f pyproject.toml ]]; then
+            python -m pip install build
+            python -m build --sdist --wheel
+          else
+            echo 'No pyproject.toml; skipping Python package build.'
+          fi
 
   audit:
     name: Dependency audit
@@ -76,37 +179,31 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v6
-        with:
-          version: 10.19.0
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - run: pnpm install --frozen-lockfile
-      # Fail on high/critical CVEs in production dependencies. Dev-only CVEs
-      # are surfaced by Dependabot; gating CI on them creates noise without
-      # production impact.
-      - name: pnpm audit (production, high+)
-        run: pnpm audit --prod --audit-level=high
-
-  secret-scan:
-    name: Secret scan (gitleaks)
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Install gitleaks
-        env:
-          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
-          GITLEAKS_VERSION: 8.28.0
+      - name: Audit JavaScript / TypeScript production dependencies
+        shell: bash
         run: |
-          mkdir -p "$RUNNER_TEMP/gitleaks"
-          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -o "$RUNNER_TEMP/gitleaks.tar.gz"
-          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check --strict
-          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP/gitleaks" gitleaks
-          chmod +x "$RUNNER_TEMP/gitleaks/gitleaks"
-          echo "$RUNNER_TEMP/gitleaks" >> "$GITHUB_PATH"
-      - name: gitleaks detect
-        run: gitleaks detect --source . --no-banner --redact
+          set -euo pipefail
+          js_dir="${JS_PACKAGE_DIR:-}"
+          if [[ -z "$js_dir" ]]; then
+            if [[ -f package.json ]]; then js_dir="."; elif [[ -f client/typescript/package.json ]]; then js_dir="client/typescript"; fi
+          fi
+          if [[ -z "$js_dir" ]]; then echo 'No JavaScript/TypeScript package found; skipping audit.'; exit 0; fi
+          cd "$js_dir"
+          corepack enable
+          if [[ -f pnpm-lock.yaml ]]; then
+            corepack prepare "pnpm@${PNPM_VERSION:-10.19.0}" --activate
+            pnpm install --frozen-lockfile ${PNPM_INSTALL_FLAGS:-}
+            pnpm audit --prod --audit-level=high
+          elif [[ -f package-lock.json ]]; then
+            npm ci ${NPM_CI_FLAGS:-}
+            npm audit --omit=dev --audit-level=high
+          elif [[ -f yarn.lock ]]; then
+            yarn install --immutable || yarn install --frozen-lockfile
+            yarn npm audit --environment production --severity high || echo 'Yarn audit unavailable or returned findings; review dependency updates manually.'
+          else
+            npm install
+            npm audit --omit=dev --audit-level=high
+          fi

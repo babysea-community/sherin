@@ -30,7 +30,7 @@ Private workspace for generative media with own key, domain, and storage.
 [![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
 [![Sentry](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/sentry-check.yml?style=for-the-badge&label=sentry&logo=sentry&logoColor=white&color=181225)](https://github.com/babysea-community/sherin/actions/workflows/sentry-check.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/codeql.yml?style=for-the-badge&label=codeql&logo=github&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/codeql.yml)
-[![Package](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/publish-check.yml?style=for-the-badge&label=package&logo=npm&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/publish-check.yml)
+[![Package](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/package-check.yml?style=for-the-badge&label=package&logo=npm&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/package-check.yml)
 
 <br/>
 
@@ -234,4 +234,4 @@ Sherin is an Apache-2.0 open-source starter in [`babysea-community/sherin`](http
 
 ## License
 
-[Apache License 2.0](LICENSE). Use it, fork it, ship it. Just keep the notice.
+[Apache License 2.0](LICENSE). Use it, fork it, ship it.
