@@ -215,6 +215,16 @@ function checkRequired(name) {
   }
 }
 
+function hasExactHref(source, expectedHref) {
+  return new RegExp(`href\\s*=\\s*(['"])${escapeRegExp(expectedHref)}\\1`).test(
+    source,
+  );
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function checkUrl(name, options = {}) {
   const value = optional(name);
 
@@ -457,6 +467,7 @@ function checkDeployButtons() {
   const expectedRailwayButton = `[![Deploy on Railway](https://railway.com/button.svg)](${SHERIN_RAILWAY_DEPLOY_URL})`;
   const expectedRenderButton = `[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](${SHERIN_RENDER_DEPLOY_URL})`;
   const expectedNetlifyHomeLink = 'This site is powered by Netlify';
+  const expectedNetlifyHomeHref = 'https://www.netlify.com/';
 
   if (!readme.includes(expectedVercelButton)) {
     ok = false;
@@ -508,7 +519,7 @@ function checkDeployButtons() {
 
   if (
     !homePage.includes(expectedNetlifyHomeLink) ||
-    !homePage.includes('https://www.netlify.com/')
+    !hasExactHref(homePage, expectedNetlifyHomeHref)
   ) {
     ok = false;
     fail('Homepage must include the Netlify-powered backlink.');
