@@ -10,7 +10,7 @@ Private workspace for generative media with own key, domain, and storage.
 
 <br />
 
-[![Demo](https://custom-icon-badges.demolab.com/badge/view-demo-0D9488?style=for-the-badge&logo=babysea&logoColor=white)](https://sherin.babysea.live)
+[![Website](https://custom-icon-badges.demolab.com/badge/view-website-0D9488?style=for-the-badge&logo=babysea&logoColor=white)](https://sherin.babysea.live)
 
 <br />
 
