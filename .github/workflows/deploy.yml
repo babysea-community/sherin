@@ -62,7 +62,7 @@ jobs:
           vercel pull --yes \
             --environment="$VERCEL_ENVIRONMENT" \
             --token "$VERCEL_TOKEN"
-      - name: Check Sherin runtime environment
+      - name: Check project runtime environment
         if: steps.check.outputs.deploy == 'true'
         env:
           VERCEL_ENVIRONMENT: ${{ github.event.inputs.environment == 'preview' && 'preview' || 'production' }}
@@ -117,7 +117,7 @@ jobs:
 
           if (missing.length > 0) {
             console.error(
-              `::error::Missing required Sherin Vercel ${envName} env vars: ${missing.join(', ')}`,
+              `::error::Missing required project Vercel ${envName} env vars: ${missing.join(', ')}`,
             );
             process.exit(1);
           }
@@ -143,8 +143,8 @@ jobs:
 
           const inferenceProvider = (env.INFERENCE_PROVIDER || 'bfl').trim().toLowerCase();
 
-          if (!['babysea', 'bfl'].includes(inferenceProvider)) {
-            console.error('::error::INFERENCE_PROVIDER must be babysea or bfl.');
+          if (!['bfl', 'babysea'].includes(inferenceProvider)) {
+            console.error('::error::INFERENCE_PROVIDER must be bfl or babysea.');
             process.exit(1);
           }
 
@@ -158,7 +158,7 @@ jobs:
             process.exit(1);
           }
 
-          console.log(`Sherin Vercel ${envName} environment has required runtime variables.`);
+          console.log(`Project Vercel ${envName} environment has required runtime variables.`);
           NODE
       - name: Build
         if: steps.check.outputs.deploy == 'true'

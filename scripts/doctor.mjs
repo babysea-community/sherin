@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 
 const ENV_FILES = ['.env.local', '.env'];
-const INFERENCE_PROVIDERS = new Set(['babysea', 'bfl']);
+const INFERENCE_PROVIDERS = new Set(['bfl', 'babysea']);
 const STORAGE_PROVIDERS = new Set([
   'supabase-storage',
   'vercel-blob',
