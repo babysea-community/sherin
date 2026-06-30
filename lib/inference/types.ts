@@ -1,7 +1,7 @@
 import type { ByokInferenceProviderId, SherinModelId } from '@/lib/app-config';
 
 export type InferenceProviderId = 'babysea' | ByokInferenceProviderId;
-export type InferenceByokParamValue = string | number | boolean;
+export type InferenceByokParamValue = string | number | boolean | string[];
 export type InferenceByokParams = Record<string, InferenceByokParamValue>;
 
 export type InferenceRequest = {
@@ -18,7 +18,8 @@ export type InferenceRequest = {
 };
 
 export type InferencePreparedRequest = {
-  inputFileLimit: number;
+  inputImageLimit: number;
+  inputVideoLimit?: number;
   request: InferenceRequest;
 };
 

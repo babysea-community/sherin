@@ -2,7 +2,9 @@
 
 All notable changes will be documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+## [0.4.0] - 2026-05-30
 
 ### Added
 
@@ -11,15 +13,25 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Changed
 
+- Standardize Black Forest Labs BYOK form rendering around Semantic Lady schema fields.
+- Separate image and video input handling for FLUX models while keeping shared UI media/file wording generic.
+- Render Black Forest Labs duration as a bounded select control and use local field descriptions for Studio form help text.
+- Order Studio model dropdowns by image models first, then video models, with alphabetical sorting inside each group.
+- Expose a base64 input image field for Black Forest Labs Flux 1.x direct BYOK models.
+- Treat Black Forest Labs Flux 1.x direct BYOK image prompts as base64-only by rejecting generic uploaded or linked input images before submission.
 - Consolidated direct-provider naming behind BYOK-facing runtime types, form fields, dashboard summaries, usage metrics, retry/resume handling, and test fixtures; Black Forest Labs-specific TypeScript references are now confined to the model/provider boundary, excluding CSP and storage host allowlists.
 - Updated Sherin deployment prompts, CI fixtures, one-click deploy links, and doctor drift checks to default to the BYOK inference path without requiring BabySea credentials unless BabySea execution is explicitly selected.
 - Moved supported-model documentation into a standalone README section that lists only direct Black Forest Labs BYOK models and links BabySea model schemas externally.
 - Standardized security and contributing documentation to refer to `.env.example` for runtime variables instead of repeating secret inventories across human-facing docs.
-- Renamed provider-specific tests to BYOK-neutral shared coverage and kept Black Forest Labs/FLUX test references limited to the direct-provider and model-registry test files.
+- Renamed provider-specific tests to BYOK-neutral shared and kept Black Forest Labs/FLUX test references limited to the direct-provider and model-registry test files.
 - Removed the Heroku-style `app.json` deploy manifest and doctor checks because Sherin does not publish a Heroku deployment path.
 
 ### Fixed
 
+- Ignore stale form values that are outside the active FLUX models schema.
+- Omit empty video input values from BYOK submissions so image-only FLUX models do not receive unsupported schema fields.
+- Preserve durable input reference assets after terminal generation states so the References dashboard keeps displaying uploaded and URL-based inputs.
+- Normalize optional `/v1` suffixes from `BFL_API_BASE_URL` and reject non-API BFL hosts for polling URLs.
 - Fixed owner sign-in being dropped on hosts that do not merge `next/headers` cookies into a returned redirect (such as Netlify) by writing the Supabase session cookies directly onto the auth callback redirect response and anchoring redirects to `NEXT_PUBLIC_SITE_URL`, so the freshly minted session persists and the owner reaches the dashboard instead of bouncing back to `/access`.
 - Aligned the direct Black Forest Labs FLUX 1.1 Pro and FLUX 1.1 Pro Ultra configuration with the current non-Redux FLUX schemas by hiding and rejecting unsupported base64 `image_prompt` input before submit.
 - Fixed Sherin deployment YAML and doctor fixtures so CI/deploy validation succeeds with BYOK-only defaults and valid numeric storage quota examples.
@@ -36,7 +48,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 - Bumped the starter release metadata to `0.3.0` for the deploy-host expansion.
 - Expanded the homepage gallery to 36 mosaic images plus a full-width final image, keeping visible rendition-size suffixes in the bundled demo asset URLs.
 - Swapped the gallery creator/social shortcut buttons to Simple Icons SVG paths for more accurate brand icons while keeping existing fallback icons for LinkedIn and Website.
-- Standardized GitLab application security coverage with SAST-IaC, guarded Container Scanning, shared security variables, and license-compliance documentation.
+- Standardized GitLab application security with SAST-IaC, guarded Container Scanning, shared security variables, and license-compliance documentation.
 
 ### Notes
 
@@ -94,8 +106,8 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Added
 
-- Added a GitLab CI pipeline that mirrors BabyChain's verification, coverage, build, dependency audit, secret scanning, Code Quality, SAST, Dependency Scanning, and scheduled/manual DAST checks.
-- Added Cobertura coverage output for GitLab coverage reports.
+- Added a GitLab CI pipeline that mirrors BabyChain's verification, build, dependency audit, secret scanning, Code Quality, SAST, Dependency Scanning, and scheduled/manual DAST checks.
+- Added Cobertura output for GitLab reports.
 
 ### Fixed
 
@@ -126,16 +138,9 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## [0.2.0] - 2026-05-22
 
-### Added
-
-- Added a CircleCI package-check workflow for Sherin package validation, production dependency audit, and trusted `main` Codecov CLI upload when `CODECOV_TOKEN` is configured in CircleCI.
-- Added a Snyk Security workflow for Snyk Code SARIF upload, Open Source scanning and monitoring, high/critical dependency gating, and IaC reporting with `SNYK_TOKEN`.
-- Added repository `codecov.yml` with GitHub Actions and CircleCI provider recognition, CI-gated Codecov status, and pull request comment configuration.
-
 ### Changed
 
-- Constrained GitHub Actions Codecov uploads to the explicit Vitest LCOV report to avoid irrelevant uploader search warnings.
-- Updated trusted Package Check Codecov uploads to pass `CODECOV_TOKEN` through the action environment and fail CI when coverage upload fails.
+- Constrained GitHub Actions uploads to the explicit Vitest LCOV report to avoid irrelevant uploader search warnings.
 
 ## [0.1.9] - 2026-05-22
 
@@ -143,7 +148,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 - Standardized contributing and code-of-conduct guidance with the shared BabySea OSS documentation standard.
 - Moved Sherin repository metadata and starter distribution from the `babysea-ai` organization to `babysea-community`.
-- Upgraded Package Check, Sentry Check, CodeQL, and Deploy workflow actions to Node 24-compatible majors, including `actions/checkout@v6`, `actions/setup-node@v6`, `pnpm/action-setup@v6`, `github/codeql-action@v4`, and `codecov/codecov-action@v6`.
+- Upgraded Package Check, Sentry Check, CodeQL, and Deploy workflow actions to Node 24-compatible majors, including `actions/checkout@v6`, `actions/setup-node@v6`, `pnpm/action-setup@v6`, `github/codeql-action@v4`.
 
 ### Fixed
 
@@ -167,15 +172,8 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## [0.1.6] - 2026-05-21
 
-### Added
-
-- Added Vitest V8 coverage reporting with `pnpm test:coverage`, producing text, lcov, and JSON summary reports for CI and Codecov ingestion.
-- Added Codecov upload to the Package Check workflow through `codecov/codecov-action@v5`, using `CODECOV_TOKEN` and `coverage/lcov.info`.
-- Added a Codecov badge to the README Checks section alongside Sentry, CodeQL, and package validation badges.
-
 ### Changed
 
-- Package Check now runs coverage during CI instead of the plain Vitest run, keeping the release gate and coverage report generation on the same path.
 - Synced the Sherin lockfile with the local catalog resolution for `babysea@1.4.6`.
 
 ## [0.1.5] - 2026-05-21

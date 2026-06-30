@@ -3,11 +3,11 @@ import 'server-only';
 import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
 import { getOptionalEnv } from '@/lib/utils/env';
 import type { InferenceProvider, InferenceProviderId } from './types';
-import { createBflProvider, isBflConfigured } from './bfl/server-actions';
 import {
   createBabySeaProvider,
   isBabySeaConfigured,
 } from './babysea/server-actions';
+import { createByokProvider, isByokProviderConfigured } from './byok-provider';
 
 export type { InferenceProvider, InferenceProviderId } from './types';
 export type { InferenceRequest, InferenceResult } from './types';
@@ -21,10 +21,12 @@ export function resolveInferenceProvider(): InferenceProvider {
   const configuredPreference = getOptionalEnv('INFERENCE_PROVIDER');
   const preferred = normalizePreference(configuredPreference);
   const babyseaReady = isBabySeaConfigured();
-  const bflReady = isBflConfigured();
+  const byokReady = isByokProviderConfigured();
 
   if (configuredPreference && !preferred) {
-    throw new Error('INFERENCE_PROVIDER must be bfl or babysea.');
+    throw new Error(
+      `INFERENCE_PROVIDER must be ${BYOK_INFERENCE_PROVIDER_ID} or babysea.`,
+    );
   }
 
   if (preferred === 'babysea') {
@@ -37,16 +39,16 @@ export function resolveInferenceProvider(): InferenceProvider {
   }
 
   if (preferred === BYOK_INFERENCE_PROVIDER_ID) {
-    if (!bflReady) {
+    if (!byokReady) {
       throw new Error(
-        `INFERENCE_PROVIDER=${BYOK_INFERENCE_PROVIDER_ID} but BFL_API_KEY is not set.`,
+        `INFERENCE_PROVIDER=${BYOK_INFERENCE_PROVIDER_ID} but the direct provider API key is not set.`,
       );
     }
-    return createBflProvider();
+    return createByokProvider();
   }
 
-  if (bflReady) {
-    return createBflProvider();
+  if (byokReady) {
+    return createByokProvider();
   }
 
   if (babyseaReady) {
@@ -54,7 +56,7 @@ export function resolveInferenceProvider(): InferenceProvider {
   }
 
   throw new Error(
-    'No inference provider configured. Set BFL_API_KEY or BABYSEA_API_KEY.',
+    'No inference provider configured. Set the direct provider API key or BABYSEA_API_KEY.',
   );
 }
 
@@ -72,13 +74,13 @@ export function resolveInferenceProviderById(
   }
 
   if (providerId === BYOK_INFERENCE_PROVIDER_ID) {
-    if (!isBflConfigured()) {
+    if (!isByokProviderConfigured()) {
       throw new Error(
         'Queued generation requires the configured BYOK provider, but its API key is not set.',
       );
     }
 
-    return createBflProvider();
+    return createByokProvider();
   }
 
   throw new Error(`Unsupported queued inference provider: ${providerId}`);
@@ -86,7 +88,7 @@ export function resolveInferenceProviderById(
 
 export function getInferenceProviderStatus() {
   const preferred = normalizePreference(getOptionalEnv('INFERENCE_PROVIDER'));
-  const bfl = isBflConfigured();
+  const byok = isByokProviderConfigured();
   const babysea = isBabySeaConfigured();
   const active: InferenceProviderId | null = (() => {
     try {
@@ -96,7 +98,7 @@ export function getInferenceProviderStatus() {
     }
   })();
 
-  return { preferred, bfl, babysea, active };
+  return { preferred, byok, babysea, active };
 }
 
 function normalizePreference(

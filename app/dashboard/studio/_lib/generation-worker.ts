@@ -19,13 +19,13 @@ import { errorMessage } from '@/lib/utils';
 
 import {
   mergeGenerationMetadata,
+  readQueuedGenerationInputFileAssets,
   readQueuedGenerationJob,
-  readQueuedGenerationInputFileUploadPaths,
   type QueuedGenerationJob,
   type GenerationInput,
 } from './generation-job';
 import {
-  cleanupInputFileUploads,
+  createInputFileAssetUrls,
   createSignedInputFileUrls,
 } from './input-file-uploads';
 import {
@@ -487,11 +487,6 @@ async function processClaimedGeneration(
         storageProvider: storedAsset.providerId,
       });
 
-      await cleanupInputFileUploads(
-        admin,
-        claimed.row.user_id,
-        job.inputFileUploadPaths,
-      );
       revalidateStudioPaths();
       return 'succeeded' as const;
     } catch (storageError) {
@@ -524,6 +519,7 @@ async function processClaimedGeneration(
         {
           error: storageErrorMessage,
           metadata: generationMetadata,
+          storage_bytes: inputFileAssetsByteLength(job),
           status: 'unavailable',
         },
       );
@@ -537,11 +533,6 @@ async function processClaimedGeneration(
         return 'skipped' as const;
       }
 
-      await cleanupInputFileUploads(
-        admin,
-        claimed.row.user_id,
-        job.inputFileUploadPaths,
-      );
       revalidateStudioPaths();
       return 'unavailable' as const;
     }
@@ -643,8 +634,6 @@ async function processClaimedGeneration(
       sherin_stage: 'failed',
     });
 
-    let failedStateSaved = false;
-
     try {
       const saved = await updateClaimedGenerationWithRetry(
         admin,
@@ -653,6 +642,8 @@ async function processClaimedGeneration(
         {
           error: message,
           metadata: generationMetadata,
+          storage_bytes:
+            inputFileAssetsByteLengthFromMetadata(generationMetadata),
           status: 'failed',
         },
       );
@@ -665,27 +656,11 @@ async function processClaimedGeneration(
         revalidateStudioPaths();
         return 'skipped' as const;
       }
-
-      failedStateSaved = true;
     } catch (failureUpdateError) {
       console.error(
         'Could not persist failed generation state',
         failureUpdateError,
       );
-    }
-
-    if (failedStateSaved) {
-      try {
-        const job = readQueuedGenerationJob(claimed.row.metadata);
-        await cleanupInputFileUploads(
-          admin,
-          claimed.row.user_id,
-          job.inputFileUploadPaths,
-        );
-      } catch {
-        // If the job payload itself is malformed, there are no trusted storage
-        // paths to clean up. The failure row already records the parse error.
-      }
     }
 
     revalidateStudioPaths();
@@ -708,14 +683,72 @@ async function prepareInferenceJob({
   processingToken: string;
   userId: string;
 }): Promise<{ job: QueuedGenerationJob; metadata: Json }> {
-  if (job.inputFileUploadPaths.length === 0) {
+  if (job.inputFileAssets.length > 0) {
+    const imageAssets = job.inputFileAssets.filter((asset) =>
+      asset.contentType.startsWith('image/'),
+    );
+    const videoAssets = job.inputFileAssets.filter((asset) =>
+      asset.contentType.startsWith('video/'),
+    );
+    const imageUrls = await createInputFileAssetUrls(imageAssets);
+    const videoUrls = await createInputFileAssetUrls(videoAssets);
+    const preparedJob = {
+      ...job,
+      values: {
+        ...job.values,
+        generation_input_file: imageUrls,
+        byok_params:
+          videoUrls.length > 0
+            ? {
+                ...job.values.byok_params,
+                generation_input_video_file: videoUrls,
+              }
+            : job.values.byok_params,
+      },
+    };
+    const preparedMetadata = mergeGenerationMetadata(metadata, {
+      sherin_job: preparedJob,
+    });
+
+    await updateGenerationMetadata(
+      admin,
+      generationId,
+      processingToken,
+      preparedMetadata,
+    );
+
+    return { job: preparedJob, metadata: preparedMetadata };
+  }
+
+  if (job.inputFileUploadPaths.length === 0 || hasStableInputFileUrls(job)) {
     return { job, metadata };
   }
 
-  if (hasStableInputFileUrls(job)) {
-    return { job, metadata };
-  }
+  return prepareLegacyInputFileUploadPaths({
+    admin,
+    generationId,
+    job,
+    metadata,
+    processingToken,
+    userId,
+  });
+}
 
+async function prepareLegacyInputFileUploadPaths({
+  admin,
+  generationId,
+  job,
+  metadata,
+  processingToken,
+  userId,
+}: {
+  admin: SupabaseAdminClient;
+  generationId: string;
+  job: QueuedGenerationJob;
+  metadata: Json;
+  processingToken: string;
+  userId: string;
+}) {
   const inputFileUrls = await createSignedInputFileUrls(
     admin,
     userId,
@@ -752,6 +785,13 @@ function hasStableInputFileUrls(job: QueuedGenerationJob) {
 
 function inputFileAssetsByteLength(job: QueuedGenerationJob) {
   return job.inputFileAssets.reduce(
+    (total, asset) => total + asset.byteLength,
+    0,
+  );
+}
+
+function inputFileAssetsByteLengthFromMetadata(metadata: Json | null) {
+  return readQueuedGenerationInputFileAssets(metadata).reduce(
     (total, asset) => total + asset.byteLength,
     0,
   );
@@ -825,6 +865,9 @@ async function failAbandonedGeneration(
   staleBefore: string,
 ): Promise<boolean> {
   const message = `Generation could not be completed after ${MAX_GENERATION_ATTEMPTS} worker attempts.`;
+  const inputFileBytes = inputFileAssetsByteLengthFromMetadata(
+    generation.metadata,
+  );
   const metadata = mergeGenerationMetadata(generation.metadata, {
     sherin_error: message,
     sherin_failed_at: new Date().toISOString(),
@@ -837,6 +880,7 @@ async function failAbandonedGeneration(
     .update({
       error: message,
       metadata,
+      storage_bytes: inputFileBytes,
       status: 'failed',
     })
     .eq('id', generation.id)
@@ -846,14 +890,6 @@ async function failAbandonedGeneration(
 
   if (error) {
     throw error;
-  }
-
-  if ((data?.length ?? 0) > 0) {
-    await cleanupInputFileUploads(
-      admin,
-      generation.user_id,
-      readQueuedGenerationInputFileUploadPaths(generation.metadata),
-    );
   }
 
   return (data?.length ?? 0) > 0;

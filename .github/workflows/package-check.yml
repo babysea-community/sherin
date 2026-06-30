@@ -10,9 +10,13 @@ on:
 permissions:
   contents: read
 
+env:
+  PNPM_VERSION: '11.7.0'
+  PNPM_CONFIG_MINIMUM_RELEASE_AGE: '0'
+
 jobs:
   javascript:
-    name: JavaScript / TypeScript package
+    name: JavaScript/TypeScript package
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -22,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: Detect, install, and check JavaScript / TypeScript package
+      - name: Detect, install, and check JavaScript/TypeScript package
         shell: bash
         run: |
           set -euo pipefail
@@ -39,7 +43,6 @@ jobs:
 
           if [[ -z "$js_dir" ]]; then
             echo "::notice::No JavaScript/TypeScript package found; skipping."
-            mkdir -p coverage
             exit 0
           fi
 
@@ -88,7 +91,7 @@ jobs:
             run_script format
             run_script lint
             run_script typecheck
-            if has_script test:coverage; then run_script test:coverage; else run_script test; fi
+            run_script test
             run_script build
           fi
 
@@ -97,25 +100,6 @@ jobs:
           else
             echo "::notice::Package is private; skipping npm pack dry-run."
           fi
-
-          mkdir -p "$root_dir/coverage"
-          if [[ -f coverage/lcov.info ]]; then
-            coverage_source="$(cd coverage && pwd -P)/lcov.info"
-            coverage_target="$(cd "$root_dir/coverage" && pwd -P)/lcov.info"
-            if [[ "$coverage_source" != "$coverage_target" ]]; then
-              cp "$coverage_source" "$coverage_target"
-            fi
-          fi
-      - name: Upload coverage reports to Codecov
-        if: ${{ hashFiles('coverage/lcov.info') != '' && github.actor != 'dependabot[bot]' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
-        uses: codecov/codecov-action@v6
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-          disable_search: true
 
   python:
     name: Python package
@@ -186,7 +170,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 24
-      - name: Audit JavaScript / TypeScript production dependencies
+      - name: Audit JavaScript/TypeScript production dependencies
         shell: bash
         run: |
           set -euo pipefail

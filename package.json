@@ -1,6 +1,6 @@
 {
   "name": "sherin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Private workspace for generative media with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
@@ -27,7 +27,7 @@
     "sentry"
   ],
   "engines": {
-    "node": "24.x"
+    "node": ">=24.14.0 <25"
   },
   "scripts": {
     "build": "next build",
@@ -46,7 +46,6 @@
     "supabase:typegen": "supabase gen types typescript --project-id $SUPABASE_PROJECT_REF --schema public > ./lib/database.types.ts",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -63,6 +62,8 @@
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "semantic-lady": "catalog:",
+    "server-only": "catalog:",
     "simple-icons": "catalog:",
     "sonner": "catalog:",
     "tailwind-merge": "catalog:",
@@ -79,22 +80,16 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "@vitest/coverage-v8": "4.1.0",
     "babel-plugin-react-compiler": "catalog:",
     "eslint": "catalog:",
     "eslint-config-next": "catalog:",
-    "globals": "16.4.0",
+    "globals": "catalog:",
     "prettier": "catalog:",
     "supabase": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "typescript-eslint": "8.59.3",
-    "vitest": "4.1.0"
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
   },
-  "pnpm": {
-    "overrides": {
-      "postcss": "8.5.10"
-    }
-  },
-  "packageManager": "pnpm@10.19.0"
+  "packageManager": "pnpm@11.7.0"
 }

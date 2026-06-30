@@ -8,6 +8,7 @@ import { isIP, type LookupFunction } from 'node:net';
 
 import type { createSupabaseAdminClient } from '@/lib/database/admin';
 import {
+  MAX_VIDEO_ASSET_BYTES,
   persistInputReferenceAsset,
   resolveStoredAssetUrl,
   type PersistedStorageAsset,
@@ -17,6 +18,8 @@ import { SHERIN_BUCKET } from '@/lib/storage/supabase-storage/server-actions';
 
 type SupabaseAdminClient = ReturnType<typeof createSupabaseAdminClient>;
 type InputFileUploadContentType = keyof typeof INPUT_FILE_UPLOAD_EXTENSIONS;
+type InputVideoFileUploadContentType =
+  keyof typeof INPUT_VIDEO_FILE_UPLOAD_EXTENSIONS;
 export type InputFileSource = 'upload' | 'url';
 export type StoredInputFileAsset = {
   byteLength: number;
@@ -32,6 +35,7 @@ export type StoredInputFileAsset = {
 };
 
 export const MAX_INPUT_FILE_UPLOAD_BYTES = 10 * 1024 * 1024;
+export const MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES = MAX_VIDEO_ASSET_BYTES;
 
 const INPUT_FILE_UPLOAD_FOLDER = 'user-upload';
 const INPUT_FILE_FETCH_TIMEOUT_MS = 20_000;
@@ -42,6 +46,11 @@ const INPUT_FILE_UPLOAD_EXTENSIONS = {
   'image/png': 'png',
   'image/webp': 'webp',
 } as const;
+const INPUT_VIDEO_FILE_UPLOAD_EXTENSIONS = {
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+  'video/webm': 'webm',
+} as const;
 
 export class InvalidInputFileUploadError extends Error {
   constructor(
@@ -49,8 +58,10 @@ export class InvalidInputFileUploadError extends Error {
     readonly feedback:
       | 'invalid_input'
       | 'input_upload_invalid' = 'input_upload_invalid',
+    readonly cause?: unknown,
   ) {
     super(message);
+    this.name = 'InvalidInputFileUploadError';
   }
 }
 
@@ -88,6 +99,49 @@ export async function persistUploadedInputFile(input: {
     contentType,
     data,
     extension: INPUT_FILE_UPLOAD_EXTENSIONS[contentType],
+    generationId,
+    index,
+    remoteHost: 'local-upload',
+    reservedBytes,
+    source: 'upload',
+    userId,
+  });
+}
+
+export async function persistUploadedInputVideoFile(input: {
+  file: File;
+  generationId: string;
+  index: number;
+  reservedBytes?: number;
+  userId: string;
+}) {
+  const { file, generationId, index, reservedBytes, userId } = input;
+
+  if (file.size <= 0 || file.size > MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES) {
+    throw new InvalidInputFileUploadError('Invalid input video size.');
+  }
+
+  const contentType = normalizeInputVideoFileUploadContentType(file);
+
+  if (!contentType) {
+    throw new InvalidInputFileUploadError('Invalid input video type.');
+  }
+
+  const data = Buffer.from(await file.arrayBuffer());
+
+  if (data.length <= 0 || data.length > MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES) {
+    throw new InvalidInputFileUploadError('Invalid input video data.');
+  }
+
+  if (!isValidInputVideoPayload(data, contentType)) {
+    throw new InvalidInputFileUploadError('Invalid input video payload.');
+  }
+
+  return persistInputFileAsset({
+    byteLength: data.byteLength,
+    contentType,
+    data,
+    extension: INPUT_VIDEO_FILE_UPLOAD_EXTENSIONS[contentType],
     generationId,
     index,
     remoteHost: 'local-upload',
@@ -156,9 +210,78 @@ export async function persistUrlInputFile(input: {
   });
 }
 
+export async function persistUrlInputVideoFile(input: {
+  generationId: string;
+  index: number;
+  reservedBytes?: number;
+  url: string;
+  userId: string;
+}) {
+  const url = parseInputFileUrl(input.url, 'video');
+  const response = await downloadInputFileUrl(
+    url,
+    MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES,
+    'video',
+  );
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw new InvalidInputFileUploadError(
+      `Could not download input video URL: ${response.statusCode}.`,
+      'invalid_input',
+    );
+  }
+
+  const contentType = normalizeRemoteInputVideoFileContentType(
+    responseHeader(response.headers, 'content-type'),
+    url,
+  );
+
+  if (!contentType) {
+    throw new InvalidInputFileUploadError('Invalid input video type.');
+  }
+
+  const contentLength = parseContentLength(
+    responseHeader(response.headers, 'content-length'),
+  );
+
+  if (
+    contentLength !== null &&
+    contentLength > MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES
+  ) {
+    throw new InvalidInputFileUploadError('Invalid input video size.');
+  }
+
+  const data = response.data;
+
+  if (
+    data.byteLength <= 0 ||
+    data.byteLength > MAX_INPUT_VIDEO_FILE_UPLOAD_BYTES
+  ) {
+    throw new InvalidInputFileUploadError('Invalid input video data.');
+  }
+
+  if (!isValidInputVideoPayload(data, contentType)) {
+    throw new InvalidInputFileUploadError('Invalid input video payload.');
+  }
+
+  return persistInputFileAsset({
+    byteLength: data.byteLength,
+    contentType,
+    data,
+    extension: INPUT_VIDEO_FILE_UPLOAD_EXTENSIONS[contentType],
+    generationId: input.generationId,
+    index: input.index,
+    originalUrl: url.toString(),
+    remoteHost: url.hostname,
+    reservedBytes: input.reservedBytes,
+    source: 'url',
+    userId: input.userId,
+  });
+}
+
 async function persistInputFileAsset(input: {
   byteLength: number;
-  contentType: InputFileUploadContentType;
+  contentType: InputFileUploadContentType | InputVideoFileUploadContentType;
   data: Uint8Array;
   extension: string;
   generationId: string;
@@ -170,15 +293,20 @@ async function persistInputFileAsset(input: {
   userId: string;
 }): Promise<StoredInputFileAsset> {
   const stored = await persistInputReferenceAsset(input);
-  const url = await resolveInputReferenceUrl(stored);
+  const storedUrl = await resolveInputReferenceUrl(stored);
+  const url = providerFacingInputAssetUrl({
+    originalUrl: input.originalUrl,
+    source: input.source,
+    storedUrl,
+  });
 
   if (!url) {
-    throw new Error('Stored input image did not return a readable URL.');
+    throw new Error('Stored input media did not return a readable URL.');
   }
 
   if (!isHttpsUrl(url)) {
     throw new InvalidInputFileUploadError(
-      'Stored input image URL must use HTTPS.',
+      'Stored input media URL must use HTTPS.',
       'invalid_input',
     );
   }
@@ -192,6 +320,26 @@ async function resolveInputReferenceUrl(asset: PersistedStorageAsset) {
     storagePath: asset.storagePath,
     storageProvider: asset.providerId,
   });
+}
+
+function providerFacingInputAssetUrl({
+  originalUrl,
+  source,
+  storedUrl,
+}: {
+  originalUrl?: string;
+  source: InputFileSource;
+  storedUrl: string | null;
+}) {
+  if (storedUrl && isHttpsUrl(storedUrl)) {
+    return storedUrl;
+  }
+
+  if (source === 'url' && originalUrl) {
+    return originalUrl;
+  }
+
+  return storedUrl;
 }
 
 function toStoredInputFileAsset(
@@ -251,21 +399,63 @@ export async function createSignedInputFileUrls(
   return urls;
 }
 
+export async function createInputFileAssetUrls(
+  assets: readonly StoredInputFileAsset[],
+) {
+  const urls: string[] = [];
+
+  for (const asset of assets) {
+    const storedUrl = await resolveInputReferenceUrl({
+      byteLength: asset.byteLength,
+      contentType: asset.contentType,
+      fallbackFromProviderId: asset.fallbackFromProviderId,
+      fallbackReason: asset.fallbackReason,
+      providerId: asset.storageProvider,
+      publicUrl: asset.publicUrl,
+      storagePath: asset.storagePath,
+    });
+    const url = providerFacingInputAssetUrl({
+      originalUrl: asset.originalUrl,
+      source: asset.source,
+      storedUrl,
+    });
+
+    if (!url) {
+      throw new Error('Stored input media did not return a readable URL.');
+    }
+
+    if (!isHttpsUrl(url)) {
+      throw new InvalidInputFileUploadError(
+        asset.source === 'url'
+          ? 'Original input media URL must use HTTPS.'
+          : 'Stored input media URL must use HTTPS.',
+        'invalid_input',
+      );
+    }
+
+    urls.push(url);
+  }
+
+  return urls;
+}
+
 export async function cleanupInputFileUploads(
   admin: SupabaseAdminClient,
   userId: string,
   storagePaths: string[],
 ) {
+  let allStoragePathsSafe = true;
   const safeStoragePaths = storagePaths.filter((storagePath) =>
     isInputFileUploadPath(storagePath, userId),
   );
 
   if (safeStoragePaths.length !== storagePaths.length) {
+    allStoragePathsSafe = false;
     console.warn('Skipped unsafe input image upload cleanup path.');
   }
 
   if (safeStoragePaths.length === 0) {
-    return;
+    return allStoragePathsSafe;
   }
 
   const { error } = await admin.storage
@@ -274,7 +464,11 @@ export async function cleanupInputFileUploads(
 
   if (error) {
     console.warn('Could not remove input image uploads after failure', error);
+
+    return false;
   }
+
+  return allStoragePathsSafe;
 }
 
 function assertInputFileUploadPath(storagePath: string, userId: string) {
@@ -295,7 +489,7 @@ function isInputFileUploadPath(storagePath: string, userId: string) {
 
   const fileName = storagePath.slice(prefix.length);
 
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/input-\d+\.(gif|jpg|png|webp)$/.test(
+  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\/input-\d+\.(gif|jpg|mov|mp4|png|webm|webp)$/.test(
     fileName,
   );
 }
@@ -324,6 +518,18 @@ function normalizeInputFileUploadContentType(file: File) {
   }
 }
 
+function normalizeInputVideoFileUploadContentType(file: File) {
+  const directContentType = normalizeKnownInputVideoFileContentType(file.type);
+
+  if (directContentType) {
+    return directContentType;
+  }
+
+  const extension = file.name.split('.').pop()?.toLowerCase();
+
+  return normalizeKnownInputVideoFileExtension(extension);
+}
+
 function normalizeRemoteInputFileContentType(value: string | null, url: URL) {
   const directContentType = normalizeKnownInputFileContentType(
     value?.split(';')[0] ?? '',
@@ -334,6 +540,23 @@ function normalizeRemoteInputFileContentType(value: string | null, url: URL) {
   }
 
   return normalizeKnownInputFileExtension(
+    url.pathname.split('/').pop()?.split('.').pop()?.toLowerCase(),
+  );
+}
+
+function normalizeRemoteInputVideoFileContentType(
+  value: string | null,
+  url: URL,
+) {
+  const directContentType = normalizeKnownInputVideoFileContentType(
+    value?.split(';')[0] ?? '',
+  );
+
+  if (directContentType) {
+    return directContentType;
+  }
+
+  return normalizeKnownInputVideoFileExtension(
     url.pathname.split('/').pop()?.split('.').pop()?.toLowerCase(),
   );
 }
@@ -349,6 +572,22 @@ function normalizeKnownInputFileContentType(
 
   if (contentType in INPUT_FILE_UPLOAD_EXTENSIONS) {
     return contentType as InputFileUploadContentType;
+  }
+
+  return null;
+}
+
+function normalizeKnownInputVideoFileContentType(
+  value: string,
+): InputVideoFileUploadContentType | null {
+  const contentType = value.toLowerCase().trim();
+
+  if (contentType === 'video/x-m4v') {
+    return 'video/quicktime';
+  }
+
+  if (contentType in INPUT_VIDEO_FILE_UPLOAD_EXTENSIONS) {
+    return contentType as InputVideoFileUploadContentType;
   }
 
   return null;
@@ -372,35 +611,51 @@ function normalizeKnownInputFileExtension(
   }
 }
 
-function parseInputFileUrl(value: string) {
+function normalizeKnownInputVideoFileExtension(
+  extension: string | undefined,
+): InputVideoFileUploadContentType | null {
+  switch (extension) {
+    case 'm4v':
+    case 'mov':
+      return 'video/quicktime';
+    case 'mp4':
+      return 'video/mp4';
+    case 'webm':
+      return 'video/webm';
+    default:
+      return null;
+  }
+}
+
+function parseInputFileUrl(value: string, inputLabel = 'image') {
   let url: URL;
 
   try {
     url = new URL(value);
   } catch {
     throw new InvalidInputFileUploadError(
-      'Input image URL must be a valid URL.',
+      `Input ${inputLabel} URL must be a valid URL.`,
       'invalid_input',
     );
   }
 
   if (url.protocol !== 'https:') {
     throw new InvalidInputFileUploadError(
-      'Input image URL must use HTTPS.',
+      `Input ${inputLabel} URL must use HTTPS.`,
       'invalid_input',
     );
   }
 
   if (url.username || url.password) {
     throw new InvalidInputFileUploadError(
-      'Input image URL must not include credentials.',
+      `Input ${inputLabel} URL must not include credentials.`,
       'invalid_input',
     );
   }
 
   if (isLocalOrPrivateHost(url.hostname)) {
     throw new InvalidInputFileUploadError(
-      'Input image URL host is not allowed.',
+      `Input ${inputLabel} URL host is not allowed.`,
       'invalid_input',
     );
   }
@@ -481,7 +736,11 @@ function isLocalOrPrivateIpv6(host: string) {
   );
 }
 
-function downloadInputFileUrl(url: URL) {
+function downloadInputFileUrl(
+  url: URL,
+  maxBytes = MAX_INPUT_FILE_UPLOAD_BYTES,
+  inputLabel = 'image',
+) {
   return new Promise<{
     data: Uint8Array;
     headers: IncomingHttpHeaders;
@@ -494,6 +753,7 @@ function downloadInputFileUrl(url: URL) {
     const request = httpsRequest(
       url,
       {
+        headers: inputDownloadHeaders(inputLabel),
         lookup: lookupPublicInputHost,
         method: 'GET',
       },
@@ -504,7 +764,7 @@ function downloadInputFileUrl(url: URL) {
           response.destroy();
           fail(
             new InvalidInputFileUploadError(
-              'Input image URL redirects are not allowed.',
+              `Input ${inputLabel} URL redirects are not allowed.`,
               'invalid_input',
             ),
           );
@@ -526,12 +786,13 @@ function downloadInputFileUrl(url: URL) {
           responseHeader(response.headers, 'content-length'),
         );
 
-        if (
-          contentLength !== null &&
-          contentLength > MAX_INPUT_FILE_UPLOAD_BYTES
-        ) {
+        if (contentLength !== null && contentLength > maxBytes) {
           response.destroy();
-          fail(new InvalidInputFileUploadError('Invalid input image size.'));
+          fail(
+            new InvalidInputFileUploadError(
+              `Invalid input ${inputLabel} size.`,
+            ),
+          );
           return;
         }
 
@@ -539,9 +800,13 @@ function downloadInputFileUrl(url: URL) {
           const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
           totalBytes += buffer.byteLength;
 
-          if (totalBytes > MAX_INPUT_FILE_UPLOAD_BYTES) {
+          if (totalBytes > maxBytes) {
             response.destroy();
-            fail(new InvalidInputFileUploadError('Invalid input image size.'));
+            fail(
+              new InvalidInputFileUploadError(
+                `Invalid input ${inputLabel} size.`,
+              ),
+            );
             return;
           }
 
@@ -563,7 +828,7 @@ function downloadInputFileUrl(url: URL) {
     deadline = setTimeout(() => {
       fail(
         new InvalidInputFileUploadError(
-          'Input image URL timed out.',
+          `Input ${inputLabel} URL timed out.`,
           'invalid_input',
         ),
       );
@@ -571,7 +836,7 @@ function downloadInputFileUrl(url: URL) {
     request.setTimeout(INPUT_FILE_FETCH_TIMEOUT_MS, () => {
       fail(
         new InvalidInputFileUploadError(
-          'Input image URL timed out.',
+          `Input ${inputLabel} URL timed out.`,
           'invalid_input',
         ),
       );
@@ -609,8 +874,9 @@ function downloadInputFileUrl(url: URL) {
 
       reject(
         new InvalidInputFileUploadError(
-          'Could not download input image URL.',
+          `Could not download input ${inputLabel} URL.`,
           'invalid_input',
+          error,
         ),
       );
     }
@@ -626,24 +892,59 @@ function downloadInputFileUrl(url: URL) {
   });
 }
 
-const lookupPublicInputHost: LookupFunction = (
-  hostname,
-  _options,
-  callback,
+function inputDownloadHeaders(inputLabel: string) {
+  return {
+    accept: inputLabel === 'video' ? 'video/*,*/*;q=0.8' : 'image/*,*/*;q=0.8',
+    'user-agent': 'Sherin/1.0 (+https://babysea.ai)',
+  };
+}
+
+const lookupPublicInputHost = ((
+  hostname: string,
+  optionsOrCallback: unknown,
+  maybeCallback?: unknown,
 ) => {
+  const options =
+    typeof optionsOrCallback === 'function' ? undefined : optionsOrCallback;
+  const callback =
+    typeof optionsOrCallback === 'function' ? optionsOrCallback : maybeCallback;
+
+  if (typeof callback !== 'function') {
+    return;
+  }
+
   void resolvePublicInputHost(hostname)
     .then((address) => {
+      if (isLookupAllOptions(options)) {
+        callback(null, [address]);
+        return;
+      }
+
       callback(null, address.address, address.family);
     })
     .catch((error) => {
+      if (isLookupAllOptions(options)) {
+        callback(error as NodeJS.ErrnoException, []);
+        return;
+      }
+
       callback(error as NodeJS.ErrnoException, '', 0);
     });
-};
+}) as LookupFunction;
+
+function isLookupAllOptions(value: unknown) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    'all' in value &&
+    (value as { all?: unknown }).all === true,
+  );
+}
 
 async function resolvePublicInputHost(hostname: string) {
   if (isLocalOrPrivateHost(hostname)) {
     throw new InvalidInputFileUploadError(
-      'Input image URL host is not allowed.',
+      'Input media URL host is not allowed.',
       'invalid_input',
     );
   }
@@ -652,19 +953,19 @@ async function resolvePublicInputHost(hostname: string) {
 
   if (addresses.length === 0) {
     throw new InvalidInputFileUploadError(
-      'Input image URL host could not be verified.',
+      'Input media URL host could not be verified.',
       'invalid_input',
     );
   }
 
   if (addresses.some((address) => isLocalOrPrivateHost(address.address))) {
     throw new InvalidInputFileUploadError(
-      'Input image URL host resolves to a private address.',
+      'Input media URL host resolves to a private address.',
       'invalid_input',
     );
   }
 
-  return addresses[0]!;
+  return addresses.find((address) => address.family === 4) ?? addresses[0]!;
 }
 
 function responseHeader(headers: IncomingHttpHeaders, name: string) {
@@ -712,6 +1013,26 @@ function isValidInputImagePayload(
         startsWithBytes(data.subarray(8), [0x57, 0x45, 0x42, 0x50])
       );
   }
+}
+
+function isValidInputVideoPayload(
+  data: Uint8Array,
+  contentType: InputVideoFileUploadContentType,
+) {
+  switch (contentType) {
+    case 'video/mp4':
+    case 'video/quicktime':
+      return isIsoBaseMediaPayload(data);
+    case 'video/webm':
+      return startsWithBytes(data, [0x1a, 0x45, 0xdf, 0xa3]);
+  }
+}
+
+function isIsoBaseMediaPayload(data: Uint8Array) {
+  return (
+    data.length >= 12 &&
+    startsWithBytes(data.subarray(4), [0x66, 0x74, 0x79, 0x70])
+  );
 }
 
 function isGifPayload(data: Uint8Array) {

@@ -17,7 +17,7 @@ Private workspace for generative media with own key, domain, and storage.
 <strong>Project details</strong>
 
 [![BabySea OSS Starter](https://custom-icon-badges.demolab.com/badge/oss-starter-2563EB?style=for-the-badge&logo=babysea&logoColor=white)](#babysea-oss-taxonomy)
-[![BabySea OSS Status Production](https://custom-icon-badges.demolab.com/badge/oss_status-production-C026D3?style=for-the-badge&logo=babysea&logoColor=white)](#status)
+[![BabySea OSS Status Production](https://custom-icon-badges.demolab.com/badge/status-production-C026D3?style=for-the-badge&logo=babysea&logoColor=white)](#status)
 [![License](https://custom-icon-badges.demolab.com/badge/license-apache_2.0-059669?style=for-the-badge&logo=apache&logoColor=white)](LICENSE)
 
 <br/>
@@ -26,8 +26,6 @@ Private workspace for generative media with own key, domain, and storage.
 
 [![Netlify Status](https://img.shields.io/netlify/7ed9a390-7ad5-4967-b818-110863f04ebb?style=for-the-badge&logo=netlify&logoColor=white&label=netlify&color=BEF9C6)](https://app.netlify.com/projects/sherin-hazel/deploys)
 [![GitLabCI](https://img.shields.io/gitlab/pipeline-status/babysea/sherin?branch=main&style=for-the-badge&label=gitlabci&logo=gitlab&logoColor=white&color=FC6D26)](https://gitlab.com/babysea/sherin/-/commits/main)
-[![CircleCI](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcircleci.com%2Fapi%2Fv1.1%2Fproject%2Fcircleci%2F2uTLcwc4naeNuKDP41es88%2FUVW4ijtkbzrFah5yHrnaQ2%2Ftree%2Fmain%3Flimit%3D1&query=%24%5B0%5D.status&style=for-the-badge&logo=circleci&logoColor=white&label=circleci&color=003740)](https://dl.circleci.com/status-badge/redirect/circleci/2uTLcwc4naeNuKDP41es88/UVW4ijtkbzrFah5yHrnaQ2/tree/main)
-[![Codecov](https://img.shields.io/codecov/c/github/babysea-community/sherin?style=for-the-badge&label=codecov&logo=codecov&logoColor=white&color=FF0077&token=Sx2QOBbPCo)](https://codecov.io/github/babysea-community/sherin)
 [![Sentry](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/sentry-check.yml?style=for-the-badge&label=sentry&logo=sentry&logoColor=white&color=181225)](https://github.com/babysea-community/sherin/actions/workflows/sentry-check.yml)
 [![CodeQL](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/codeql.yml?style=for-the-badge&label=codeql&logo=github&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/codeql.yml)
 [![Package](https://img.shields.io/github/actions/workflow/status/babysea-community/sherin/package-check.yml?style=for-the-badge&label=package&logo=npm&logoColor=white)](https://github.com/babysea-community/sherin/actions/workflows/package-check.yml)
@@ -36,15 +34,16 @@ Private workspace for generative media with own key, domain, and storage.
 
 <strong>Built with</strong>
 
-[![Next.js](https://img.shields.io/badge/next_js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
-[![React](https://img.shields.io/badge/react-53C1DE?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
-[![BabySea](https://custom-icon-badges.demolab.com/badge/babysea-48D1CC?style=for-the-badge&logo=babysea&logoColor=white)](https://babysea.ai)
+[![Next.js](https://custom-icon-badges.demolab.com/badge/next_js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://custom-icon-badges.demolab.com/badge/react-53C1DE?style=for-the-badge&logo=react&logoColor=white)](https://react.dev)
+[![Semantic Lady](https://custom-icon-badges.demolab.com/badge/semantic_lady-EC4899?style=for-the-badge&logo=semantic-lady)](https://github.com/babysea-community/semantic-lady)
+[![BabySea](https://custom-icon-badges.demolab.com/badge/babysea-14B8A6?style=for-the-badge&logo=babysea&logoColor=white)](https://babysea.ai)
 [![Black Forest Labs](https://custom-icon-badges.demolab.com/badge/black_forest_labs-07130E?style=for-the-badge&logo=blackforestlabs&logoColor=white)](https://bfl.ai)
-[![Supabase](https://img.shields.io/badge/supabase-249361?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Vercel](https://img.shields.io/badge/vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com)
-[![AWS](https://custom-icon-badges.demolab.com/badge/aws-252F3E?style=for-the-badge&logo=aws&logoColor=white)](https://aws.amazon.com)
-[![Cloudflare](https://img.shields.io/badge/cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)](https://www.cloudflare.com)
-[![Sentry](https://img.shields.io/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
+[![Supabase](https://custom-icon-badges.demolab.com/badge/supabase-249361?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![AWS S3](https://custom-icon-badges.demolab.com/badge/aws_s3-3F8624?style=for-the-badge&logo=aws-s3-2&logoColor=white)](https://docs.aws.amazon.com/s3)
+[![Cloudflare R2](https://custom-icon-badges.demolab.com/badge/cloudflare_r2-F38020?style=for-the-badge&logo=cloudflare-r2&logoColor=white)](https://www.cloudflare.com)
+[![Vercel Blob](https://custom-icon-badges.demolab.com/badge/vercel_blob-E46000?style=for-the-badge&logo=vercel-blob-3)](https://vercel.com/docs/vercel-blob)
+[![Sentry](https://custom-icon-badges.demolab.com/badge/sentry-181225?style=for-the-badge&logo=sentry&logoColor=white)](https://sentry.io)
 
 <br/>
 
@@ -86,9 +85,9 @@ BabySea open source projects are organized into three categories:
 
 BabySea OSS projects are published into three status levels:
 
-[![BabySea OSS Status Working](https://custom-icon-badges.demolab.com/badge/oss_status-working-DB2777?style=for-the-badge&logo=babysea&logoColor=white)](#status)
-[![BabySea OSS Status Production](https://custom-icon-badges.demolab.com/badge/oss_status-production-C026D3?style=for-the-badge&logo=babysea&logoColor=white)](#status)
-[![BabySea OSS Status Alpha](https://custom-icon-badges.demolab.com/badge/oss_status-alpha-D97706?style=for-the-badge&logo=babysea&logoColor=white)](#status)
+[![BabySea OSS Status Working](https://custom-icon-badges.demolab.com/badge/status-working-DB2777?style=for-the-badge&logo=babysea&logoColor=white)](#status)
+[![BabySea OSS Status Production](https://custom-icon-badges.demolab.com/badge/status-production-C026D3?style=for-the-badge&logo=babysea&logoColor=white)](#status)
+[![BabySea OSS Status Alpha](https://custom-icon-badges.demolab.com/badge/status-alpha-D97706?style=for-the-badge&logo=babysea&logoColor=white)](#status)
 
 | Status         | Description                                                                                                                                                                          |
 | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -122,27 +121,33 @@ pnpm dev
 
 Open <http://localhost:3011>.
 
-## Inference and storage
+## Inference
 
-Use [`.env.example`](.env.example) as the source of truth for owner access, inference mode, provider credentials, storage provider, quota, worker, and monitoring configuration.
+Use [`.env.example`](.env.example) as the source of truth for inference mode and provider credentials.
 
-Supabase Storage is the default and fallback storage path.
+This project can run direct Black Forest Labs inference with `INFERENCE_PROVIDER=bfl`, or call BabySea with `INFERENCE_PROVIDER=babysea` while keeping the same Studio workflow.
 
 BabySea model schemas are published at [babysea.ai/model-schema](https://babysea.ai/model-schema).
+
+## Storage
+
+Use [`.env.example`](.env.example) as the source of truth for storage provider, quota, worker, and monitoring configuration.
+
+Supabase Storage is the default and fallback storage path. AWS S3, Cloudflare R2, and Vercel Blob are available when you want generated media in your own bucket or blob store.
 
 ## Supported models
 
 Supported model names and provider fields are registered in [`lib/model-family.ts`](lib/model-family.ts), [`lib/inference/bfl/models.ts`](lib/inference/bfl/models.ts), and [`lib/inference/babysea/models.ts`](lib/inference/babysea/models.ts).
 
-| Model              | Sherin model ID          | Black Forest Labs BYOK endpoint |
-| :----------------- | :----------------------- | :------------------------------ |
-| FLUX 1.1 Pro       | `bfl/flux-1.1-pro`       | `flux-pro-1.1`                  |
-| FLUX 1.1 Pro Ultra | `bfl/flux-1.1-pro-ultra` | `flux-pro-1.1-ultra`            |
-| FLUX 2 Flex        | `bfl/flux-2-flex`        | `flux-2-flex`                   |
-| FLUX 2 Klein 4B    | `bfl/flux-2-klein-4b`    | `flux-2-klein-4b`               |
-| FLUX 2 Klein 9B    | `bfl/flux-2-klein-9b`    | `flux-2-klein-9b`               |
-| FLUX 2 Max         | `bfl/flux-2-max`         | `flux-2-max`                    |
-| FLUX 2 Pro         | `bfl/flux-2-pro`         | `flux-2-pro`                    |
+| Model name         | Model ID                 |
+| :----------------- | :----------------------- |
+| FLUX 1.1 Pro       | `bfl/flux-1.1-pro`       |
+| FLUX 1.1 Pro Ultra | `bfl/flux-1.1-pro-ultra` |
+| FLUX 2 Flex        | `bfl/flux-2-flex`        |
+| FLUX 2 Klein 4B    | `bfl/flux-2-klein-4b`    |
+| FLUX 2 Klein 9B    | `bfl/flux-2-klein-9b`    |
+| FLUX 2 Max         | `bfl/flux-2-max`         |
+| FLUX 2 Pro         | `bfl/flux-2-pro`         |
 
 ## Workspace
 
@@ -164,27 +169,27 @@ Supported model names and provider fields are registered in [`lib/model-family.t
 
 ## Deployment
 
+### DigitalOcean
+
+[`.do/deploy.template.yaml`](.do/deploy.template.yaml) defines the DigitalOcean App Platform service, build command, start command, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the DigitalOcean or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, AWS S3, or Cloudflare R2 for generated media.
+
+### Netlify
+
+[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Prefer Supabase Storage, AWS S3, or Cloudflare R2 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+
+### Railway
+
+Use the Deploy on Railway button above to start from the published Sherin template, or create a new Railway project from the public repository. Add every runtime variable from [`.env.example`](.env.example), and set `NEXT_PUBLIC_SITE_URL` to the Railway or custom domain. Prefer Supabase Storage, AWS S3, or Cloudflare R2 on Railway; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+
+### Render
+
+[`render.yaml`](render.yaml) builds with `pnpm build` and runs `pnpm start -- -p $PORT`. Prefer Supabase Storage, AWS S3, or Cloudflare R2 on Render; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
+
 ### Vercel
 
 Keep the checked-in [`vercel.json`](vercel.json) framework settings. Configure Supabase auth callback URLs with the final Vercel domain or custom domain, then redeploy after changing env values.
 
-### DigitalOcean
-
-[`.do/deploy.template.yaml`](.do/deploy.template.yaml) defines the DigitalOcean App Platform service, build command, start command, and environment prompts. Set `NEXT_PUBLIC_SITE_URL` to the DigitalOcean or custom domain, configure Supabase auth callback URLs, and prefer Supabase Storage, Cloudflare R2, or AWS S3 for generated media.
-
-### Netlify
-
-[`netlify.toml`](netlify.toml) builds with `pnpm build` and the Next.js plugin. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Netlify; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
-
-### Render
-
-[`render.yaml`](render.yaml) builds with `pnpm build` and runs `pnpm start -- -p $PORT`. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Render; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
-
-### Railway
-
-Use the Deploy on Railway button above to start from the published Sherin template, or create a new Railway project from the public repository. Add every runtime variable from [`.env.example`](.env.example), and set `NEXT_PUBLIC_SITE_URL` to the Railway or custom domain. Prefer Supabase Storage, Cloudflare R2, or AWS S3 on Railway; if you intentionally use Vercel Blob outside Vercel, validate it with `STORAGE_SMOKE_TEST=1 pnpm run doctor`.
-
-### Scheduler
+## Scheduler
 
 Use an external scheduler for `GET /api/generations/process` when you want background recovery without opening the dashboard. Send the worker bearer secret configured from [`.env.example`](.env.example) and keep the frequency low enough to avoid `429` responses.
 
@@ -217,21 +222,12 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 
 ## Security and compliance
 
-Sherin publishes its trust signals through public GitLab and GitHub checks so contributors can inspect the actual CI configuration, jobs, and reports.
-
-| Signal                      | Coverage                                                                                                                                                          |
-| :-------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitLab application security | SAST, Advanced SAST, IaC scanning, Dependency Scanning, Secret Detection, Code Quality, guarded Container Scanning, package audit, and redacted Gitleaks.         |
-| Runtime scan                | Scheduled/manual GitLab DAST runs against the public demo target.                                                                                                 |
-| License compliance          | Dependency license inventory is reviewed against [LICENSES.md](LICENSES.md); approval policies are deferred until the GitLab group has enough eligible reviewers. |
-| Repository guards           | GitHub CodeQL, Package Check, Sentry Project Check, CircleCI, and Codecov stay public for cross-provider verification.                                            |
-
-Container scanning is present in CI but only runs when `CS_IMAGE` is configured for a repository that publishes a container image.
+The project publishes its trust signals through public GitHub, GitLab, or other CI provider checks so contributors can inspect the actual CI configuration, jobs, and reports.
 
 ## Community
 
-Sherin is an Apache-2.0 open-source starter in [`babysea-community/sherin`](https://github.com/babysea-community/sherin). Issues, pull requests, design discussion, and security reports should follow [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), and [`SECURITY.md`](SECURITY.md).
+Issues, pull requests, design discussion, and security reports should follow [`CONTRIBUTING.md`](CONTRIBUTING.md), [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md), and [`SECURITY.md`](SECURITY.md).
 
 ## License
 
-[Apache License 2.0](LICENSE). Use it, fork it, ship it.
+[Apache License 2.0](LICENSE).

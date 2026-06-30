@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { InlineByokModelProviderLight } from '@/components/icons/inline-model';
+import { InlineBlackForestLabsLight } from '@/components/icons/inline-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,7 +10,6 @@ import {
   BYOK_MODEL_ID_PREFIX,
   GENERATION_PROMPT_PLACEHOLDER,
   MODEL_OPTIONS,
-  RATIOS,
   type SherinModelId,
 } from '@/lib/app-config';
 import generationDescriptions from '@/lib/generation/descriptions.json';
@@ -40,9 +39,11 @@ const INPUT_IMAGE_SOURCE_OPTIONS = [
 export function PromptField({
   onPromptChange,
   prompt,
+  required = true,
 }: {
   onPromptChange?: (prompt: string) => void;
   prompt?: string;
+  required?: boolean;
 }) {
   return (
     <Field
@@ -50,7 +51,7 @@ export function PromptField({
       description={getFieldDescription('generation_prompt')}
     >
       <Textarea
-        required
+        required={required}
         name="prompt"
         rows={6}
         placeholder={GENERATION_PROMPT_PLACEHOLDER}
@@ -176,7 +177,7 @@ function ModelVendorIcon({ modelId }: { modelId: string }) {
 
   return (
     <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#48d1cc1a]">
-      <InlineByokModelProviderLight
+      <InlineBlackForestLabsLight
         className="h-2.5 w-3.5 shrink-0"
         aria-hidden="true"
       />
@@ -202,10 +203,7 @@ export function RatioField({
         defaultValue={defaultRatio}
         options={ratioOptions.map((ratio) => ({
           value: ratio,
-          label:
-            ratio in RATIOS
-              ? `${ratio} - ${RATIOS[ratio as keyof typeof RATIOS].width}x${RATIOS[ratio as keyof typeof RATIOS].height}`
-              : ratio,
+          label: ratio,
         }))}
       />
     </Field>
@@ -266,10 +264,12 @@ export function InputImageUrlsField({
   descriptionKey,
   maxUrls,
   name,
+  required = false,
 }: {
   descriptionKey: string;
   maxUrls: number;
   name: string;
+  required?: boolean;
 }) {
   const [source, setSource] = useState<InputImageSource>('url');
   const sourceFieldName = `${name}_source`;
@@ -313,11 +313,12 @@ export function InputImageUrlsField({
         {source === 'url' ? (
           <Textarea
             name={name}
+            required={required}
             rows={3}
             placeholder={
               maxUrls === 1
-                ? 'Optional. https://example.com/input.png'
-                : 'Optional. https://example.com/input.png, https://example.com/reference.jpg'
+                ? `${required ? '' : 'Optional. '}https://example.com/input.png`
+                : `${required ? '' : 'Optional. '}https://example.com/input.png, https://example.com/reference.jpg`
             }
             className="resize-y"
           />
@@ -325,7 +326,85 @@ export function InputImageUrlsField({
           <Input
             name={uploadFieldName}
             type="file"
+            required={required}
             accept="image/png,image/jpeg,image/webp,image/gif"
+            multiple={maxUrls > 1}
+            className="h-auto min-h-10 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-950"
+          />
+        )}
+      </span>
+    </Field>
+  );
+}
+
+export function InputVideoUrlsField({
+  descriptionKey,
+  maxUrls,
+  name,
+  required = false,
+}: {
+  descriptionKey: string;
+  maxUrls: number;
+  name: string;
+  required?: boolean;
+}) {
+  const [source, setSource] = useState<InputImageSource>('url');
+  const sourceFieldName = `${name}_source`;
+  const uploadFieldName = `${name}_upload`;
+
+  return (
+    <Field
+      className="sm:col-span-2"
+      label="Input video"
+      description={inputMediaDescription(descriptionKey, maxUrls, 'video')}
+    >
+      <input type="hidden" name={sourceFieldName} value={source} />
+
+      <span
+        role="radiogroup"
+        aria-label="Input video source"
+        className="grid gap-2 sm:grid-cols-2"
+      >
+        {INPUT_IMAGE_SOURCE_OPTIONS.map((option) => {
+          const selected = option.value === source;
+
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={selected}
+              onClick={() => setSource(option.value)}
+              className={`h-10 rounded-xl border px-3 text-sm font-medium transition ${
+                selected
+                  ? 'border-fuchsia-300/60 bg-white text-slate-950 shadow-sm shadow-fuchsia-950/20'
+                  : 'border-white/10 bg-slate-950/80 text-slate-300 hover:border-white/20 hover:text-white'
+              }`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
+      </span>
+
+      <span className="mt-3 block">
+        {source === 'url' ? (
+          <Textarea
+            name={name}
+            required={required}
+            rows={3}
+            placeholder={
+              maxUrls === 1
+                ? `${required ? '' : 'Optional. '}https://example.com/input.mp4`
+                : `${required ? '' : 'Optional. '}https://example.com/input-1.mp4, https://example.com/input-2.mp4`
+            }
+            className="resize-y"
+          />
+        ) : (
+          <Input
+            name={uploadFieldName}
+            type="file"
+            required={required}
+            accept="video/mp4,video/webm,video/quicktime"
             multiple={maxUrls > 1}
             className="h-auto min-h-10 py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-950"
           />
@@ -345,7 +424,7 @@ export function Base64ImagePromptField({
   return (
     <Field
       className="sm:col-span-2"
-      label="Image prompt (base64)"
+      label="Input image (base64)"
       description={base64ImagePromptDescription(descriptionKey)}
     >
       <Textarea
@@ -365,6 +444,7 @@ export function NumberField({
   name,
   min,
   max,
+  required = false,
   step,
 }: {
   defaultValue?: number | string;
@@ -373,6 +453,7 @@ export function NumberField({
   name: string;
   min: number;
   max: number;
+  required?: boolean;
   step?: string;
 }) {
   return (
@@ -382,6 +463,7 @@ export function NumberField({
         type="number"
         min={min}
         max={max}
+        required={required}
         step={step}
         defaultValue={defaultValue}
         placeholder={defaultValue === undefined ? 'Optional' : undefined}
@@ -426,13 +508,31 @@ export function getFieldDescription(field: string) {
   return fieldDescriptions[field];
 }
 
+export function getFieldLabel(field: string) {
+  return field
+    .replace(/^generation_/, '')
+    .split('_')
+    .filter(Boolean)
+    .map((part) => part[0]?.toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
 function punctuateDescription(description: string) {
   return /[.!?]$/.test(description) ? description : `${description}.`;
 }
 
 function inputImageDescription(descriptionKey: string, maxUrls: number) {
+  return inputMediaDescription(descriptionKey, maxUrls, 'image');
+}
+
+function inputMediaDescription(
+  descriptionKey: string,
+  maxUrls: number,
+  mediaLabel: 'image' | 'video',
+) {
   const baseDescription = getFieldDescription(descriptionKey);
-  const maxLabel = maxUrls === 1 ? '1 image' : `${maxUrls} images`;
+  const maxLabel =
+    maxUrls === 1 ? `1 ${mediaLabel}` : `${maxUrls} ${mediaLabel}s`;
   const urlDescription = `Max ${maxLabel}`;
 
   return [baseDescription, urlDescription].filter(Boolean).join('. ');

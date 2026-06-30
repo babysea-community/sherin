@@ -7,7 +7,6 @@ import {
   BYOK_MODEL_CONFIGS,
   DEFAULT_OUTPUT_FORMAT,
   DEFAULT_RATIO,
-  RATIOS,
   getDefaultModelIdForInferenceProvider,
   getBabySeaInputFileLimit,
   getModelOptionsForInferenceProvider,
@@ -66,13 +65,6 @@ export function StudioModelFields({
     ? BYOK_MODEL_CONFIGS[selectedModel]
     : null;
   const babySeaSchema = babySeaSchemas[selectedModel];
-  const showByokDimensions = byokConfig?.sizingMode === 'dimensions';
-  const byokDefaultDimensions =
-    showByokDimensions && byokConfig?.resolutions.length === 0
-      ? RATIOS[
-          defaultValue(byokConfig.ratios, DEFAULT_RATIO) as keyof typeof RATIOS
-        ]
-      : undefined;
 
   useEffect(() => {
     const draft = readStudioFormDraft();
@@ -133,28 +125,21 @@ export function StudioModelFields({
       byokConfig ? (
         <ByokFormFields
           key={`byok-${selectedModel}`}
-          defaultDimensions={byokDefaultDimensions}
           defaultOutputFormat={defaultValue(
             byokConfig.outputFormats,
             DEFAULT_OUTPUT_FORMAT,
           )}
-          defaultPromptUpsampling={byokConfig.defaultPromptUpsampling}
-          defaultRatio={defaultValue(byokConfig.ratios, DEFAULT_RATIO)}
-          defaultResolution={byokConfig.defaultResolution}
-          dimension={byokConfig.dimension}
-          inputFileLimit={byokConfig.inputFileLimit}
+          defaultRatio={defaultValue(
+            byokConfig.ratios,
+            byokConfig.defaultRatio,
+          )}
+          inputFileLimit={byokConfig.inputImageLimit}
           onPromptChange={setPrompt}
           outputFormatOptions={[...byokConfig.outputFormats]}
           prompt={prompt}
           ratioOptions={[...byokConfig.ratios]}
-          resolutionOptions={[...byokConfig.resolutions]}
-          safetyToleranceOptions={byokConfig.safetyTolerances}
-          showDimensions={showByokDimensions}
-          showGuidance={byokConfig.supportsGuidance}
-          showImagePrompt={byokConfig.supportsImagePrompt}
-          showPromptUpsampling={byokConfig.supportsPromptUpsampling}
-          showRaw={byokConfig.supportsRaw}
-          showSteps={byokConfig.supportsSteps}
+          schema={byokConfig.schema}
+          videoInputFileLimit={byokConfig.inputVideoLimit}
         />
       ) : null}
     </div>

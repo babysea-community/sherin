@@ -8,6 +8,9 @@ import {
 } from '@/lib/inference/bfl/server-actions';
 import type { InferenceRequest } from '@/lib/inference/types';
 
+const PNG_BASE64_IMAGE_PROMPT =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=';
+
 describe('BFL provider', () => {
   beforeEach(() => {
     process.env.BFL_API_KEY = 'bfl_test_key';
@@ -49,7 +52,7 @@ describe('BFL provider', () => {
 
     const generationPromise = createBflProvider().generate(
       createRequest({
-        byokParams: { raw: true },
+        byokParams: { generation_raw: true },
         model: 'bfl/flux-1.1-pro-ultra',
         outputFormat: 'png',
         ratio: '21:9',
@@ -81,6 +84,179 @@ describe('BFL provider', () => {
     expect(submitBody).not.toHaveProperty('height');
     expect(submitBody).not.toHaveProperty('image_prompt');
     expect(result.remoteUrl).toBe('https://assets.example.com/ultra.png');
+  });
+
+  it('normalizes Semantic Lady generation fields into the BFL request body', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = mockReadyBflFetch('req_semantic');
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generationPromise = createBflProvider().generate(
+      createRequest({
+        byokParams: {
+          generation_image_prompt_strength: 0.4,
+          generation_moderation: true,
+          generation_prompt_extend: true,
+          generation_raw: true,
+          generation_seed: 123,
+        },
+        model: 'bfl/flux-1.1-pro-ultra',
+        outputFormat: 'png',
+        ratio: '16:9',
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    await generationPromise;
+
+    const [, submitInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const submitBody = JSON.parse(String(submitInit.body)) as Record<
+      string,
+      unknown
+    >;
+
+    expect(submitBody).toMatchObject({
+      aspect_ratio: '16:9',
+      image_prompt_strength: 0.4,
+      prompt_upsampling: true,
+      raw: true,
+      safety_tolerance: 0,
+      seed: 123,
+    });
+  });
+
+  it('maps Semantic Lady moderation off to babychain-compatible BFL safety tolerance', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = mockReadyBflFetch('req_moderation_off');
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generationPromise = createBflProvider().generate(
+      createRequest({
+        byokParams: { generation_moderation: false },
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    await generationPromise;
+
+    const [, submitInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const submitBody = JSON.parse(String(submitInit.body)) as Record<
+      string,
+      unknown
+    >;
+
+    expect(submitBody.safety_tolerance).toBe(5);
+  });
+
+  it('prepares BYOK form params only when supported Semantic Lady form values are present', async () => {
+    const provider = createBflProvider();
+
+    await expect(
+      prepareRequest(provider, createRequest({ model: 'bfl/flux-1.1-pro' })),
+    ).resolves.toMatchObject({
+      inputImageLimit: 0,
+      request: { byokParams: {} },
+    });
+
+    await expect(
+      prepareRequest(provider, createRequest({ model: 'bfl/flux-2-pro' })),
+    ).resolves.toMatchObject({ request: { byokParams: {} } });
+
+    await expect(
+      prepareRequest(provider, createRequest({ model: 'bfl/flux-2-flex' })),
+    ).resolves.toMatchObject({ request: { byokParams: {} } });
+
+    const formData = new FormData();
+    formData.set('generation_prompt_extend', 'true');
+    formData.set('generation_raw', 'true');
+
+    await expect(
+      prepareRequest(
+        provider,
+        createRequest({
+          model: 'bfl/flux-1.1-pro-ultra',
+          ratio: '16:9',
+        }),
+        { formData },
+      ),
+    ).resolves.toMatchObject({
+      request: {
+        byokParams: { generation_prompt_extend: true, generation_raw: true },
+      },
+    });
+  });
+
+  it('prepares base64 image prompts from BYOK form data', async () => {
+    const provider = createBflProvider();
+    const formData = new FormData();
+
+    formData.set(
+      'byok_image_prompt',
+      `data:image/png;base64,${PNG_BASE64_IMAGE_PROMPT}`,
+    );
+
+    await expect(
+      prepareRequest(provider, createRequest({ model: 'bfl/flux-1.1-pro' }), {
+        formData,
+      }),
+    ).resolves.toMatchObject({
+      request: { byokParams: { imagePrompt: PNG_BASE64_IMAGE_PROMPT } },
+    });
+  });
+
+  it('rejects FLUX 1.x generic input images because image_prompt is base64-only', async () => {
+    const fetchMock = vi.fn();
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(
+      createBflProvider().generate(
+        createRequest({
+          inputFiles: ['https://assets.example.com/source.png'],
+          model: 'bfl/flux-1.1-pro',
+        }),
+      ),
+    ).rejects.toThrow('only accepts base64 image prompts');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('maps FLUX 2 input image URLs to BFL numbered input image fields', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = mockReadyBflFetch('req_flux_2_images');
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generationPromise = createBflProvider().generate(
+      createRequest({
+        inputFiles: [
+          'https://assets.example.com/source-1.png',
+          'https://assets.example.com/source-2.png',
+        ],
+        model: 'bfl/flux-2-pro',
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    await generationPromise;
+
+    const [, submitInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const submitBody = JSON.parse(String(submitInit.body)) as Record<
+      string,
+      unknown
+    >;
+
+    expect(submitBody.input_image).toBe(
+      'https://assets.example.com/source-1.png',
+    );
+    expect(submitBody.input_image_2).toBe(
+      'https://assets.example.com/source-2.png',
+    );
+    expect(submitBody).not.toHaveProperty('image_prompt');
   });
 
   it('resumes polling without resubmitting direct provider work', async () => {
@@ -127,7 +303,34 @@ describe('BFL provider', () => {
     expect(result.remoteUrl).toBe('https://assets.example.com/resumed.png');
   });
 
-  it('rejects image prompts unsupported by current FLUX 1.1 endpoints', async () => {
+  it('maps FLUX 1.x base64 image prompts to BFL image_prompt', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = mockReadyBflFetch('req_flux_1_base64');
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const generationPromise = createBflProvider().generate(
+      createRequest({
+        byokParams: { imagePrompt: PNG_BASE64_IMAGE_PROMPT },
+        model: 'bfl/flux-1.1-pro',
+      }),
+    );
+
+    await vi.advanceTimersByTimeAsync(1_500);
+    await generationPromise;
+
+    const [, submitInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const submitBody = JSON.parse(String(submitInit.body)) as Record<
+      string,
+      unknown
+    >;
+
+    expect(submitBody.image_prompt).toBe(PNG_BASE64_IMAGE_PROMPT);
+    expect(submitBody).not.toHaveProperty('input_image');
+  });
+
+  it('rejects base64 image prompts for FLUX 2 URL-input models', async () => {
     const fetchMock = vi.fn();
 
     vi.stubGlobal('fetch', fetchMock);
@@ -135,21 +338,11 @@ describe('BFL provider', () => {
     await expect(
       createBflProvider().generate(
         createRequest({
-          byokParams: { imagePrompt: 'base64-image' },
-          model: 'bfl/flux-1.1-pro',
+          byokParams: { imagePrompt: PNG_BASE64_IMAGE_PROMPT },
+          model: 'bfl/flux-2-pro',
         }),
       ),
-    ).rejects.toThrow('does not support image prompts');
-
-    await expect(
-      createBflProvider().generate(
-        createRequest({
-          byokParams: { imagePrompt: 'base64-image' },
-          model: 'bfl/flux-1.1-pro-ultra',
-          ratio: '16:9',
-        }),
-      ),
-    ).rejects.toThrow('does not support image prompts');
+    ).rejects.toThrow('does not support base64 image prompts');
 
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -175,21 +368,30 @@ describe('BFL provider', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('rejects safety tolerances unsupported by the selected BFL model', async () => {
-    const fetchMock = vi.fn();
+  it('ignores stale legacy safety tolerance params outside the selected BFL schema', async () => {
+    vi.useFakeTimers();
+
+    const fetchMock = mockReadyBflFetch('req_legacy_safety_tolerance');
 
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(
-      createBflProvider().generate(
-        createRequest({
-          byokParams: { safetyTolerance: 6 },
-          model: 'bfl/flux-2-pro',
-        }),
-      ),
-    ).rejects.toThrow('does not support safety tolerance 6');
+    const generationPromise = createBflProvider().generate(
+      createRequest({
+        byokParams: { safetyTolerance: 6 },
+        model: 'bfl/flux-2-pro',
+      }),
+    );
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1_500);
+    await generationPromise;
+
+    const [, submitInit] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const submitBody = JSON.parse(String(submitInit.body)) as Record<
+      string,
+      unknown
+    >;
+
+    expect(submitBody.safety_tolerance).toBe(2);
   });
 
   it('rejects output formats unsupported by direct BFL', async () => {
@@ -249,4 +451,42 @@ function createRequest(
     ratio: '1:1',
     ...overrides,
   };
+}
+
+function mockReadyBflFetch(requestId: string) {
+  return vi
+    .fn()
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          id: requestId,
+          polling_url: `https://api.bfl.ai/v1/get_result?id=${requestId}`,
+        }),
+        { headers: { 'content-type': 'application/json' }, status: 200 },
+      ),
+    )
+    .mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          result: { sample: `https://assets.example.com/${requestId}.png` },
+          status: 'Ready',
+        }),
+        { headers: { 'content-type': 'application/json' }, status: 200 },
+      ),
+    );
+}
+
+async function prepareRequest(
+  provider: ReturnType<typeof createBflProvider>,
+  request: InferenceRequest,
+  options: { formData?: FormData } = {},
+) {
+  if (!provider.prepareRequest) {
+    throw new Error('BFL provider does not expose prepareRequest.');
+  }
+
+  return await provider.prepareRequest({
+    formData: options.formData ?? new FormData(),
+    request,
+  });
 }

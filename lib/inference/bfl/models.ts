@@ -1,17 +1,19 @@
-import { BFL_MODEL_CONFIGS, type SherinModelId } from '@/lib/app-config';
+import {
+  BFL_MODEL_CONFIGS,
+  hasBflModelConfig,
+  type BflModelId,
+} from './family';
 
-export { BFL_MODEL_CONFIGS, type BflModelConfig } from '@/lib/app-config';
+export { BFL_MODEL_CONFIGS, type BflModelConfig } from './family';
 
-export function resolveBflModelConfig(model: SherinModelId) {
-  const config = BFL_MODEL_CONFIGS[model];
-
-  if (!config) {
+export function resolveBflModelConfig(model: string) {
+  if (!hasBflModelConfig(model)) {
     throw new Error(`Black Forest Labs does not support model ${model}.`);
   }
 
-  return config;
+  return BFL_MODEL_CONFIGS[model];
 }
 
-export function resolveBflModelEndpoint(model: SherinModelId) {
-  return resolveBflModelConfig(model).endpoint;
+export function resolveBflProviderModel(model: BflModelId) {
+  return resolveBflModelConfig(model).providerModel;
 }

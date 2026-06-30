@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: 'bottom-right',
   },
-  // Avoid printing full external fetch URLs (BabySea / Supabase / Upstash /
+  // Avoid printing full external fetch URLs (BabySea/Supabase/Upstash /
   // webhook callback URLs) into production logs. Full URLs are still useful
   // locally for debugging.
   logging: {

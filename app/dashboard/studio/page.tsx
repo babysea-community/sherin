@@ -29,7 +29,7 @@ import { cancelActiveGeneration, generateImage } from './_lib/server-actions';
 
 export const metadata: Metadata = {
   title: 'Studio',
-  description: 'Generate images through your own keys and storage.',
+  description: 'Generate media through your own keys and storage.',
   robots: { index: false, follow: false },
 };
 
@@ -45,7 +45,8 @@ const BABYSEA_SCHEMA_UNAVAILABLE_COPY =
 const STUDIO_TOASTS: Record<string, Omit<StudioToast, 'id'>> = {
   invalid_input: {
     type: 'warning',
-    message: 'Some generation settings are outside the active provider schema.',
+    message:
+      'Some generation settings or input media are invalid. Check the active model fields and use public HTTPS image or video URLs.',
   },
   inference_unconfigured: {
     type: 'warning',
@@ -138,6 +139,12 @@ export default async function StudioPage({ searchParams }: PageProps) {
   const latestPreviewUrl =
     latestAssetUrl ??
     (showSampleResult ? SHERIN_SAMPLE_RESULT.previewUrl : null);
+  const latestPreviewContentType = latestGeneration
+    ? (getGenerationMetadataString(
+        latestGeneration.metadata,
+        'sherin_asset_content_type',
+      ) ?? previewContentTypeForOutputFormat(latestRequest?.outputFormat))
+    : null;
   const showGeneratingPreview = latestGenerationActive && !latestPreviewUrl;
   const studioToasts = createStudioToasts({
     activeProvider,
@@ -163,7 +170,7 @@ export default async function StudioPage({ searchParams }: PageProps) {
                 Input
               </p>
               <h1 className="mt-2 text-2xl font-semibold text-white">
-                Image model
+                Media model
               </h1>
             </div>
           </div>
@@ -250,6 +257,7 @@ export default async function StudioPage({ searchParams }: PageProps) {
                   : null
             }
             generating={showGeneratingPreview}
+            previewContentType={latestPreviewContentType}
             previewUrl={latestPreviewUrl}
             stage={latestActiveStage}
           />
@@ -261,6 +269,10 @@ export default async function StudioPage({ searchParams }: PageProps) {
 
 function isActiveGenerationStatus(status: string) {
   return status === 'queued' || status === 'running';
+}
+
+function previewContentTypeForOutputFormat(outputFormat: string | undefined) {
+  return outputFormat === 'mp4' ? 'video/mp4' : null;
 }
 
 function readStudioFormDefaults(metadata: unknown): {

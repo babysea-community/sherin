@@ -5,7 +5,7 @@ import { WifiOff } from 'lucide-react';
 
 /**
  * Minimal offline indicator. Subscribes to `navigator.onLine` via the
- * `online` / `offline` window events and shows a high-contrast banner when
+ * `online`/`offline` window events and shows a high-contrast banner when
  * the browser reports it has lost connectivity. Hidden on the server so
  * there's no hydration flash. `role="status"` + `aria-live="polite"` lets
  * screen readers announce the change without stealing focus.

@@ -230,7 +230,7 @@ function timingSafeStringEqual(left: string, right: string) {
 /**
  * Rate-limit key fingerprint. We never expose the raw bearer token or IP to
  * caller-visible headers, so a short opaque hash is sufficient. Using the
- * first 16 chars of the token / IP keeps memory bounded.
+ * first 16 chars of the token/IP keeps memory bounded.
  */
 function fingerprint(value: string) {
   return value.slice(0, 16);

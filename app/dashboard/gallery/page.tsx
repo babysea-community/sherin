@@ -27,7 +27,7 @@ import { getStorageProviderStatus } from '@/lib/storage';
 import { getUser } from '@/lib/database/server-actions';
 import { formatDate } from '@/lib/utils';
 import { InlineBabySea } from '@/components/icons/inline-babysea';
-import { InlineByokInferenceProviderLight } from '@/components/icons/inline-inference';
+import { InlineBlackForestLabsLight } from '@/components/icons/inline-inference';
 import {
   InlineAwsS3Storage,
   InlineCloudflareR2Storage,
@@ -44,7 +44,7 @@ import { GalleryPreviewPanel } from './_components/gallery-preview-panel';
 
 export const metadata: Metadata = {
   title: 'Gallery',
-  description: 'Every image you have generated through Sherin.',
+  description: 'Every media asset you have generated through Sherin.',
   robots: { index: false, follow: false },
 };
 
@@ -72,6 +72,9 @@ export default async function GalleryPage() {
   const rows = (generations ?? []).map((generation) => {
     const request = getGenerationRequestSnapshot(generation.metadata);
     const previewUrl = previewUrlForGeneration(generation);
+    const previewContentType =
+      previewContentTypeForGeneration(generation) ??
+      previewContentTypeForOutputFormat(request.outputFormat);
     const previewSource: 'storage' | null = previewUrl ? 'storage' : null;
     const storageProvider = storageProviderForGeneration(generation);
     const fallbackStorageProvider =
@@ -91,6 +94,7 @@ export default async function GalleryPage() {
         fallbackStorageProvider,
       ),
       fallbackStorageProvider,
+      previewContentType,
       previewUrl,
       storageProvider,
       previewSource,
@@ -151,6 +155,7 @@ export default async function GalleryPage() {
               <GalleryPreviewPanel
                 priority={index < 4}
                 prompt={generation.prompt}
+                previewContentType={generation.previewContentType}
                 previewUrl={generation.previewUrl}
                 ratio={generation.ratio}
                 status={generation.status}
@@ -175,6 +180,7 @@ function createSampleGalleryRow() {
     id: SHERIN_SAMPLE_RESULT.id,
     imageInfo:
       'Sample image only. Your first real generation will replace this card.',
+    previewContentType: null,
     previewUrl: SHERIN_SAMPLE_RESULT.previewUrl,
     prompt: SHERIN_SAMPLE_RESULT.prompt,
     ratio: SHERIN_SAMPLE_RESULT.ratio,
@@ -325,7 +331,7 @@ function inferenceProviderSummaryValue(provider: string): ProviderSummaryValue {
     return {
       content: (
         <>
-          <InlineByokInferenceProviderLight
+          <InlineBlackForestLabsLight
             className="h-3.5 w-5 shrink-0"
             aria-hidden="true"
           />
@@ -360,12 +366,12 @@ function storageProviderSummaryValue(provider: string): ProviderSummaryValue {
     };
   }
 
-  if (normalizedProvider === 'vercel-blob') {
+  if (normalizedProvider === 'aws-s3') {
     return {
       content: (
         <>
-          <InlineVercelBlob className="size-4 shrink-0" aria-hidden="true" />
-          <span>Vercel Blob{fallbackSuffix}</span>
+          <InlineAwsS3Storage className="size-4 shrink-0" aria-hidden="true" />
+          <span>AWS S3{fallbackSuffix}</span>
         </>
       ),
       key: provider,
@@ -387,12 +393,12 @@ function storageProviderSummaryValue(provider: string): ProviderSummaryValue {
     };
   }
 
-  if (normalizedProvider === 'aws-s3') {
+  if (normalizedProvider === 'vercel-blob') {
     return {
       content: (
         <>
-          <InlineAwsS3Storage className="size-4 shrink-0" aria-hidden="true" />
-          <span>AWS S3{fallbackSuffix}</span>
+          <InlineVercelBlob className="size-4 shrink-0" aria-hidden="true" />
+          <span>Vercel Blob{fallbackSuffix}</span>
         </>
       ),
       key: provider,
@@ -459,16 +465,16 @@ function formatStorageProvider(provider: string) {
     return 'Supabase Storage';
   }
 
-  if (provider === 'vercel-blob') {
-    return 'Vercel Blob';
+  if (provider === 'aws-s3') {
+    return 'AWS S3';
   }
 
   if (provider === 'cloudflare-r2') {
     return 'Cloudflare R2';
   }
 
-  if (provider === 'aws-s3') {
-    return 'AWS S3';
+  if (provider === 'vercel-blob') {
+    return 'Vercel Blob';
   }
 
   return provider;
@@ -501,11 +507,8 @@ function normalizeStorageProviderForSummary(provider: string | null) {
     return 'supabase-storage';
   }
 
-  if (
-    normalizedProvider === 'vercel-blob' ||
-    normalizedProvider === 'vercel blob'
-  ) {
-    return 'vercel-blob';
+  if (normalizedProvider === 'aws-s3' || normalizedProvider === 'aws s3') {
+    return 'aws-s3';
   }
 
   if (
@@ -515,8 +518,11 @@ function normalizeStorageProviderForSummary(provider: string | null) {
     return 'cloudflare-r2';
   }
 
-  if (normalizedProvider === 'aws-s3' || normalizedProvider === 'aws s3') {
-    return 'aws-s3';
+  if (
+    normalizedProvider === 'vercel-blob' ||
+    normalizedProvider === 'vercel blob'
+  ) {
+    return 'vercel-blob';
   }
 
   return normalizedProvider;
@@ -568,6 +574,19 @@ function previewUrlForGeneration(generation: {
   return `/dashboard/gallery/preview/${generation.id}`;
 }
 
+function previewContentTypeForGeneration(generation: {
+  metadata: Parameters<typeof getGenerationMetadataString>[0];
+}) {
+  return getGenerationMetadataString(
+    generation.metadata,
+    'sherin_asset_content_type',
+  );
+}
+
+function previewContentTypeForOutputFormat(outputFormat: string | undefined) {
+  return outputFormat === 'mp4' ? 'video/mp4' : null;
+}
+
 function fallbackStorageProviderForGeneration(generation: {
   metadata: Parameters<typeof getGenerationMetadataString>[0];
 }) {
@@ -601,7 +620,7 @@ function imageInfoForGeneration(
     return (
       <>
         Your <CodeValue>{storageProvider}</CodeValue> is set up correctly and
-        the generated image is ready to view. Good job!
+        the generated media is ready to view. Good job!
       </>
     );
   }
@@ -618,13 +637,13 @@ function imageInfoForGeneration(
   if (status === 'unavailable' || status === 'succeeded') {
     return (
       <>
-        Your image file is not available. Check your{' '}
+        Your media file is not available. Check your{' '}
         <CodeValue>{storageProvider}</CodeValue> content.
       </>
     );
   }
 
-  return 'Image output is not available yet.';
+  return 'Media output is not available yet.';
 }
 
 function CodeValue({ children }: { children: string }) {

@@ -50,7 +50,7 @@ export function getOptionalEnvSchema<TSchema extends ZodTypeAny>(
   return requireEnvSchema(name, schema);
 }
 
-const EMAIL_SCHEMA = z.string().email('must be a valid email address');
+const EMAIL_SCHEMA = z.email('must be a valid email address');
 
 export function requireEmailEnv(name: string) {
   return requireEnvSchema(name, EMAIL_SCHEMA);

@@ -1,228 +1,64 @@
 import 'server-only';
+
 import { Buffer } from 'node:buffer';
-import {
-  DEFAULT_BFL_SAFETY_TOLERANCE,
-  getBflFlux2Size,
-  isBflFlux2Model,
-  RATIOS,
-  type SherinDimensionRatio,
-} from '@/lib/app-config';
-import {
-  getOptionalEnv,
-  getOptionalPositiveIntEnv,
-  requireEnv,
-} from '@/lib/utils/env';
+
+import { getOptionalEnv, getOptionalPositiveIntEnv } from '@/lib/utils/env';
+
+import { BFL_PROVIDER_ID, type BflModelConfig } from './family';
 import { resolveBflModelConfig } from './models';
+import { assertBflSemanticParams } from './semantic-lady';
 import type {
+  InferenceByokParams,
   InferenceProvider,
   InferenceRequest,
   InferenceResult,
 } from '../types';
 
 const DEFAULT_BFL_BASE_URL = 'https://api.bfl.ai';
-const MAX_BFL_IMAGE_PROMPT_BYTES = 10 * 1024 * 1024;
-const MAX_BFL_IMAGE_PROMPT_BASE64_CHARS =
-  Math.ceil(MAX_BFL_IMAGE_PROMPT_BYTES / 3) * 4;
-
-const POLL_INTERVAL_MS = 1500;
-// Polling budget per worker invocation. Must stay safely below the route's
-// `maxDuration` (60s by default on Vercel Pro). When the budget elapses the
-// worker exits cleanly; the next cron tick resumes polling via the persisted
-// `bfl_request_id`, so end-to-end generation latency is uncapped. Override
-// with `INFERENCE_POLL_TIMEOUT_MS` if you raise the worker `maxDuration`.
+const POLL_INTERVAL_MS = 1_500;
 const DEFAULT_POLL_TIMEOUT_MS = 45_000;
 const POLL_TIMEOUT_MS =
   getOptionalPositiveIntEnv('INFERENCE_POLL_TIMEOUT_MS') ??
   DEFAULT_POLL_TIMEOUT_MS;
 const REQUEST_TIMEOUT_MS = 20_000;
-// Inference signed sample URLs are valid for ~10 minutes. We download to durable
-// storage immediately, but the URL is also persisted to metadata so the UI
-// can surface a stale-link warning when the asset cannot be resolved.
 const BFL_SAMPLE_URL_TTL_MS = 10 * 60 * 1000;
-
-export function isBflConfigured() {
-  return Boolean(getOptionalEnv('BFL_API_KEY'));
-}
+const DEFAULT_BFL_SAFETY_TOLERANCE = 2;
+const MAX_BFL_IMAGE_PROMPT_BYTES = 10 * 1024 * 1024;
 
 type BflRequestParams = {
-  guidanceScale?: number;
+  guidance?: number;
   height?: number;
   imagePrompt?: string;
-  numInferenceSteps?: number;
-  promptUpsampling: boolean;
-  raw: boolean;
-  safetyTolerance: number;
+  imagePromptStrength?: number;
+  moderation?: boolean;
+  promptExtend?: boolean;
+  raw?: boolean;
   seed?: number;
+  steps?: number;
   width?: number;
 };
 
-function readBflParamsFromFormData(
-  formData: FormData,
-  config: ReturnType<typeof resolveBflModelConfig>,
-): BflRequestParams {
-  const rawImagePrompt = readOptionalString(
-    formData.get('byok_image_prompt') ?? formData.get('bfl_image_prompt'),
-  );
-  const imagePrompt = rawImagePrompt
-    ? normalizeBflImagePromptBase64(rawImagePrompt)
-    : undefined;
+type BflSubmitResponse = {
+  id?: string;
+  polling_url?: string;
+};
 
-  if (rawImagePrompt && !imagePrompt) {
-    throw new Error('Invalid BFL image prompt.');
-  }
+type BflPollResponse = {
+  status: string;
+  result?: { sample?: string };
+};
 
-  return {
-    ...(readOptionalNumber(
-      formData.get('byok_guidance_scale') ?? formData.get('bfl_guidance_scale'),
-    ) !== undefined
-      ? {
-          guidanceScale: readOptionalNumber(
-            formData.get('byok_guidance_scale') ??
-              formData.get('bfl_guidance_scale'),
-          ),
-        }
-      : {}),
-    ...(readOptionalNumber(
-      formData.get('byok_height') ?? formData.get('bfl_height'),
-    ) !== undefined
-      ? {
-          height: readOptionalNumber(
-            formData.get('byok_height') ?? formData.get('bfl_height'),
-          ),
-        }
-      : {}),
-    ...(imagePrompt ? { imagePrompt } : {}),
-    ...(readOptionalNumber(
-      formData.get('byok_num_inference_steps') ??
-        formData.get('bfl_num_inference_steps'),
-    ) !== undefined
-      ? {
-          numInferenceSteps: readOptionalNumber(
-            formData.get('byok_num_inference_steps') ??
-              formData.get('bfl_num_inference_steps'),
-          ),
-        }
-      : {}),
-    promptUpsampling: formData.has('byok_prompt_upsampling')
-      ? formData.get('byok_prompt_upsampling') === 'true'
-      : formData.has('bfl_prompt_upsampling')
-        ? formData.get('bfl_prompt_upsampling') === 'true'
-        : config.defaultPromptUpsampling,
-    raw: (formData.get('byok_raw') ?? formData.get('bfl_raw')) === 'true',
-    safetyTolerance:
-      readOptionalNumber(
-        formData.get('byok_safety_tolerance') ??
-          formData.get('bfl_safety_tolerance'),
-      ) ?? DEFAULT_BFL_SAFETY_TOLERANCE,
-    ...(readOptionalNumber(
-      formData.get('byok_seed') ?? formData.get('bfl_seed'),
-    ) !== undefined
-      ? {
-          seed: readOptionalNumber(
-            formData.get('byok_seed') ?? formData.get('bfl_seed'),
-          ),
-        }
-      : {}),
-    ...(readOptionalNumber(
-      formData.get('byok_width') ?? formData.get('bfl_width'),
-    ) !== undefined
-      ? {
-          width: readOptionalNumber(
-            formData.get('byok_width') ?? formData.get('bfl_width'),
-          ),
-        }
-      : {}),
-  };
-}
-
-function resolveBflParams(
-  params: InferenceRequest['byokParams'],
-  config: ReturnType<typeof resolveBflModelConfig>,
-): BflRequestParams {
-  return {
-    ...(readOptionalNumber(params.guidanceScale) !== undefined
-      ? { guidanceScale: readOptionalNumber(params.guidanceScale) }
-      : {}),
-    ...(readOptionalNumber(params.height) !== undefined
-      ? { height: readOptionalNumber(params.height) }
-      : {}),
-    ...(readOptionalString(params.imagePrompt)
-      ? { imagePrompt: readOptionalString(params.imagePrompt) }
-      : {}),
-    ...(readOptionalNumber(params.numInferenceSteps) !== undefined
-      ? { numInferenceSteps: readOptionalNumber(params.numInferenceSteps) }
-      : {}),
-    promptUpsampling:
-      readOptionalBoolean(params.promptUpsampling) ??
-      config.defaultPromptUpsampling,
-    raw: readOptionalBoolean(params.raw) ?? false,
-    safetyTolerance:
-      readOptionalNumber(params.safetyTolerance) ??
-      DEFAULT_BFL_SAFETY_TOLERANCE,
-    ...(readOptionalNumber(params.seed) !== undefined
-      ? { seed: readOptionalNumber(params.seed) }
-      : {}),
-    ...(readOptionalNumber(params.width) !== undefined
-      ? { width: readOptionalNumber(params.width) }
-      : {}),
-  };
-}
-
-function toBflByokParams(params: BflRequestParams) {
-  return {
-    ...(params.guidanceScale !== undefined
-      ? { guidanceScale: params.guidanceScale }
-      : {}),
-    ...(params.height !== undefined ? { height: params.height } : {}),
-    ...(params.imagePrompt ? { imagePrompt: params.imagePrompt } : {}),
-    ...(params.numInferenceSteps !== undefined
-      ? { numInferenceSteps: params.numInferenceSteps }
-      : {}),
-    promptUpsampling: params.promptUpsampling,
-    raw: params.raw,
-    safetyTolerance: params.safetyTolerance,
-    ...(params.seed !== undefined ? { seed: params.seed } : {}),
-    ...(params.width !== undefined ? { width: params.width } : {}),
-  };
-}
-
-function readOptionalString(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
-}
-
-function readOptionalNumber(value: unknown) {
-  if (value === null || value === undefined || value === '') {
-    return undefined;
-  }
-
-  const numberValue = Number(value);
-
-  return Number.isFinite(numberValue) ? numberValue : undefined;
-}
-
-function readOptionalBoolean(value: unknown) {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (value === 'true') {
-    return true;
-  }
-
-  if (value === 'false') {
-    return false;
-  }
-
-  return undefined;
+export function isBflConfigured() {
+  return Boolean(readBflApiKey());
 }
 
 export function createBflProvider(): InferenceProvider {
-  const apiKey = requireEnv('BFL_API_KEY');
+  const apiKey = requireBflApiKey();
   const baseUrl = resolveBflBaseUrl();
 
   return {
-    id: 'bfl',
-    label: 'BFL',
+    id: BFL_PROVIDER_ID,
+    label: 'Black Forest Labs',
     submitPolicy: { maxSubmitAttemptsWithoutProviderId: 2 },
     extractProviderGenerationId(metadata) {
       const value = metadata.bfl_request_id;
@@ -234,14 +70,35 @@ export function createBflProvider(): InferenceProvider {
       const params = readBflParamsFromFormData(formData, modelConfig);
       const preparedRequest = {
         ...request,
-        byokParams: toBflByokParams(params),
-        resolution: request.resolution ?? modelConfig.defaultResolution,
+        byokParams: params,
+        outputFormat: includesString(
+          modelConfig.outputFormats,
+          request.outputFormat,
+        )
+          ? request.outputFormat
+          : (modelConfig.outputFormats[0] ?? request.outputFormat),
+        ratio: modelConfig.ratios.includes(request.ratio)
+          ? request.ratio
+          : modelConfig.defaultRatio,
+        resolution: modelConfig.defaultResolution,
       };
+      const resolvedParams = resolveBflParams(params, modelConfig);
+      const semanticParams = createBflSemanticParams(
+        preparedRequest,
+        resolvedParams,
+        modelConfig,
+      );
 
-      assertBflRequestMatchesModelConfig(preparedRequest, modelConfig, params);
+      assertBflSemanticParams(request.model, semanticParams);
+      assertBflRequestMatchesModelConfig(
+        preparedRequest,
+        modelConfig,
+        resolvedParams,
+      );
 
       return {
-        inputFileLimit: modelConfig.inputFileLimit,
+        inputImageLimit: modelConfig.inputImageLimit,
+        inputVideoLimit: modelConfig.inputVideoLimit,
         request: preparedRequest,
       };
     },
@@ -251,21 +108,16 @@ export function createBflProvider(): InferenceProvider {
     ): Promise<InferenceResult> {
       const modelConfig = resolveBflModelConfig(request.model);
       const params = resolveBflParams(request.byokParams, modelConfig);
-      const modelEndpoint = modelConfig.endpoint;
-      const dimensions = resolveBflDimensions(request, modelConfig);
-      const width = params.width ?? dimensions?.width;
-      const height = params.height ?? dimensions?.height;
+      const semanticParams = createBflSemanticParams(
+        request,
+        params,
+        modelConfig,
+      );
 
-      if (modelConfig.sizingMode === 'dimensions' && (!width || !height)) {
-        throw new Error(`Unsupported ratio for BFL: ${request.ratio}`);
-      }
-
+      assertBflSemanticParams(request.model, semanticParams);
       assertBflRequestMatchesModelConfig(request, modelConfig, params);
 
       const resumeRequestId = options?.providerGenerationId ?? null;
-      const resumeIsLikelyDuplicate = isResumeLikelyDuplicate(
-        options?.resumeMetadata,
-      );
 
       if (resumeRequestId) {
         const pollingUrl = resolveBflResumePollingUrl(
@@ -274,32 +126,26 @@ export function createBflProvider(): InferenceProvider {
           options?.resumeMetadata,
         );
         const bflMetadata = createBflMetadata({
+          modelConfig,
           params,
-          height,
-          modelEndpoint,
           pollingUrl,
           request,
           requestId: resumeRequestId,
           resumed: true,
-          width,
         });
 
         await options?.onStarted?.(bflMetadata);
 
         const polled = await pollBfl(pollingUrl, apiKey);
-        const sample = polled.result?.sample;
-
-        if (typeof sample !== 'string' || !sample.startsWith('https://')) {
-          throw new Error('BFL returned no signed sample URL.');
-        }
+        const remoteUrl = firstBflOutput(polled);
 
         return {
-          providerId: 'bfl',
-          remoteUrl: sample,
+          providerId: BFL_PROVIDER_ID,
+          remoteUrl,
           contentType: contentTypeForBflOutputFormat(request.outputFormat),
           metadata: {
             ...bflMetadata,
-            bfl_remote_url: sample,
+            bfl_remote_url: remoteUrl,
             bfl_remote_url_expires_at: new Date(
               Date.now() + BFL_SAMPLE_URL_TTL_MS,
             ).toISOString(),
@@ -308,38 +154,21 @@ export function createBflProvider(): InferenceProvider {
         };
       }
 
-      // CRITICAL: BFL does not support idempotent re-submit. The worker MUST
-      // persist a "submitting" marker before this network call so that a
-      // crash between submit and id-persistence is detectable. Without that
-      // marker, a worker crash here would silently re-charge credits on retry.
       await options?.onPreSubmit?.({
         sherin_model_id: request.model,
-        sherin_provider: 'bfl',
+        sherin_provider: BFL_PROVIDER_ID,
         sherin_stage: 'provider_submitting',
-        bfl_model_endpoint: modelEndpoint,
-        ...(resumeIsLikelyDuplicate
-          ? { bfl_duplicate_risk: true, sherin_provider_duplicate_risk: true }
-          : {}),
+        bfl_model_endpoint: modelConfig.providerModel,
       });
 
       const submitResponse = await fetch(
-        `${baseUrl}/v1/${encodeURIComponent(modelEndpoint)}`,
+        `${baseUrl}/v1/${encodeURIComponent(modelConfig.providerModel)}`,
         {
           method: 'POST',
-          headers: {
-            accept: 'application/json',
-            'content-type': 'application/json',
-            'x-key': apiKey,
-          },
-          body: JSON.stringify({
-            ...createBflRequestBody(
-              request,
-              width,
-              height,
-              modelConfig,
-              params,
-            ),
-          }),
+          headers: bflHeaders(apiKey),
+          body: JSON.stringify(
+            createBflRequestBody(request, modelConfig, params),
+          ),
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         },
       );
@@ -348,10 +177,7 @@ export function createBflProvider(): InferenceProvider {
         throw await buildBflHttpError('BFL request', submitResponse);
       }
 
-      const submitJson = (await submitResponse.json()) as {
-        id?: string;
-        polling_url?: string;
-      };
+      const submitJson = (await submitResponse.json()) as BflSubmitResponse;
 
       if (!submitJson.id) {
         throw new Error('BFL response did not include an id.');
@@ -364,33 +190,26 @@ export function createBflProvider(): InferenceProvider {
       }
 
       const bflMetadata = createBflMetadata({
+        modelConfig,
         params,
-        height,
-        modelEndpoint,
         pollingUrl,
         request,
         requestId: submitJson.id,
         resumed: false,
-        width,
-        duplicateRisk: resumeIsLikelyDuplicate,
       });
 
       await options?.onStarted?.(bflMetadata);
 
       const polled = await pollBfl(pollingUrl, apiKey);
-      const sample = polled.result?.sample;
-
-      if (typeof sample !== 'string' || !sample.startsWith('https://')) {
-        throw new Error('BFL returned no signed sample URL.');
-      }
+      const remoteUrl = firstBflOutput(polled);
 
       return {
-        providerId: 'bfl',
-        remoteUrl: sample,
+        providerId: BFL_PROVIDER_ID,
+        remoteUrl,
         contentType: contentTypeForBflOutputFormat(request.outputFormat),
         metadata: {
           ...bflMetadata,
-          bfl_remote_url: sample,
+          bfl_remote_url: remoteUrl,
           bfl_remote_url_expires_at: new Date(
             Date.now() + BFL_SAMPLE_URL_TTL_MS,
           ).toISOString(),
@@ -401,233 +220,375 @@ export function createBflProvider(): InferenceProvider {
   };
 }
 
-function resolveBflDimensions(
-  request: InferenceRequest,
-  config: ReturnType<typeof resolveBflModelConfig>,
-) {
-  if (config.sizingMode === 'aspectRatio') {
-    return undefined;
+function readBflParamsFromFormData(
+  formData: FormData,
+  config: BflModelConfig,
+): InferenceRequest['byokParams'] {
+  const params: InferenceRequest['byokParams'] = {};
+
+  if (hasBflSchemaField(config, 'generation_guidance')) {
+    assignNumberParam(
+      params,
+      'generation_guidance',
+      firstFormValue(formData, ['generation_guidance', 'byok_guidance_scale']),
+    );
   }
 
-  if (isBflFlux2Model(request.model)) {
-    return getBflFlux2Size(request.ratio, request.resolution);
+  if (hasBflSchemaField(config, 'generation_height')) {
+    assignNumberParam(
+      params,
+      'generation_height',
+      firstFormValue(formData, ['generation_height', 'byok_height']),
+    );
   }
 
-  return RATIOS[request.ratio as SherinDimensionRatio];
+  assignBase64ImagePromptParam(
+    params,
+    firstFormValue(formData, ['byok_image_prompt', 'generation_image_prompt']),
+  );
+
+  if (hasBflSchemaField(config, 'generation_image_prompt_strength')) {
+    assignNumberParam(
+      params,
+      'generation_image_prompt_strength',
+      formData.get('generation_image_prompt_strength'),
+    );
+  }
+
+  if (hasBflSchemaField(config, 'generation_moderation')) {
+    const moderation = readOptionalBoolean(
+      formData.get('generation_moderation'),
+    );
+
+    if (moderation !== undefined) {
+      params.generation_moderation = moderation;
+    }
+  }
+
+  if (hasBflSchemaField(config, 'generation_prompt_extend')) {
+    const promptExtend = readOptionalBoolean(
+      firstFormValue(formData, [
+        'generation_prompt_extend',
+        'byok_prompt_upsampling',
+      ]),
+    );
+
+    if (promptExtend !== undefined) {
+      params.generation_prompt_extend = promptExtend;
+    }
+  }
+
+  if (hasBflSchemaField(config, 'generation_raw')) {
+    const raw = readOptionalBoolean(
+      firstFormValue(formData, ['generation_raw', 'byok_raw']),
+    );
+
+    if (raw !== undefined) {
+      params.generation_raw = raw;
+    }
+  }
+
+  if (hasBflSchemaField(config, 'generation_seed')) {
+    assignNumberParam(
+      params,
+      'generation_seed',
+      firstFormValue(formData, ['generation_seed', 'byok_seed']),
+    );
+  }
+
+  if (hasBflSchemaField(config, 'generation_steps')) {
+    assignNumberParam(
+      params,
+      'generation_steps',
+      firstFormValue(formData, [
+        'generation_steps',
+        'byok_num_inference_steps',
+      ]),
+    );
+  }
+
+  if (hasBflSchemaField(config, 'generation_width')) {
+    assignNumberParam(
+      params,
+      'generation_width',
+      firstFormValue(formData, ['generation_width', 'byok_width']),
+    );
+  }
+
+  return params;
+}
+
+function resolveBflParams(
+  params: InferenceByokParams,
+  config: BflModelConfig,
+): BflRequestParams {
+  return {
+    guidance: hasBflSchemaField(config, 'generation_guidance')
+      ? readOptionalNumber(params.generation_guidance)
+      : undefined,
+    height: hasBflSchemaField(config, 'generation_height')
+      ? (readOptionalNumber(params.generation_height) ??
+        numberDefault(fieldByName(config, 'generation_height')))
+      : undefined,
+    imagePrompt: readOptionalBase64ImagePrompt(params.imagePrompt),
+    imagePromptStrength: hasBflSchemaField(
+      config,
+      'generation_image_prompt_strength',
+    )
+      ? readOptionalNumber(params.generation_image_prompt_strength)
+      : undefined,
+    moderation: hasBflSchemaField(config, 'generation_moderation')
+      ? readOptionalBoolean(params.generation_moderation)
+      : undefined,
+    promptExtend: hasBflSchemaField(config, 'generation_prompt_extend')
+      ? (readOptionalBoolean(params.generation_prompt_extend) ??
+        booleanDefault(fieldByName(config, 'generation_prompt_extend')) ??
+        false)
+      : undefined,
+    raw: hasBflSchemaField(config, 'generation_raw')
+      ? (readOptionalBoolean(params.generation_raw) ?? false)
+      : undefined,
+    seed: hasBflSchemaField(config, 'generation_seed')
+      ? readOptionalNumber(params.generation_seed)
+      : undefined,
+    steps: hasBflSchemaField(config, 'generation_steps')
+      ? readOptionalNumber(params.generation_steps)
+      : undefined,
+    width: hasBflSchemaField(config, 'generation_width')
+      ? (readOptionalNumber(params.generation_width) ??
+        numberDefault(fieldByName(config, 'generation_width')))
+      : undefined,
+  };
+}
+
+function hasBflSchemaField(config: BflModelConfig, name: string) {
+  return config.schema.some((field) => field.name === name);
+}
+
+function fieldByName(config: BflModelConfig, name: string) {
+  return config.schema.find((field) => field.name === name);
 }
 
 function createBflRequestBody(
   request: InferenceRequest,
-  width: number | undefined,
-  height: number | undefined,
-  config: ReturnType<typeof resolveBflModelConfig>,
+  config: BflModelConfig,
   params: BflRequestParams,
 ) {
   const body: Record<string, unknown> = {
-    prompt: request.prompt,
-    safety_tolerance: params.safetyTolerance,
     output_format: request.outputFormat,
+    prompt: request.prompt,
+    safety_tolerance: safetyToleranceForBflRequest(config, params),
   };
 
-  if (config.sizingMode === 'dimensions') {
-    body.width = width;
-    body.height = height;
-  } else {
+  if (hasBflSchemaField(config, 'generation_aspect_ratio')) {
     body.aspect_ratio = request.ratio;
+  }
+
+  if (hasBflSchemaField(config, 'generation_width')) {
+    body.width = params.width;
+  }
+
+  if (hasBflSchemaField(config, 'generation_height')) {
+    body.height = params.height;
   }
 
   if (params.seed !== undefined) {
     body.seed = params.seed;
   }
 
-  if (params.imagePrompt) {
+  if (params.imagePromptStrength !== undefined) {
+    body.image_prompt_strength = params.imagePromptStrength;
+  }
+
+  if (params.promptExtend !== undefined) {
+    body.prompt_upsampling = params.promptExtend;
+  }
+
+  if (params.guidance !== undefined) {
+    body.guidance = params.guidance;
+  }
+
+  if (params.steps !== undefined) {
+    body.steps = params.steps;
+  }
+
+  if (params.raw !== undefined) {
+    body.raw = params.raw;
+  }
+
+  if (params.imagePrompt !== undefined) {
     body.image_prompt = params.imagePrompt;
   }
 
-  if (config.supportsPromptUpsampling) {
-    body.prompt_upsampling = params.promptUpsampling;
+  assignBflInputFiles(body, request, config);
+
+  return body;
+}
+
+function assignBflInputFiles(
+  body: Record<string, unknown>,
+  request: InferenceRequest,
+  config: BflModelConfig,
+) {
+  if (request.inputFiles.length === 0) {
+    return;
   }
 
-  if (config.supportsGuidance && params.guidanceScale !== undefined) {
-    body.guidance = params.guidanceScale;
-  }
-
-  if (config.supportsSteps && params.numInferenceSteps !== undefined) {
-    body.steps = params.numInferenceSteps;
-  }
-
-  if (config.supportsRaw) {
-    body.raw = params.raw;
+  if (isBflFlux1Endpoint(config.providerModel)) {
+    return;
   }
 
   for (let index = 0; index < request.inputFiles.length; index += 1) {
     body[index === 0 ? 'input_image' : `input_image_${index + 1}`] =
       request.inputFiles[index];
   }
+}
 
-  return body;
+function createBflSemanticParams(
+  request: InferenceRequest,
+  params: BflRequestParams,
+  config: BflModelConfig,
+) {
+  const semanticParams: Record<string, unknown> = {
+    generation_output_format: request.outputFormat,
+  };
+
+  if (config.promptSupported) {
+    semanticParams.generation_prompt = request.prompt;
+  }
+
+  if (hasBflSchemaField(config, 'generation_aspect_ratio')) {
+    semanticParams.generation_aspect_ratio = request.ratio;
+  }
+
+  if (params.guidance !== undefined) {
+    semanticParams.generation_guidance = params.guidance;
+  }
+
+  if (params.height !== undefined) {
+    semanticParams.generation_height = params.height;
+  }
+
+  if (params.imagePromptStrength !== undefined) {
+    semanticParams.generation_image_prompt_strength =
+      params.imagePromptStrength;
+  }
+
+  if (params.moderation !== undefined) {
+    semanticParams.generation_moderation = params.moderation;
+  }
+
+  if (params.promptExtend !== undefined) {
+    semanticParams.generation_prompt_extend = params.promptExtend;
+  }
+
+  if (params.raw !== undefined) {
+    semanticParams.generation_raw = params.raw;
+  }
+
+  if (params.seed !== undefined) {
+    semanticParams.generation_seed = params.seed;
+  }
+
+  if (params.steps !== undefined) {
+    semanticParams.generation_steps = params.steps;
+  }
+
+  if (params.width !== undefined) {
+    semanticParams.generation_width = params.width;
+  }
+
+  if (request.inputFiles.length > 0) {
+    semanticParams.generation_input_image_file = request.inputFiles;
+  }
+
+  return semanticParams;
 }
 
 function assertBflRequestMatchesModelConfig(
   request: InferenceRequest,
-  config: ReturnType<typeof resolveBflModelConfig>,
+  config: BflModelConfig,
   params: BflRequestParams,
 ) {
   if (!includesString(config.outputFormats, request.outputFormat)) {
     throw new Error(
-      `BFL model ${request.model} does not support output format ${request.outputFormat}.`,
-    );
-  }
-
-  if (!includesNumber(config.safetyTolerances, params.safetyTolerance)) {
-    throw new Error(
-      `BFL model ${request.model} does not support safety tolerance ${params.safetyTolerance}.`,
-    );
-  }
-
-  if (!includesString(config.ratios, request.ratio)) {
-    throw new Error(
-      `BFL model ${request.model} does not support ${request.ratio}.`,
+      `Black Forest Labs model ${request.model} does not support output format ${request.outputFormat}.`,
     );
   }
 
   if (
-    config.sizingMode === 'aspectRatio' &&
-    (params.width !== undefined || params.height !== undefined)
+    hasBflSchemaField(config, 'generation_aspect_ratio') &&
+    !includesString(config.ratios, request.ratio)
   ) {
     throw new Error(
-      `BFL model ${request.model} does not support custom dimensions.`,
+      `Black Forest Labs model ${request.model} does not support ${request.ratio}.`,
     );
   }
 
-  if (params.width !== undefined || params.height !== undefined) {
-    if (config.sizingMode !== 'dimensions') {
-      throw new Error(
-        `BFL model ${request.model} does not support custom dimensions.`,
-      );
-    }
-
-    if (params.width === undefined || params.height === undefined) {
-      throw new Error('BFL width and height must be set together.');
-    }
-
-    if (
-      !isBflDimension(params.width, config.dimension) ||
-      !isBflDimension(params.height, config.dimension)
-    ) {
-      throw new Error(
-        `BFL model ${request.model} does not support custom dimensions ${params.width}x${params.height}.`,
-      );
-    }
-  }
-
-  if (request.inputFiles.length > config.inputFileLimit) {
+  if (params.imagePrompt && !isBflFlux1Endpoint(config.providerModel)) {
     throw new Error(
-      `BFL model ${request.model} supports at most ${config.inputFileLimit} input image URLs.`,
+      `Black Forest Labs model ${request.model} does not support base64 image prompts.`,
     );
   }
 
-  if (request.inputFiles.length > 0 && config.inputFileLimit === 0) {
-    throw new Error(`BFL model ${request.model} does not support input files.`);
-  }
-
-  if (params.imagePrompt && !config.supportsImagePrompt) {
+  if (config.requiresImageInput && request.inputFiles.length === 0) {
     throw new Error(
-      `BFL model ${request.model} does not support image prompts.`,
+      `Black Forest Labs model ${request.model} requires an input image URL.`,
     );
   }
 
-  if (params.promptUpsampling && !config.supportsPromptUpsampling) {
+  if (!config.supportsImageInput && request.inputFiles.length > 0) {
     throw new Error(
-      `BFL model ${request.model} does not support prompt upsampling.`,
+      isBflFlux1Endpoint(config.providerModel)
+        ? `Black Forest Labs model ${request.model} only accepts base64 image prompts. Uploaded or linked input images are not supported in Sherin.`
+        : `Black Forest Labs model ${request.model} does not support input images.`,
     );
   }
 
-  if (params.guidanceScale !== undefined && !config.supportsGuidance) {
-    throw new Error(`BFL model ${request.model} does not support guidance.`);
+  if (request.inputFiles.length > config.inputImageLimit) {
+    throw new Error(
+      `Black Forest Labs model ${request.model} supports at most ${config.inputImageLimit} input image URLs.`,
+    );
   }
-
-  if (params.numInferenceSteps !== undefined && !config.supportsSteps) {
-    throw new Error(`BFL model ${request.model} does not support steps.`);
-  }
-
-  if (params.raw && !config.supportsRaw) {
-    throw new Error(`BFL model ${request.model} does not support raw mode.`);
-  }
-}
-
-function isBflDimension(
-  value: number,
-  dimension: ReturnType<typeof resolveBflModelConfig>['dimension'],
-) {
-  const max = 'max' in dimension ? dimension.max : undefined;
-  const step = 'step' in dimension ? dimension.step : undefined;
-
-  return (
-    Number.isInteger(value) &&
-    value >= dimension.min &&
-    (max === undefined || value <= max) &&
-    (step === undefined || value % step === 0)
-  );
-}
-
-function includesString(values: readonly string[], value: string) {
-  return values.includes(value);
-}
-
-function includesNumber(values: readonly number[], value: number) {
-  return values.includes(value);
 }
 
 function createBflMetadata({
+  modelConfig,
   params,
-  height,
-  modelEndpoint,
   pollingUrl,
   request,
   requestId,
   resumed,
-  width,
-  duplicateRisk = false,
 }: {
+  modelConfig: BflModelConfig;
   params: BflRequestParams;
-  height: number | undefined;
-  modelEndpoint: string;
   pollingUrl: string;
   request: InferenceRequest;
   requestId: string;
   resumed: boolean;
-  width: number | undefined;
-  duplicateRisk?: boolean;
 }) {
   return {
     sherin_model_id: request.model,
     sherin_stage: 'inference_started',
     bfl_request_id: requestId,
-    bfl_model_endpoint: modelEndpoint,
+    bfl_model_endpoint: modelConfig.providerModel,
     bfl_aspect_ratio: request.ratio,
-    ...(width !== undefined ? { bfl_width: width } : {}),
-    ...(height !== undefined ? { bfl_height: height } : {}),
+    ...(params.width !== undefined ? { bfl_width: params.width } : {}),
+    ...(params.height !== undefined ? { bfl_height: params.height } : {}),
     ...(request.resolution ? { bfl_resolution: request.resolution } : {}),
-    bfl_has_image_prompt: Boolean(params.imagePrompt),
     bfl_input_file_count: request.inputFiles.length,
-    bfl_prompt_upsampling: params.promptUpsampling,
-    bfl_guidance_scale: params.guidanceScale ?? null,
-    bfl_num_inference_steps: params.numInferenceSteps ?? null,
-    bfl_raw: params.raw,
+    bfl_prompt_upsampling: params.promptExtend ?? null,
+    bfl_guidance_scale: params.guidance ?? null,
+    bfl_num_inference_steps: params.steps ?? null,
+    bfl_raw: params.raw ?? null,
     bfl_seed: params.seed ?? null,
-    bfl_safety_tolerance: params.safetyTolerance,
+    bfl_image_prompt_provided: Boolean(params.imagePrompt),
+    bfl_safety_tolerance: safetyToleranceForBflRequest(modelConfig, params),
     bfl_output_format: request.outputFormat,
     bfl_polling_url: pollingUrlForMetadata(pollingUrl),
     ...(resumed ? { bfl_resumed: true } : {}),
-    ...(duplicateRisk ? { bfl_duplicate_risk: true } : {}),
   };
 }
-
-type BflPollResponse = {
-  status: string;
-  result?: { sample?: string };
-};
 
 async function pollBfl(pollingUrl: string, apiKey: string) {
   const deadline = Date.now() + POLL_TIMEOUT_MS;
@@ -664,12 +625,100 @@ async function pollBfl(pollingUrl: string, apiKey: string) {
   throw buildBflPollTimeoutError(lastStatus);
 }
 
+function firstBflOutput(response: BflPollResponse) {
+  const remoteUrl = response.result?.sample;
+
+  if (typeof remoteUrl !== 'string' || !remoteUrl.startsWith('https://')) {
+    throw new Error('BFL returned no signed sample URL.');
+  }
+
+  return remoteUrl;
+}
+
+function bflHeaders(apiKey: string) {
+  return {
+    accept: 'application/json',
+    'content-type': 'application/json',
+    'x-key': apiKey,
+  };
+}
+
+async function buildBflHttpError(label: string, response: Response) {
+  const body = await safeText(response);
+  const error = new Error(
+    `${label} failed (${response.status}): ${body}`,
+  ) as Error & {
+    statusCode?: number;
+    retryAfterSeconds?: number | null;
+    isTransient?: boolean;
+  };
+  error.statusCode = response.status;
+  error.retryAfterSeconds = parseRetryAfter(
+    response.headers.get('retry-after'),
+  );
+  error.isTransient =
+    response.status === 408 ||
+    response.status === 425 ||
+    response.status === 429 ||
+    (response.status >= 500 && response.status < 600);
+  return error;
+}
+
 function buildBflPollTimeoutError(lastStatus: string) {
   const error = new Error(
     `BFL generation timed out within this worker invocation (last status: ${lastStatus}).`,
   );
   error.name = 'TimeoutError';
   return error;
+}
+
+function readBflApiKey() {
+  return getOptionalEnv('BFL_API_KEY');
+}
+
+function requireBflApiKey() {
+  const apiKey = readBflApiKey();
+
+  if (!apiKey) {
+    throw new Error('BFL_API_KEY is required for Black Forest Labs inference.');
+  }
+
+  return apiKey;
+}
+
+function resolveBflBaseUrl() {
+  const value = getOptionalEnv('BFL_API_BASE_URL') ?? DEFAULT_BFL_BASE_URL;
+
+  return normalizeBflApiBaseUrl(value);
+}
+
+export function normalizeBflApiBaseUrl(value: string) {
+  let url: URL;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('BFL_API_BASE_URL must be a valid URL.');
+  }
+
+  if (url.protocol !== 'https:') {
+    throw new Error('BFL_API_BASE_URL must use HTTPS.');
+  }
+
+  if (!isBflApiHost(url.hostname)) {
+    throw new Error('BFL_API_BASE_URL must be a BFL API host.');
+  }
+
+  url.pathname = url.pathname.replace(/\/+$/g, '');
+
+  if (url.pathname === '/v1') {
+    url.pathname = '';
+  }
+
+  url.search = '';
+  url.hash = '';
+
+  return url.toString().replace(/\/$/, '');
 }
 
 export function validateBflPollingUrl(value: string | undefined) {
@@ -692,13 +741,6 @@ export function validateBflPollingUrl(value: string | undefined) {
     throw new Error('BFL polling_url must be a BFL API host.');
   }
 
-  url.hash = '';
-
-  return url.toString();
-}
-
-function pollingUrlForMetadata(value: string) {
-  const url = new URL(value);
   url.hash = '';
 
   return url.toString();
@@ -747,104 +789,170 @@ function buildBflPollingUrl(baseUrl: string, requestId: string) {
   return pollingUrl;
 }
 
-function isResumeLikelyDuplicate(
-  metadata: Record<string, unknown> | null | undefined,
+function pollingUrlForMetadata(value: string) {
+  const url = new URL(value);
+  url.hash = '';
+
+  return url.toString();
+}
+
+function safetyToleranceForBflRequest(
+  config: BflModelConfig,
+  params: BflRequestParams,
 ) {
-  if (!metadata) {
-    return false;
+  if (params.moderation === true) {
+    return 0;
   }
 
-  if (
-    metadata.bfl_duplicate_risk === true ||
-    metadata.sherin_provider_duplicate_risk === true
-  ) {
+  if (params.moderation === false) {
+    return isBflFlux2Endpoint(config.providerModel) ? 5 : 5;
+  }
+
+  return DEFAULT_BFL_SAFETY_TOLERANCE;
+}
+
+function isBflFlux1Endpoint(endpoint: string) {
+  const normalized = endpoint.toLowerCase();
+
+  return (
+    normalized.startsWith('flux-pro-1.1') || normalized.startsWith('flux-1.1')
+  );
+}
+
+function isBflFlux2Endpoint(endpoint: string) {
+  return endpoint.toLowerCase().startsWith('flux-2');
+}
+
+export function isBflApiHost(hostname: string) {
+  const host = hostname.toLowerCase();
+
+  return /^api(?:[.-][a-z0-9-]+)*\.bfl\.ai$/.test(host);
+}
+
+function assignNumberParam(
+  params: InferenceRequest['byokParams'],
+  key: string,
+  value: unknown,
+) {
+  const parsed = readOptionalNumber(value);
+
+  if (parsed !== undefined) {
+    params[key] = parsed;
+  }
+}
+
+function assignBase64ImagePromptParam(
+  params: InferenceRequest['byokParams'],
+  value: unknown,
+) {
+  const imagePrompt = readOptionalBase64ImagePrompt(value);
+
+  if (imagePrompt !== undefined) {
+    params.imagePrompt = imagePrompt;
+  }
+}
+
+function readOptionalNumber(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
+function readOptionalBoolean(value: unknown) {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (value === 'true') {
     return true;
   }
 
-  const stage = metadata.sherin_stage;
-  const hasRequestId =
-    typeof metadata.bfl_request_id === 'string' &&
-    (metadata.bfl_request_id as string).length > 0;
+  if (value === 'false') {
+    return false;
+  }
 
-  return (
-    (stage === 'bfl_submitting' || stage === 'provider_submitting') &&
-    !hasRequestId
-  );
+  return undefined;
 }
 
-function normalizeBflImagePromptBase64(value: string) {
-  if (isHttpsUrl(value)) {
-    return null;
+function readOptionalBase64ImagePrompt(value: unknown) {
+  if (typeof value !== 'string') {
+    return undefined;
   }
 
   const trimmed = value.trim();
-  const dataUrlMatch =
-    /^data:image\/(?:jpeg|jpg|png|gif|webp);base64,(.+)$/is.exec(trimmed);
-  const unwrapped = dataUrlMatch?.[1] ?? trimmed;
-  const compact = unwrapped.replace(/\s+/g, '');
 
-  if (compact.length > MAX_BFL_IMAGE_PROMPT_BASE64_CHARS) {
-    return null;
+  if (!trimmed) {
+    return undefined;
   }
 
-  if (!compact || !/^[A-Za-z0-9+/]+={0,2}$/.test(compact)) {
-    return null;
-  }
-
-  const remainder = compact.length % 4;
-
-  if (remainder === 1) {
-    return null;
-  }
-
-  const normalized =
-    remainder === 0
-      ? compact
-      : compact.padEnd(compact.length + 4 - remainder, '=');
-
-  const decoded = Buffer.from(normalized, 'base64');
-
-  if (decoded.length === 0 || decoded.length > MAX_BFL_IMAGE_PROMPT_BYTES) {
-    return null;
-  }
-
-  return normalized;
-}
-
-function isHttpsUrl(value: string) {
-  try {
-    const url = new URL(value);
-
-    return url.protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Build an Error annotated with retry hints derived from the BFL response.
- * The worker inspects these properties to decide between transient retry
- * (429 / 5xx with Retry-After) and permanent failure (4xx other than 429).
- */
-async function buildBflHttpError(label: string, response: Response) {
-  const body = await safeText(response);
-  const error = new Error(
-    `${label} failed (${response.status}): ${body}`,
-  ) as Error & {
-    statusCode?: number;
-    retryAfterSeconds?: number | null;
-    isTransient?: boolean;
-  };
-  error.statusCode = response.status;
-  error.retryAfterSeconds = parseRetryAfter(
-    response.headers.get('retry-after'),
+  const dataUrlMatch = trimmed.match(
+    /^data:image\/(?:gif|jpe?g|png|webp);base64,(?<data>[\s\S]+)$/i,
   );
-  error.isTransient =
-    response.status === 408 ||
-    response.status === 425 ||
-    response.status === 429 ||
-    (response.status >= 500 && response.status < 600);
-  return error;
+  const base64 = (dataUrlMatch?.groups?.data ?? trimmed).replace(/\s+/g, '');
+
+  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(base64) || base64.length % 4 === 1) {
+    throw new Error('BFL image prompt must be a base64 encoded image.');
+  }
+
+  const decoded = Buffer.from(base64, 'base64');
+
+  if (
+    decoded.byteLength <= 0 ||
+    decoded.byteLength > MAX_BFL_IMAGE_PROMPT_BYTES
+  ) {
+    throw new Error('BFL image prompt must be 10 MB or smaller.');
+  }
+
+  return base64;
+}
+
+function firstFormValue(formData: FormData, names: readonly string[]) {
+  for (const name of names) {
+    const value = formData.get(name);
+
+    if (typeof value === 'string' && value.trim().length === 0) {
+      continue;
+    }
+
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  return null;
+}
+
+function numberDefault(field: SemanticField | undefined) {
+  return typeof field?.default === 'number' ? field.default : undefined;
+}
+
+function booleanDefault(field: SemanticField | undefined) {
+  return typeof field?.default === 'boolean' ? field.default : undefined;
+}
+
+type SemanticField = BflModelConfig['schema'][number];
+
+function includesString(values: readonly string[], value: string) {
+  return values.some((candidate) => candidate === value);
+}
+
+function contentTypeForBflOutputFormat(format: string) {
+  switch (format) {
+    case 'gif':
+      return 'image/gif';
+    case 'png':
+      return 'image/png';
+    case 'webp':
+      return 'image/webp';
+    case 'jpeg':
+    case 'jpg':
+    default:
+      return 'image/jpeg';
+  }
 }
 
 function parseRetryAfter(value: string | null) {
@@ -865,67 +973,6 @@ function parseRetryAfter(value: string | null) {
   }
 
   return null;
-}
-
-function contentTypeForBflOutputFormat(outputFormat: string) {
-  if (outputFormat === 'png') return 'image/png';
-  if (outputFormat === 'webp') return 'image/webp';
-  return 'image/jpeg';
-}
-
-function resolveBflBaseUrl() {
-  const configured = getOptionalEnv('BFL_API_BASE_URL');
-
-  if (!configured) {
-    return DEFAULT_BFL_BASE_URL;
-  }
-
-  return normalizeBflApiBaseUrl(configured, 'BFL_API_BASE_URL');
-}
-
-export function normalizeBflApiBaseUrl(
-  value: string,
-  envName = 'BFL_API_BASE_URL',
-) {
-  let url: URL;
-
-  try {
-    url = new URL(value);
-  } catch {
-    throw new Error(`${envName} must be a valid URL.`);
-  }
-
-  if (url.protocol !== 'https:') {
-    throw new Error(`${envName} must use HTTPS.`);
-  }
-
-  if (!isBflApiHost(url.hostname)) {
-    throw new Error(`${envName} must be a BFL API host.`);
-  }
-
-  url.pathname = url.pathname.replace(/\/+$/, '');
-
-  if (url.pathname === '/v1') {
-    url.pathname = '';
-  }
-
-  if (url.pathname && url.pathname !== '/') {
-    throw new Error(`${envName} can include only the optional /v1 path.`);
-  }
-
-  url.search = '';
-  url.hash = '';
-
-  return url.toString().replace(/\/+$/, '');
-}
-
-export function isBflApiHost(hostname: string) {
-  const normalized = hostname.toLowerCase();
-
-  return (
-    normalized === 'api.bfl.ai' ||
-    (normalized.startsWith('api.') && normalized.endsWith('.bfl.ai'))
-  );
 }
 
 async function safeText(response: Response) {

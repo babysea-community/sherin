@@ -51,7 +51,6 @@ export default [
     ignores: [
       '.next/**',
       '.pnpm-store/**',
-      'coverage/**',
       'node_modules/**',
       'next-env.d.ts',
       'lib/database.types.ts',
@@ -93,7 +92,7 @@ export default [
   {
     // Restrict server-only imports from any file that opts into the client
     // runtime via the `'use client'` directive. Files that need these modules
-    // should remain server components / server actions / route handlers.
+    // should remain server components/server actions/route handlers.
     // Type-only imports are allowed because they are erased at compile time.
     files: ['**/*.{ts,tsx}'],
     rules: {

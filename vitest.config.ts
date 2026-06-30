@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 // Minimal Vitest config for the starter.
 //
 // Tests cover the pure, server-only helpers that are easy to break and hard
-// to debug in production. Component / integration tests belong in the
+// to debug in production. Component/integration tests belong in the
 // apps/e2e Playwright project.
 export default defineConfig({
   test: {
@@ -12,11 +12,6 @@ export default defineConfig({
     globals: false,
     include: ['test/**/*.test.ts'],
     passWithNoTests: true,
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'lcov', 'json-summary', 'cobertura'],
-      reportsDirectory: 'coverage',
-    },
   },
   resolve: {
     alias: {

@@ -11,7 +11,7 @@
   INFERENCE_PROVIDER = "Required. Inference provider: bfl or babysea. Default bfl."
   BFL_API_KEY = "Required when INFERENCE_PROVIDER=bfl. Your Black Forest Labs API key."
   BFL_API_BASE_URL = "Required when INFERENCE_PROVIDER=bfl. Black Forest Labs API base URL, default https://api.bfl.ai."
-  STORAGE_PROVIDER = "Required. Storage provider: supabase-storage, vercel-blob, cloudflare-r2, or aws-s3. Default supabase-storage."
+  STORAGE_PROVIDER = "Required. Storage provider: supabase-storage, aws-s3, cloudflare-r2, or vercel-blob. Default supabase-storage."
   CUSTOM_USER_STORAGE_QUOTA_GB = "Required. Per-owner stored image quota in GB. Default 10."
 
 [[plugins]]

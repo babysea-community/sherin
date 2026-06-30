@@ -1,203 +1,100 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment } from 'react';
+import type { SemanticLadyField } from 'semantic-lady';
 
-import {
-  DEFAULT_BYOK_GUIDANCE,
-  DEFAULT_BYOK_SAFETY_TOLERANCE,
-  DEFAULT_BYOK_STEPS,
-  DEFAULT_GENERATION_OUTPUT_NUMBER,
-} from '@/lib/app-config';
+import { DEFAULT_GENERATION_OUTPUT_NUMBER } from '@/lib/app-config';
 import { Input } from '@/components/ui/input';
 
 import {
   Base64ImagePromptField,
   Field,
   InputImageUrlsField,
+  InputVideoUrlsField,
   NumberField,
   OutputFormatField,
   PromptField,
   RatioField,
-  ResolutionField,
   Select,
   getFieldDescription,
+  getFieldLabel,
 } from './form-controls';
 
 type ByokFormFieldsProps = {
-  defaultDimensions?: { width: number; height: number };
   defaultOutputFormat: string;
-  defaultPromptUpsampling: boolean;
   defaultRatio: string;
-  defaultResolution?: string;
-  dimension: {
-    min: number;
-    max?: number;
-    step?: number;
-  };
   inputFileLimit: number;
   onPromptChange: (prompt: string) => void;
   outputFormatOptions: string[];
   prompt: string;
   ratioOptions: string[];
-  resolutionOptions: string[];
-  safetyToleranceOptions: readonly number[];
-  showDimensions: boolean;
-  showGuidance: boolean;
-  showImagePrompt: boolean;
-  showPromptUpsampling: boolean;
-  showRaw: boolean;
-  showSteps: boolean;
+  schema: readonly SemanticLadyField[];
+  videoInputFileLimit?: number;
 };
 
+const SHERIN_LEVEL_FIELDS = new Set([
+  'generation_output_number',
+  'generation_provider_order',
+]);
+
 export function ByokFormFields({
-  defaultDimensions,
   defaultOutputFormat,
-  defaultPromptUpsampling,
   defaultRatio,
-  defaultResolution,
-  dimension,
   inputFileLimit,
   onPromptChange,
   outputFormatOptions,
   prompt,
   ratioOptions,
-  resolutionOptions,
-  safetyToleranceOptions,
-  showDimensions,
-  showGuidance,
-  showImagePrompt,
-  showPromptUpsampling,
-  showRaw,
-  showSteps,
+  schema,
+  videoInputFileLimit = 0,
 }: ByokFormFieldsProps) {
-  const remainingFields: ExtraField[] = [
-    {
-      key: 'byok_safety_tolerance',
-      label: 'Safety tolerance',
-      node: (
-        <Field
-          label="Safety tolerance"
-          description={getFieldDescription('byok_safety_tolerance')}
-        >
-          <Select
-            name="byok_safety_tolerance"
-            defaultValue={String(DEFAULT_BYOK_SAFETY_TOLERANCE)}
-            options={safetyToleranceOptions.map((value) => ({
-              value: String(value),
-            }))}
-          />
-        </Field>
-      ),
-    },
-    {
-      key: 'byok_seed',
-      label: 'Seed',
-      node: (
-        <NumberField
-          description={getFieldDescription('byok_seed')}
-          label="Seed"
-          name="byok_seed"
-          min={0}
-          max={2_147_483_647}
-        />
-      ),
-    },
-  ];
-
-  if (showPromptUpsampling) {
-    remainingFields.push({
-      key: 'byok_prompt_upsampling',
-      label: 'Prompt upsampling',
-      node: (
-        <Field
-          label="Prompt upsampling"
-          description={getFieldDescription('byok_prompt_upsampling')}
-        >
-          <Select
-            name="byok_prompt_upsampling"
-            defaultValue={String(defaultPromptUpsampling)}
-            options={[
-              { value: 'false', label: 'Off' },
-              { value: 'true', label: 'On' },
-            ]}
-          />
-        </Field>
-      ),
-    });
-  }
-
-  if (showRaw) {
-    remainingFields.push({
-      key: 'byok_raw',
-      label: 'Raw mode',
-      node: (
-        <Field label="Raw mode" description={getFieldDescription('byok_raw')}>
-          <Select
-            name="byok_raw"
-            defaultValue="false"
-            options={[
-              { value: 'false', label: 'Off' },
-              { value: 'true', label: 'On' },
-            ]}
-          />
-        </Field>
-      ),
-    });
-  }
-
-  if (showGuidance) {
-    remainingFields.push({
-      key: 'byok_guidance_scale',
-      label: 'Guidance scale',
-      node: (
-        <NumberField
-          defaultValue={DEFAULT_BYOK_GUIDANCE}
-          description={getFieldDescription('byok_guidance_scale')}
-          label="Guidance scale"
-          name="byok_guidance_scale"
-          min={1.5}
-          max={10}
-          step="0.1"
-        />
-      ),
-    });
-  }
-
-  if (showSteps) {
-    remainingFields.push({
-      key: 'byok_num_inference_steps',
-      label: 'Inference steps',
-      node: (
-        <NumberField
-          defaultValue={DEFAULT_BYOK_STEPS}
-          description={getFieldDescription('byok_num_inference_steps')}
-          label="Inference steps"
-          name="byok_num_inference_steps"
-          min={1}
-          max={50}
-        />
-      ),
-    });
-  }
-
-  remainingFields.sort((left, right) => left.label.localeCompare(right.label));
+  const promptField = fieldByName(schema, 'generation_prompt');
+  const ratioField = fieldByName(schema, 'generation_aspect_ratio');
+  const outputFormatField = fieldByName(schema, 'generation_output_format');
+  const inputImageField = fieldByName(schema, 'generation_input_image_file');
+  const inputVideoField = fieldByName(schema, 'generation_input_video_file');
+  const remainingFields = schema
+    .filter((field) => !isSpecialField(field.name))
+    .map((field) => ({
+      key: field.name,
+      label: getFieldLabel(field.name),
+      node: <SchemaField field={field} />,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
 
   return (
     <div className="space-y-5">
-      <PromptField prompt={prompt} onPromptChange={onPromptChange} />
+      {promptField ? (
+        <PromptField
+          prompt={prompt}
+          required={Boolean(promptField.required)}
+          onPromptChange={onPromptChange}
+        />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <RatioField
-          defaultRatio={defaultRatio}
-          label="Aspect ratio"
-          ratioOptions={ratioOptions}
-        />
+        {ratioField ? (
+          <RatioField
+            defaultRatio={fieldStringDefault(ratioField) ?? defaultRatio}
+            description={fieldDescription(ratioField)}
+            label={getFieldLabel(ratioField.name)}
+            ratioOptions={fieldStringEnum(ratioField, ratioOptions)}
+          />
+        ) : null}
 
-        <OutputFormatField
-          defaultOutputFormat={defaultOutputFormat}
-          outputFormatOptions={outputFormatOptions}
-        />
+        {outputFormatField ? (
+          <OutputFormatField
+            defaultOutputFormat={
+              fieldStringDefault(outputFormatField) ?? defaultOutputFormat
+            }
+            description={fieldDescription(outputFormatField)}
+            outputFormatOptions={fieldStringEnum(
+              outputFormatField,
+              outputFormatOptions,
+            )}
+          />
+        ) : null}
 
         <Field
-          label="Number of images"
+          label="Number of outputs"
           description={getFieldDescription('generation_output_number')}
         >
           <Input
@@ -209,59 +106,28 @@ export function ByokFormFields({
           />
         </Field>
 
-        {resolutionOptions.length > 0 ? (
-          <ResolutionField
-            defaultResolution={defaultResolution ?? resolutionOptions[0] ?? ''}
-            resolutionOptions={resolutionOptions}
+        {inputImageField && inputFileLimit > 0 ? (
+          <InputImageUrlsField
+            descriptionKey={inputImageField.name}
+            maxUrls={inputFileLimit}
+            name="generation_input_file"
+            required={Boolean(inputImageField.required)}
           />
         ) : null}
 
-        {showDimensions ? (
-          <>
-            <Field
-              label="Width"
-              description={getFieldDescription('byok_width')}
-            >
-              <Input
-                name="byok_width"
-                type="number"
-                min={dimension.min}
-                max={dimension.max}
-                step={dimension.step}
-                defaultValue={defaultDimensions?.width}
-                placeholder={defaultDimensions ? undefined : 'Optional'}
-              />
-            </Field>
-
-            <Field
-              label="Height"
-              description={getFieldDescription('byok_height')}
-            >
-              <Input
-                name="byok_height"
-                type="number"
-                min={dimension.min}
-                max={dimension.max}
-                step={dimension.step}
-                defaultValue={defaultDimensions?.height}
-                placeholder={defaultDimensions ? undefined : 'Optional'}
-              />
-            </Field>
-          </>
-        ) : null}
-
-        {showImagePrompt ? (
+        {inputImageField && inputFileLimit === 0 ? (
           <Base64ImagePromptField
             descriptionKey="byok_image_prompt"
             name="byok_image_prompt"
           />
         ) : null}
 
-        {inputFileLimit > 0 ? (
-          <InputImageUrlsField
-            descriptionKey="byok_image_input_urls"
-            maxUrls={inputFileLimit}
-            name="generation_input_file"
+        {inputVideoField && videoInputFileLimit > 0 ? (
+          <InputVideoUrlsField
+            descriptionKey={inputVideoField.name}
+            maxUrls={videoInputFileLimit}
+            name="generation_input_video_file"
+            required={Boolean(inputVideoField.required)}
           />
         ) : null}
 
@@ -273,8 +139,156 @@ export function ByokFormFields({
   );
 }
 
-type ExtraField = {
-  key: string;
-  label: string;
-  node: ReactNode;
-};
+function SchemaField({ field }: { field: SemanticLadyField }) {
+  const label = getFieldLabel(field.name);
+  const description = fieldDescription(field);
+
+  if (field.name === 'generation_duration' && field.type === 'integer') {
+    const options = durationOptions(field);
+
+    if (options.length > 0) {
+      return (
+        <Field label={label} description={description}>
+          <Select
+            name={field.name}
+            defaultValue={durationDefaultValue(field)}
+            options={options}
+            placeholder={
+              field.required ? 'Select duration' : 'Provider default'
+            }
+          />
+        </Field>
+      );
+    }
+  }
+
+  if (field.type === 'boolean') {
+    return (
+      <Field label={label} description={description}>
+        <Select
+          name={field.name}
+          defaultValue={fieldBooleanDefault(field)}
+          options={[
+            { value: 'false', label: 'Off' },
+            { value: 'true', label: 'On' },
+          ]}
+          placeholder="Provider default"
+        />
+      </Field>
+    );
+  }
+
+  if (field.type === 'enum') {
+    const options = fieldStringEnum(field, []);
+
+    return (
+      <Field label={label} description={description}>
+        <Select
+          name={field.name}
+          defaultValue={fieldStringDefault(field) ?? options[0] ?? ''}
+          options={options.map((value) => ({ value }))}
+        />
+      </Field>
+    );
+  }
+
+  if (field.type === 'integer' || field.type === 'number') {
+    return (
+      <NumberField
+        defaultValue={fieldNumberDefault(field)}
+        description={description}
+        label={label}
+        name={field.name}
+        min={field.min ?? 0}
+        max={field.max ?? Number.MAX_SAFE_INTEGER}
+        required={Boolean(field.required)}
+        step={field.type === 'number' ? '0.1' : undefined}
+      />
+    );
+  }
+
+  return (
+    <Field label={label} description={description}>
+      <Input
+        name={field.name}
+        required={field.required}
+        defaultValue={fieldStringDefault(field)}
+        placeholder={field.placeholder ?? 'Optional'}
+      />
+    </Field>
+  );
+}
+
+function isSpecialField(name: string) {
+  return (
+    SHERIN_LEVEL_FIELDS.has(name) ||
+    name === 'generation_prompt' ||
+    name === 'generation_aspect_ratio' ||
+    name === 'generation_output_format' ||
+    name === 'generation_input_image_file' ||
+    name === 'generation_input_video_file'
+  );
+}
+
+function fieldByName(schema: readonly SemanticLadyField[], name: string) {
+  return schema.find((field) => field.name === name);
+}
+
+function fieldDescription(field: SemanticLadyField) {
+  return (
+    getFieldDescription(fieldDescriptionKey(field.name)) ?? field.description
+  );
+}
+
+function fieldDescriptionKey(name: string) {
+  return name === 'generation_aspect_ratio' ? 'generation_ratio' : name;
+}
+
+function fieldStringEnum(
+  field: SemanticLadyField,
+  fallback: readonly string[],
+) {
+  const values = (field.enum ?? []).filter(
+    (value): value is string => typeof value === 'string',
+  );
+
+  return values.length > 0 ? values : [...fallback];
+}
+
+function fieldStringDefault(field: SemanticLadyField) {
+  return typeof field.default === 'string' ? field.default : undefined;
+}
+
+function fieldNumberDefault(field: SemanticLadyField) {
+  return typeof field.default === 'number' ? field.default : undefined;
+}
+
+function fieldBooleanDefault(field: SemanticLadyField) {
+  return typeof field.default === 'boolean' ? String(field.default) : undefined;
+}
+
+function durationOptions(field: SemanticLadyField) {
+  const min = typeof field.min === 'number' ? field.min : 2;
+  const max = typeof field.max === 'number' ? field.max : 10;
+
+  if (!Number.isInteger(min) || !Number.isInteger(max) || min > max) {
+    return [];
+  }
+
+  return Array.from({ length: max - min + 1 }, (_, index) => {
+    const value = String(min + index);
+
+    return { value, label: `${value} seconds` };
+  });
+}
+
+function durationDefaultValue(field: SemanticLadyField) {
+  if (!field.required) {
+    return undefined;
+  }
+
+  const min = typeof field.min === 'number' ? field.min : 2;
+  const max = typeof field.max === 'number' ? field.max : 10;
+
+  return String(Math.min(Math.max(5, min), max));
+}

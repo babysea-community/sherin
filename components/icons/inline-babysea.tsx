@@ -1,21 +1,22 @@
 'use client';
 
 import type { CSSProperties } from 'react';
+
 import { cn } from '../../lib/utils';
 
-interface InlineBabySeaProps {
+interface InlineStampProps {
   width?: number;
   height?: number;
   className?: string;
   style?: CSSProperties;
 }
 
-export function InlineBabySea({
+export function InlineStamp({
   width = 200,
   height = 200,
   className,
   style,
-}: InlineBabySeaProps) {
+}: InlineStampProps) {
   return (
     <svg
       width={width}
@@ -48,3 +49,5 @@ export function InlineBabySea({
     </svg>
   );
 }
+
+export const InlineBabySea = InlineStamp;

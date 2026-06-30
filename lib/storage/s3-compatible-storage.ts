@@ -105,7 +105,7 @@ async function loadObjectStorageClient(): Promise<ObjectStorageClientModule> {
     return (await import('@aws-sdk/client-s3')) as unknown as ObjectStorageClientModule;
   } catch {
     throw new Error(
-      'aws-s3 / cloudflare-r2 storage is selected but `@aws-sdk/client-s3` is not installed. Run `pnpm add @aws-sdk/client-s3`.',
+      'aws-s3/cloudflare-r2 storage is selected but `@aws-sdk/client-s3` is not installed. Run `pnpm add @aws-sdk/client-s3`.',
     );
   }
 }
