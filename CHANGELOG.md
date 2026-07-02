@@ -12,6 +12,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 - Gate the Studio model catalog by configured provider keys: `BFL_API_KEY` surfaces `bfl/*` models, `RUNWAYML_API_SECRET` surfaces `runway/*` models, and setting both surfaces both. BabySea mode exposes the combined catalog through the BabySea API.
 - Cancel Runway provider-side work when the owner cancels an active generation (best-effort `DELETE /v1/tasks/{id}`), matching the existing Black Forest Labs and BabySea cancel behavior.
 - Add the Runway API and delivery hosts to the Content-Security-Policy and storage asset allowlists so Runway-rendered media loads and downloads.
+- Add free-tier scheduled queue draining on both hosts through the `CRON_SECRET`-guarded `/api/generations/process` endpoint: a Netlify Scheduled Function (`netlify/functions/process-generations`, every 5 minutes) and a Vercel Cron Job (`vercel.json`, daily - the Hobby-plan maximum). Both advance queued or running generations when no owner browser is open; the client kicker and post-submit processing cover active sessions.
 
 ### Changed
 
@@ -122,7 +123,7 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 ### Added
 
 - Added a `.gitleaks.toml` with project-specific allowlist entries so the Gitleaks workflow ignores documentation and CI placeholder examples (mirrors BabyChain).
-- Added a Vercel deploy preflight that fails the workflow if `NEXT_PUBLIC_SITE_URL`, `OWNER_EMAIL`, Supabase keys, or `BFL_API_KEY` (when `INFERENCE_PROVIDER=bfl`) are missing—and validates the email format and HTTPS site URL—so misconfiguration is caught before deploy instead of at runtime (mirrors BabyChain's deploy preflight).
+- Added a Vercel deploy preflight that fails the workflow if `NEXT_PUBLIC_SITE_URL`, `OWNER_EMAIL`, Supabase keys, or `BFL_API_KEY` (when `INFERENCE_PROVIDER=bfl`) are missing, and validates the email format and HTTPS site URL, so misconfiguration is caught before deploy instead of at runtime (mirrors BabyChain's deploy preflight).
 
 ### Changed
 
