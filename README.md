@@ -39,6 +39,7 @@ Private workspace for generative media with own key, domain, and storage.
 [![Semantic Lady](https://custom-icon-badges.demolab.com/badge/semantic_lady-EC4899?style=for-the-badge&logo=semantic-lady)](https://github.com/babysea-community/semantic-lady)
 [![BabySea](https://custom-icon-badges.demolab.com/badge/babysea-14B8A6?style=for-the-badge&logo=babysea&logoColor=white)](https://babysea.ai)
 [![Black Forest Labs](https://custom-icon-badges.demolab.com/badge/black_forest_labs-07130E?style=for-the-badge&logo=blackforestlabs&logoColor=white)](https://bfl.ai)
+[![Runway](https://custom-icon-badges.demolab.com/badge/runway-000000?style=for-the-badge&logo=runway&logoColor=white)](https://runwayml.com)
 [![Supabase](https://custom-icon-badges.demolab.com/badge/supabase-249361?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
 [![AWS S3](https://custom-icon-badges.demolab.com/badge/aws_s3-3F8624?style=for-the-badge&logo=aws-s3-2&logoColor=white)](https://docs.aws.amazon.com/s3)
 [![Backblaze B2](https://custom-icon-badges.demolab.com/badge/backblaze_b2-E21E29?style=for-the-badge&logo=backblaze&logoColor=white)](https://www.backblaze.com/docs)
@@ -126,7 +127,10 @@ Open <http://localhost:3011>.
 
 Use [`.env.example`](.env.example) as the source of truth for inference mode and provider credentials.
 
-This project can run direct Black Forest Labs inference with `INFERENCE_PROVIDER=bfl`, or call BabySea with `INFERENCE_PROVIDER=babysea` while keeping the same Studio workflow.
+This project supports bring-your-own-key (BYOK) inference across multiple providers plus BabySea execution, all sharing the same Studio workflow:
+
+- `INFERENCE_PROVIDER=byok` - every configured BYOK provider is active at once. Set `BFL_API_KEY` to enable Black Forest Labs models and `RUNWAYML_API_SECRET` to enable Runway models; set both to run both. Each model routes to its provider by id prefix.
+- `INFERENCE_PROVIDER=babysea` - run the combined model catalog through BabySea.
 
 BabySea model schemas are published at [babysea.ai/model-schema](https://babysea.ai/model-schema).
 
@@ -138,17 +142,24 @@ Supabase Storage is the default and fallback storage path. AWS S3, Backblaze B2,
 
 ## Supported models
 
-Supported model names and provider fields are registered in [`lib/model-family.ts`](lib/model-family.ts), [`lib/inference/bfl/models.ts`](lib/inference/bfl/models.ts), and [`lib/inference/babysea/models.ts`](lib/inference/babysea/models.ts).
+Supported model names and provider fields are registered in [`lib/model-family.ts`](lib/model-family.ts), [`lib/inference/bfl/models.ts`](lib/inference/bfl/models.ts), [`lib/inference/runway/models.ts`](lib/inference/runway/models.ts), and [`lib/inference/babysea/models.ts`](lib/inference/babysea/models.ts).
 
-| Model name         | Model ID                 |
-| :----------------- | :----------------------- |
-| FLUX 1.1 Pro       | `bfl/flux-1.1-pro`       |
-| FLUX 1.1 Pro Ultra | `bfl/flux-1.1-pro-ultra` |
-| FLUX 2 Flex        | `bfl/flux-2-flex`        |
-| FLUX 2 Klein 4B    | `bfl/flux-2-klein-4b`    |
-| FLUX 2 Klein 9B    | `bfl/flux-2-klein-9b`    |
-| FLUX 2 Max         | `bfl/flux-2-max`         |
-| FLUX 2 Pro         | `bfl/flux-2-pro`         |
+| Model name               | Model ID                   |
+| :----------------------- | :------------------------- |
+| FLUX 1.1 Pro             | `bfl/flux-1.1-pro`         |
+| FLUX 1.1 Pro Ultra       | `bfl/flux-1.1-pro-ultra`   |
+| FLUX 2 Flex              | `bfl/flux-2-flex`          |
+| FLUX 2 Klein 4B          | `bfl/flux-2-klein-4b`      |
+| FLUX 2 Klein 9B          | `bfl/flux-2-klein-9b`      |
+| FLUX 2 Max               | `bfl/flux-2-max`           |
+| FLUX 2 Pro               | `bfl/flux-2-pro`           |
+| Runway Act Two           | `runway/act-two`           |
+| Runway Aleph 2           | `runway/aleph-2`           |
+| Runway Gen-4.5           | `runway/gen-4.5`           |
+| Runway Gen-4 Aleph       | `runway/gen-4-aleph`       |
+| Runway Gen-4 Image       | `runway/gen-4-image`       |
+| Runway Gen-4 Image Turbo | `runway/gen-4-image-turbo` |
+| Runway Gen-4 Turbo       | `runway/gen-4-turbo`       |
 
 ## Workspace
 
@@ -196,16 +207,16 @@ Use an external scheduler for `GET /api/generations/process` when you want backg
 
 ## Customize
 
-| Change     | Files                                                                                                                                      |
-| :--------- | :----------------------------------------------------------------------------------------------------------------------------------------- |
-| UI         | `app/page.tsx`, `app/access/page.tsx`, `app/dashboard/**`                                                                                  |
-| Auth       | `lib/auth/owner.ts`, `app/access/_lib/server-actions.ts`, `supabase/migrations/001_sherin.sql`                                             |
-| Models     | `lib/model-family.ts`, `lib/app-config.ts`, `lib/inference/bfl/models.ts`, `lib/inference/babysea/models.ts`, `test/sherin-models.test.ts` |
-| Inference  | `lib/inference/index.ts`, `lib/inference/bfl/server-actions.ts`, `lib/inference/babysea/server-actions.ts`                                 |
-| Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql`    |
-| Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                   |
-| Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                    |
-| Deploy     | `.do/deploy.template.yaml`, `.env.example`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`                             |
+| Change     | Files                                                                                                                                                                        |
+| :--------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI         | `app/page.tsx`, `app/access/page.tsx`, `app/dashboard/**`                                                                                                                    |
+| Auth       | `lib/auth/owner.ts`, `app/access/_lib/server-actions.ts`, `supabase/migrations/001_sherin.sql`                                                                               |
+| Models     | `lib/model-family.ts`, `lib/app-config.ts`, `lib/inference/bfl/models.ts`, `lib/inference/runway/models.ts`, `lib/inference/babysea/models.ts`, `test/sherin-models.test.ts` |
+| Inference  | `lib/inference/index.ts`, `lib/inference/bfl/server-actions.ts`, `lib/inference/runway/server-actions.ts`, `lib/inference/babysea/server-actions.ts`                         |
+| Storage    | `lib/storage/index.ts`, `lib/storage/*/server-actions.ts`, `lib/storage/s3-compatible-storage.ts`, `supabase/migrations/001_sherin.sql`                                      |
+| Worker     | `app/dashboard/studio/_lib/generation-worker.ts`, `app/api/generations/process/route.ts`                                                                                     |
+| Monitoring | `instrumentation.ts`, `instrumentation-client.ts`, `lib/monitoring`, `scripts/sentry-project-check.mjs`                                                                      |
+| Deploy     | `.do/deploy.template.yaml`, `.env.example`, `netlify.toml`, `render.yaml`, `vercel.json`, `scripts/doctor.mjs`                                                               |
 
 ## Troubleshooting
 

@@ -65,6 +65,8 @@ const ALLOWED_ASSET_HOST_SUFFIXES = [
   'delivery-us.bfl.ai',
   'delivery-eu.bfl.ai',
   'bfl.ai',
+  'runwayml.com',
+  'cloudfront.net',
   // BabySea
   'app.babysea.ai',
   'app.us.babysea.ai',

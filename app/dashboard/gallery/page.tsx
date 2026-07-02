@@ -19,15 +19,15 @@ import {
 } from '@/lib/generation/display';
 import { SHERIN_SAMPLE_RESULT } from '@/lib/generation/sample-result';
 import { getInferenceProviderStatus } from '@/lib/inference';
-import {
-  BYOK_INFERENCE_PROVIDER_ID,
-  BYOK_INFERENCE_PROVIDER_LABEL,
-} from '@/lib/app-config';
+import { byokProviderLabel, isByokInferenceProviderId } from '@/lib/app-config';
 import { getStorageProviderStatus } from '@/lib/storage';
 import { getUser } from '@/lib/database/server-actions';
 import { formatDate } from '@/lib/utils';
 import { InlineBabySea } from '@/components/icons/inline-babysea';
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-inference';
+import {
+  InlineBlackForestLabsLight,
+  InlineRunwayLight,
+} from '@/components/icons/inline-inference';
 import {
   InlineAwsS3,
   InlineBackblazeB2,
@@ -56,8 +56,10 @@ export default async function GalleryPage() {
   const { supabase, user } = await getUser();
   const inferenceStatus = getInferenceProviderStatus();
   const storageStatus = getStorageProviderStatus();
-  const summaryInferenceProvider =
-    inferenceStatus.preferred ?? inferenceStatus.active;
+  const summaryInferenceProviders: string[] =
+    inferenceStatus.mode === 'babysea'
+      ? ['babysea']
+      : inferenceStatus.configuredByok;
   const summaryStorageProvider =
     storageStatus.preferred ?? storageStatus.active;
 
@@ -105,7 +107,7 @@ export default async function GalleryPage() {
     };
   });
   const summary = createGallerySummary(rows, {
-    inferenceProvider: summaryInferenceProvider,
+    inferenceProviders: summaryInferenceProviders,
     storageProvider: summaryStorageProvider,
   });
   const hasActiveGeneration = rows.some((row) => isActiveStatus(row.status));
@@ -331,15 +333,15 @@ function inferenceProviderSummaryValue(provider: string): ProviderSummaryValue {
     };
   }
 
-  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
+  if (isByokInferenceProviderId(provider)) {
+    const Icon =
+      provider === 'runway' ? InlineRunwayLight : InlineBlackForestLabsLight;
+
     return {
       content: (
         <>
-          <InlineBlackForestLabsLight
-            className="h-3.5 w-5 shrink-0"
-            aria-hidden="true"
-          />
-          <span>{BYOK_INFERENCE_PROVIDER_LABEL}</span>
+          <Icon className="h-3.5 w-5 shrink-0" aria-hidden="true" />
+          <span>{byokProviderLabel(provider)}</span>
         </>
       ),
       key: provider,
@@ -435,19 +437,16 @@ function createGallerySummary(
     previewSource: 'storage' | null;
   }>,
   providers: {
-    inferenceProvider: string | null;
+    inferenceProviders: string[];
     storageProvider: string | null;
   },
 ) {
   return {
     failed: rows.filter((row) => row.status === 'failed').length,
-    inferenceLabel:
-      providers.inferenceProvider === 'babysea'
-        ? 'Inference Execution'
-        : 'Inference',
-    inferenceProviders: providers.inferenceProvider
-      ? [providers.inferenceProvider]
-      : [],
+    inferenceLabel: providers.inferenceProviders.includes('babysea')
+      ? 'Inference Execution'
+      : 'Inference',
+    inferenceProviders: providers.inferenceProviders,
     storageProviders: storageSummaryValues(providers.storageProvider),
     success: rows.filter(
       (row) => row.status === 'succeeded' && row.previewSource === 'storage',
@@ -466,8 +465,8 @@ function formatInferenceProvider(provider: string) {
     return 'BabySea';
   }
 
-  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
-    return BYOK_INFERENCE_PROVIDER_LABEL;
+  if (isByokInferenceProviderId(provider)) {
+    return byokProviderLabel(provider);
   }
 
   return provider;

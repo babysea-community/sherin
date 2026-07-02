@@ -18,6 +18,7 @@ import type { Database, Json } from '@/lib/database.types';
 import {
   resolveInferenceProvider,
   resolveInferenceProviderById,
+  resolveInferenceProviderForModel,
   type InferenceCancelResult,
   type InferenceProvider,
   type InferenceProviderId,
@@ -122,6 +123,16 @@ export async function generateImage(formData: FormData) {
       videoUploadCount: inputVideoFileUploads.length,
     });
     redirectStudioError('invalid_input', 'SHERIN_FORM_PARSE_FAILED');
+  }
+
+  try {
+    provider = resolveInferenceProviderForModel(parsed.data.model);
+  } catch (error) {
+    logStudioError('SHERIN_INFERENCE_PROVIDER_RESOLVE_FAILED', error);
+    redirectStudioError(
+      'inference_unconfigured',
+      'SHERIN_INFERENCE_PROVIDER_RESOLVE_FAILED',
+    );
   }
 
   const admin = createSupabaseAdminClient();

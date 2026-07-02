@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import {
-  BYOK_INFERENCE_PROVIDER_ID,
   BYOK_MODEL_CONFIGS,
+  DEFAULT_MODEL_ID,
   DEFAULT_OUTPUT_FORMAT,
   DEFAULT_RATIO,
-  getDefaultModelIdForInferenceProvider,
+  MODEL_OPTIONS,
   getBabySeaInputFileLimit,
-  getModelOptionsForInferenceProvider,
+  getModelOptionsForByokProviders,
   hasByokModelConfig,
   isSherinModelId,
   type ByokInferenceProviderId,
@@ -22,7 +22,8 @@ import { ByokFormFields } from './byok-form-fields';
 import { ModelField } from './form-controls';
 
 type StudioModelFieldsProps = {
-  activeProvider: 'babysea' | ByokInferenceProviderId | null;
+  mode: 'babysea' | 'byok' | null;
+  byokProviderIds: readonly ByokInferenceProviderId[];
   babySeaSchemas: Partial<Record<SherinModelId, BabySeaStudioModelSchema>>;
   initialModel?: SherinModelId;
   initialPrompt?: string;
@@ -32,25 +33,22 @@ const STUDIO_FORM_DRAFT_KEY = 'sherin:studio-form-draft:v1';
 const STUDIO_FORM_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 
 export function StudioModelFields({
-  activeProvider,
+  mode,
+  byokProviderIds,
   babySeaSchemas,
   initialModel,
   initialPrompt,
 }: StudioModelFieldsProps) {
   const modelOptions = useMemo(() => {
-    const providerOptions = getModelOptionsForInferenceProvider(activeProvider);
+    if (mode === 'babysea') {
+      const babySeaModelIds = new Set(Object.keys(babySeaSchemas));
 
-    if (activeProvider !== 'babysea') {
-      return providerOptions;
+      return MODEL_OPTIONS.filter((option) => babySeaModelIds.has(option.id));
     }
 
-    const babySeaModelIds = new Set(Object.keys(babySeaSchemas));
-
-    return providerOptions.filter((option) => babySeaModelIds.has(option.id));
-  }, [activeProvider, babySeaSchemas]);
-  const fallbackModel =
-    modelOptions[0]?.id ??
-    getDefaultModelIdForInferenceProvider(activeProvider);
+    return getModelOptionsForByokProviders(byokProviderIds);
+  }, [mode, babySeaSchemas, byokProviderIds]);
+  const fallbackModel = modelOptions[0]?.id ?? DEFAULT_MODEL_ID;
   const [model, setModel] = useState<SherinModelId>(
     initialModel && isModelOption(initialModel, modelOptions)
       ? initialModel
@@ -96,7 +94,7 @@ export function StudioModelFields({
         onModelChange={setSelectedModel}
       />
 
-      {activeProvider === 'babysea' && babySeaSchema ? (
+      {mode === 'babysea' && babySeaSchema ? (
         <BabySeaFormFields
           key={`babysea-${selectedModel}`}
           defaultOutputFormat={defaultValue(
@@ -121,8 +119,7 @@ export function StudioModelFields({
         />
       ) : null}
 
-      {(activeProvider === BYOK_INFERENCE_PROVIDER_ID || !activeProvider) &&
-      byokConfig ? (
+      {mode !== 'babysea' && byokConfig ? (
         <ByokFormFields
           key={`byok-${selectedModel}`}
           defaultOutputFormat={defaultValue(

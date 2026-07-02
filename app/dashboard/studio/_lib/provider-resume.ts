@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
+import { isByokInferenceProviderId } from '@/lib/app-config';
 import type { Database, Json } from '@/lib/database.types';
 import { BABYSEA_IDEMPOTENCY_IN_PROGRESS_CODE } from '@/lib/inference/errors';
 
@@ -23,7 +23,7 @@ export function canResumeProviderWorkload(generation: ProviderResumeRow) {
 
 export function canResumeByokProviderPolling(generation: ProviderResumeRow) {
   return (
-    generation.inference_provider === BYOK_INFERENCE_PROVIDER_ID &&
+    isByokInferenceProviderId(generation.inference_provider) &&
     hasProviderGenerationId(generation) &&
     isWithinResumeWindow(generation, MAX_BYOK_POLL_RESUME_AGE_MS)
   );

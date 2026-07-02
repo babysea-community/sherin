@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  BYOK_INFERENCE_PROVIDER_ID,
-  BYOK_INFERENCE_PROVIDER_LABEL,
+  BYOK_INFERENCE_PROVIDER_IDS,
   DEFAULT_MODEL_ID,
   MODEL_IDS,
   MODEL_OPTIONS,
+  byokProviderLabel,
   getDefaultModelIdForInferenceProvider,
   getModelIdsForInferenceProvider,
   getModelOptionsForInferenceProvider,
@@ -56,13 +56,16 @@ const BFL_MODEL_EXPECTATIONS = [
 
 describe('App model registry', () => {
   it('derives provider model options from the central registry', () => {
-    expect(BYOK_INFERENCE_PROVIDER_ID).toBe('bfl');
-    expect(BYOK_INFERENCE_PROVIDER_LABEL).toBe('Black Forest Labs');
+    expect(BYOK_INFERENCE_PROVIDER_IDS).toContain('bfl');
+    expect(BYOK_INFERENCE_PROVIDER_IDS).toContain('runway');
+    expect(byokProviderLabel('bfl')).toBe('Black Forest Labs');
     expect(getModelOptionsForInferenceProvider('babysea')).toEqual(
       MODEL_OPTIONS,
     );
     expect(getModelIdsForInferenceProvider('babysea')).toEqual(MODEL_IDS);
-    expect(getModelIdsForInferenceProvider('bfl')).toEqual(MODEL_IDS);
+    expect(getModelIdsForInferenceProvider('bfl')).toEqual(
+      BFL_MODEL_EXPECTATIONS.map((model) => model.id),
+    );
     expect(getDefaultModelIdForInferenceProvider('babysea')).toBe(
       DEFAULT_MODEL_ID,
     );
@@ -70,7 +73,9 @@ describe('App model registry', () => {
   });
 
   it('registers BFL models across the Studio providers', () => {
-    expect(MODEL_IDS).toEqual(BFL_MODEL_EXPECTATIONS.map((model) => model.id));
+    expect(getModelIdsForInferenceProvider('bfl')).toEqual(
+      BFL_MODEL_EXPECTATIONS.map((model) => model.id),
+    );
 
     for (const model of BFL_MODEL_EXPECTATIONS) {
       expect(MODEL_OPTIONS.find((option) => option.id === model.id)).toEqual({

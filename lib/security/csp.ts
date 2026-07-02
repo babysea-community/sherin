@@ -43,9 +43,10 @@ function buildContentSecurityPolicy() {
     'https://api.us.babysea.ai', // us-region
     'https://api.eu.babysea.ai', // eu-region
     'https://api.jp.babysea.ai', // apac-region
-    'https://api.bfl.ai', // global
-    'https://api.us.bfl.ai', // us-region
-    'https://api.eu.bfl.ai', // eu-region
+    'https://api.bfl.ai', // bfl (global)
+    'https://api.us.bfl.ai', // bfl (us-region)
+    'https://api.eu.bfl.ai', // bfl (eu-region)
+    'https://api.dev.runwayml.com', // runway (global)
   ]);
   const imageHosts = new Set<string>([
     "'self'",
@@ -54,8 +55,10 @@ function buildContentSecurityPolicy() {
     'https://app.us.babysea.ai', // us-region
     'https://app.eu.babysea.ai', // eu-region
     'https://app.jp.babysea.ai', // apac-region
-    'https://delivery-us.bfl.ai', // us-region
-    'https://delivery-eu.bfl.ai', // eu-region
+    'https://delivery-us.bfl.ai', // bfl (us-region)
+    'https://delivery-eu.bfl.ai', // bfl (eu-region)
+    'https://*.runwayml.com', // runway (hosted)
+    'https://*.cloudfront.net', // runway (cdn)
     'https://lh3.googleusercontent.com', // Google profile photos from Google OAuth
     BABYSEA_CDN_ORIGIN, // app assets
     'https://imagedelivery.net', // app assets

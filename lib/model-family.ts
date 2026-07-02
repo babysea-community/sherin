@@ -1,31 +1,98 @@
 /**
- * App model-family registry facade.
+ * App model-family registry facade (multi-BYOK).
  *
- * Provider-specific model catalogs live beside their direct provider adapter.
- * When cloning the app for a new provider family, keep this facade stable and
- * swap only the provider family import plus the direct provider shim.
+ * `sherin` supports multiple BYOK provider families (BFL + Runway) plus BabySea.
+ * Each model id is prefixed with its provider (`bfl/*`, `runway/*`) and routed to
+ * the matching direct adapter. The catalog surfaced to the studio is gated by
+ * which provider keys are configured (see `lib/inference`). BabySea mode exposes
+ * the combined catalog routed through the BabySea API.
  */
 import {
-  SHERIN_BYOK_FAMILY as PROVIDER_FAMILY,
-  hasProviderModelConfig,
+  SHERIN_BYOK_FAMILY as BFL_FAMILY,
+  hasBflModelConfig,
+  type BflModelId,
 } from './inference/bfl/family';
+import {
+  SHERIN_BYOK_FAMILY as RUNWAY_FAMILY,
+  hasRunwayModelConfig,
+  type RunwayModelId,
+} from './inference/runway/family';
 
 export { SHERIN_BYOK_FAMILY as BYOK_FAMILY } from './inference/bfl/family';
 
-export const MODEL_OPTIONS = PROVIDER_FAMILY.modelOptions;
-export type SherinModelId = (typeof MODEL_OPTIONS)[number]['id'];
+export type SherinModelId = BflModelId | RunwayModelId;
+export type SherinModelOption = { id: SherinModelId; label: string };
 
-export const MODEL_IDS = PROVIDER_FAMILY.modelIds as [
+export const MODEL_OPTIONS: readonly SherinModelOption[] = [
+  ...BFL_FAMILY.modelOptions,
+  ...RUNWAY_FAMILY.modelOptions,
+];
+
+export const MODEL_IDS = MODEL_OPTIONS.map((option) => option.id) as [
   SherinModelId,
   ...SherinModelId[],
 ];
 
-export const DEFAULT_MODEL_ID: SherinModelId = PROVIDER_FAMILY.defaultModelId;
-export const BYOK_INFERENCE_PROVIDER_ID = PROVIDER_FAMILY.providerId;
-export const BYOK_INFERENCE_PROVIDER_LABEL = PROVIDER_FAMILY.providerLabel;
-export const BYOK_INFERENCE_PROVIDER_KEYWORD = PROVIDER_FAMILY.providerKeyword;
-export const BYOK_MODEL_ID_PREFIX = PROVIDER_FAMILY.modelIdPrefix;
-export type ByokInferenceProviderId = typeof BYOK_INFERENCE_PROVIDER_ID;
+export const DEFAULT_MODEL_ID: SherinModelId = BFL_FAMILY.defaultModelId;
+
+/** BYOK provider ids, in catalog/default precedence order. */
+export const BYOK_INFERENCE_PROVIDER_IDS = [
+  BFL_FAMILY.providerId,
+  RUNWAY_FAMILY.providerId,
+] as const;
+export type ByokInferenceProviderId =
+  (typeof BYOK_INFERENCE_PROVIDER_IDS)[number];
+
+export function isByokInferenceProviderId(
+  value: unknown,
+): value is ByokInferenceProviderId {
+  return (
+    typeof value === 'string' &&
+    (BYOK_INFERENCE_PROVIDER_IDS as readonly string[]).includes(value)
+  );
+}
+
+const BYOK_PROVIDER_LABELS = {
+  [BFL_FAMILY.providerId]: BFL_FAMILY.providerLabel,
+  [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.providerLabel,
+} as Record<ByokInferenceProviderId, string>;
+
+const BYOK_PROVIDER_KEYWORDS = {
+  [BFL_FAMILY.providerId]: BFL_FAMILY.providerKeyword,
+  [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.providerKeyword,
+} as Record<ByokInferenceProviderId, string>;
+
+const BYOK_MODEL_ID_PREFIXES = {
+  [BFL_FAMILY.providerId]: BFL_FAMILY.modelIdPrefix,
+  [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.modelIdPrefix,
+} as Record<ByokInferenceProviderId, string>;
+
+export function byokProviderLabel(providerId: ByokInferenceProviderId) {
+  return BYOK_PROVIDER_LABELS[providerId];
+}
+
+export function byokProviderKeyword(providerId: ByokInferenceProviderId) {
+  return BYOK_PROVIDER_KEYWORDS[providerId];
+}
+
+export function byokModelIdPrefix(providerId: ByokInferenceProviderId) {
+  return BYOK_MODEL_ID_PREFIXES[providerId];
+}
+
+/** Resolve which BYOK provider owns a model id (by config membership). */
+export function byokProviderIdForModel(
+  model: string,
+): ByokInferenceProviderId | null {
+  if (hasBflModelConfig(model)) {
+    return BFL_FAMILY.providerId;
+  }
+
+  if (hasRunwayModelConfig(model)) {
+    return RUNWAY_FAMILY.providerId;
+  }
+
+  return null;
+}
 
 export function isSherinModelId(value: unknown): value is SherinModelId {
   return (
@@ -35,19 +102,28 @@ export function isSherinModelId(value: unknown): value is SherinModelId {
 
 export const RATIOS = {} as Record<string, { width: number; height: number }>;
 export type SherinDimensionRatio = string;
-export const RATIO_OPTIONS = PROVIDER_FAMILY.ratioOptions;
+export const RATIO_OPTIONS = uniqueStrings([
+  ...BFL_FAMILY.ratioOptions,
+  ...RUNWAY_FAMILY.ratioOptions,
+]);
 export type SherinRatio = (typeof RATIO_OPTIONS)[number];
 
-export const OUTPUT_FORMATS = PROVIDER_FAMILY.outputFormats;
+export const OUTPUT_FORMATS = uniqueStrings([
+  ...BFL_FAMILY.outputFormats,
+  ...RUNWAY_FAMILY.outputFormats,
+]);
 export type SherinOutputFormat = (typeof OUTPUT_FORMATS)[number];
 
-export const DEFAULT_RATIO: SherinDimensionRatio = PROVIDER_FAMILY.defaultRatio;
+export const DEFAULT_RATIO: SherinDimensionRatio = BFL_FAMILY.defaultRatio;
 export const DEFAULT_OUTPUT_FORMAT: SherinOutputFormat =
-  PROVIDER_FAMILY.defaultOutputFormat;
-export const RESOLUTION_OPTIONS = PROVIDER_FAMILY.resolutionOptions;
+  BFL_FAMILY.defaultOutputFormat;
+export const RESOLUTION_OPTIONS = uniqueStrings([
+  ...BFL_FAMILY.resolutionOptions,
+  ...RUNWAY_FAMILY.resolutionOptions,
+]);
 export type SherinResolution = (typeof RESOLUTION_OPTIONS)[number];
 export const DEFAULT_RESOLUTION: SherinResolution | undefined =
-  PROVIDER_FAMILY.defaultResolution as SherinResolution | undefined;
+  BFL_FAMILY.defaultResolution as SherinResolution | undefined;
 export const GENERATION_PROMPT_PLACEHOLDER =
   'A cinematic editorial portrait with arctic light, soft film grain...';
 
@@ -55,18 +131,23 @@ export const DEFAULT_GENERATION_OUTPUT_NUMBER = 1;
 export const DEFAULT_GENERATION_OUTPUT_QUALITY = 80;
 export const DEFAULT_GENERATION_GUIDANCE_SCALE = 3.5;
 export const DEFAULT_GENERATION_NUM_INFERENCE_STEPS = 28;
-export const DEFAULT_BYOK_GUIDANCE = PROVIDER_FAMILY.defaultGenerationGuidance;
-export const DEFAULT_BYOK_STEPS = PROVIDER_FAMILY.defaultGenerationSteps;
-export const DEFAULT_BYOK_SAFETY_TOLERANCE =
-  PROVIDER_FAMILY.defaultSafetyTolerance;
+export const DEFAULT_BYOK_GUIDANCE = BFL_FAMILY.defaultGenerationGuidance;
+export const DEFAULT_BYOK_STEPS = BFL_FAMILY.defaultGenerationSteps;
+export const DEFAULT_BYOK_SAFETY_TOLERANCE = BFL_FAMILY.defaultSafetyTolerance;
 
-export const BYOK_MODEL_CONFIGS = PROVIDER_FAMILY.modelConfigs;
-export const BYOK_MODEL_IDS = PROVIDER_FAMILY.modelIds;
+export const BYOK_MODEL_CONFIGS = {
+  ...BFL_FAMILY.modelConfigs,
+  ...RUNWAY_FAMILY.modelConfigs,
+};
+export const BYOK_MODEL_IDS = MODEL_IDS;
+
+export const BABYSEA_MODEL_CONFIGS = {
+  ...BFL_FAMILY.babySeaModelConfigs,
+  ...RUNWAY_FAMILY.babySeaModelConfigs,
+};
 
 export type BabySeaModelConfig =
-  (typeof PROVIDER_FAMILY.babySeaModelConfigs)[SherinModelId];
-
-export const BABYSEA_MODEL_CONFIGS = PROVIDER_FAMILY.babySeaModelConfigs;
+  (typeof BABYSEA_MODEL_CONFIGS)[keyof typeof BABYSEA_MODEL_CONFIGS];
 
 export const SHERIN_INPUT_FILE_LIMIT = Math.max(
   ...Object.values(BYOK_MODEL_CONFIGS).map((model) =>
@@ -77,22 +158,33 @@ export const SHERIN_INPUT_FILE_LIMIT = Math.max(
 
 export type InferenceProviderScope = 'babysea' | ByokInferenceProviderId | null;
 
-export function hasByokModelConfig(
-  model: SherinModelId,
-): model is keyof typeof BYOK_MODEL_CONFIGS & SherinModelId {
-  return hasProviderModelConfig(model);
+export function hasByokModelConfig(model: string): model is SherinModelId {
+  return hasBflModelConfig(model) || hasRunwayModelConfig(model);
 }
 
 export function getModelOptionsForInferenceProvider(
   providerId: InferenceProviderScope,
 ) {
-  if (providerId === BYOK_INFERENCE_PROVIDER_ID) {
-    const byokModelIds = new Set<SherinModelId>(BYOK_MODEL_IDS);
-
-    return MODEL_OPTIONS.filter((option) => byokModelIds.has(option.id));
+  if (providerId !== null && isByokInferenceProviderId(providerId)) {
+    return MODEL_OPTIONS.filter(
+      (option) => byokProviderIdForModel(option.id) === providerId,
+    );
   }
 
   return MODEL_OPTIONS;
+}
+
+/** Combined catalog for the given set of configured BYOK providers. */
+export function getModelOptionsForByokProviders(
+  providerIds: readonly ByokInferenceProviderId[],
+) {
+  const configured = new Set<ByokInferenceProviderId>(providerIds);
+
+  return MODEL_OPTIONS.filter((option) => {
+    const owner = byokProviderIdForModel(option.id);
+
+    return owner !== null && configured.has(owner);
+  });
 }
 
 export function getModelIdsForInferenceProvider(
@@ -106,11 +198,12 @@ export function getModelIdsForInferenceProvider(
 export function getDefaultModelIdForInferenceProvider(
   providerId: InferenceProviderScope,
 ) {
-  if (
-    providerId === BYOK_INFERENCE_PROVIDER_ID &&
-    !hasByokModelConfig(DEFAULT_MODEL_ID)
-  ) {
-    return BYOK_MODEL_IDS[0] ?? DEFAULT_MODEL_ID;
+  if (providerId !== null && isByokInferenceProviderId(providerId)) {
+    const owned = getModelIdsForInferenceProvider(providerId);
+
+    if (!owned.includes(DEFAULT_MODEL_ID)) {
+      return owned[0] ?? DEFAULT_MODEL_ID;
+    }
   }
 
   return DEFAULT_MODEL_ID;
@@ -136,4 +229,8 @@ export function isSherinResolution(
   value: string | undefined,
 ): value is SherinResolution {
   return RESOLUTION_OPTIONS.includes(value as SherinResolution);
+}
+
+function uniqueStrings(values: readonly string[]): string[] {
+  return [...new Set(values)];
 }

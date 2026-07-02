@@ -3,7 +3,7 @@ import 'server-only';
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 
-import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
+import { isByokInferenceProviderId } from '@/lib/app-config';
 import type { Database, Json } from '@/lib/database.types';
 import {
   resolveInferenceProviderById,
@@ -913,7 +913,7 @@ function toInferenceRequest({
 }
 
 function toInferenceProviderId(value: string): InferenceProviderId {
-  if (value === 'babysea' || value === BYOK_INFERENCE_PROVIDER_ID) {
+  if (value === 'babysea' || isByokInferenceProviderId(value)) {
     return value;
   }
 

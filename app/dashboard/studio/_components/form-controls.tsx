@@ -2,12 +2,15 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-model';
+import {
+  InlineBlackForestLabsLight,
+  InlineRunwayLight,
+} from '@/components/icons/inline-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  BYOK_MODEL_ID_PREFIX,
+  byokProviderIdForModel,
   GENERATION_PROMPT_PLACEHOLDER,
   MODEL_OPTIONS,
   type SherinModelId,
@@ -171,16 +174,18 @@ export function ModelField({
 }
 
 function ModelVendorIcon({ modelId }: { modelId: string }) {
-  if (!modelId.startsWith(BYOK_MODEL_ID_PREFIX)) {
+  const providerId = byokProviderIdForModel(modelId);
+
+  if (!providerId) {
     return null;
   }
 
+  const Icon =
+    providerId === 'runway' ? InlineRunwayLight : InlineBlackForestLabsLight;
+
   return (
     <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#48d1cc1a]">
-      <InlineBlackForestLabsLight
-        className="h-2.5 w-3.5 shrink-0"
-        aria-hidden="true"
-      />
+      <Icon className="h-2.5 w-3.5 shrink-0" aria-hidden="true" />
     </span>
   );
 }

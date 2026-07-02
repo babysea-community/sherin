@@ -1,8 +1,5 @@
 import { getGenerationMetadataString } from '@/lib/generation/display';
-import {
-  BYOK_INFERENCE_PROVIDER_ID,
-  BYOK_INFERENCE_PROVIDER_LABEL,
-} from '@/lib/app-config';
+import { byokProviderLabel, isByokInferenceProviderId } from '@/lib/app-config';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const FALLBACK_STORAGE_PROVIDER = 'supabase-storage';
@@ -188,8 +185,8 @@ function formatInferenceProvider(provider: string) {
     return 'BabySea';
   }
 
-  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
-    return BYOK_INFERENCE_PROVIDER_LABEL;
+  if (isByokInferenceProviderId(provider)) {
+    return byokProviderLabel(provider);
   }
 
   return provider;

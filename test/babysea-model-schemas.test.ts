@@ -21,11 +21,7 @@ vi.mock('next/cache', () => ({
 }));
 
 import { getBabySeaStudioModelSchemas } from '@/lib/inference/babysea/server-actions';
-import {
-  BYOK_INFERENCE_PROVIDER_ID,
-  DEFAULT_MODEL_ID,
-  MODEL_IDS,
-} from '@/lib/app-config';
+import { DEFAULT_MODEL_ID, MODEL_IDS } from '@/lib/app-config';
 
 describe('BabySea Studio model schemas', () => {
   beforeEach(() => {
@@ -59,7 +55,7 @@ describe('BabySea Studio model schemas', () => {
 function createBabySeaModel(modelIdentifier: string) {
   return {
     model_identifier: modelIdentifier,
-    model_supported_provider: [BYOK_INFERENCE_PROVIDER_ID],
+    model_supported_provider: ['bfl'],
     schema: {
       generation_input_file: false,
       generation_output_format: ['jpg', 'png', 'webp'],

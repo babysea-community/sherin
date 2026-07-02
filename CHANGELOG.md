@@ -4,6 +4,21 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-02
+
+### Added
+
+- Add Runway as a second bring-your-own-key (BYOK) inference provider alongside Black Forest Labs, so Sherin now runs BFL, Runway, and BabySea from a single Studio. In `INFERENCE_PROVIDER=byok` mode every configured provider is active at once and each model routes to its provider by id prefix (`bfl/*` to Black Forest Labs, `runway/*` to Runway).
+- Gate the Studio model catalog by configured provider keys: `BFL_API_KEY` surfaces `bfl/*` models, `RUNWAYML_API_SECRET` surfaces `runway/*` models, and setting both surfaces both. BabySea mode exposes the combined catalog through the BabySea API.
+- Cancel Runway provider-side work when the owner cancels an active generation (best-effort `DELETE /v1/tasks/{id}`), matching the existing Black Forest Labs and BabySea cancel behavior.
+- Add the Runway API and delivery hosts to the Content-Security-Policy and storage asset allowlists so Runway-rendered media loads and downloads.
+
+### Changed
+
+- Generalize the inference boundary from a single direct provider to a multi-provider BYOK registry: `INFERENCE_PROVIDER` selects `byok` (any configured provider) or `babysea`, provider resolution routes per model by id prefix, and dashboards, usage metrics, queue worker, resume handling, and Studio fields resolve each generation's own provider.
+- Allow `runway` in the `generations.inference_provider` database check constraint.
+- Update `.env.example` and the doctor preflight to document `byok` mode and the `RUNWAYML_API_SECRET` credential.
+
 ## [0.4.0] - 2026-05-30
 
 ### Added

@@ -6,7 +6,7 @@ import {
   canResumeByokProviderPolling,
   canResumeProviderWorkload,
 } from '@/app/dashboard/studio/_lib/provider-resume';
-import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
+const BYOK_INFERENCE_PROVIDER_ID = 'bfl';
 
 const now = new Date().toISOString();
 const withinExtendedWindow = new Date(

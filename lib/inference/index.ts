@@ -1,64 +1,176 @@
 import 'server-only';
 
-import { BYOK_INFERENCE_PROVIDER_ID } from '@/lib/app-config';
+import {
+  BYOK_INFERENCE_PROVIDER_IDS,
+  byokProviderIdForModel,
+  isByokInferenceProviderId,
+  type ByokInferenceProviderId,
+  type SherinModelId,
+} from '@/lib/app-config';
 import { getOptionalEnv } from '@/lib/utils/env';
 import type { InferenceProvider, InferenceProviderId } from './types';
 import {
   createBabySeaProvider,
   isBabySeaConfigured,
 } from './babysea/server-actions';
-import { createByokProvider, isByokProviderConfigured } from './byok-provider';
+import { createBflProvider, isBflConfigured } from './bfl/server-actions';
+import {
+  createRunwayProvider,
+  isRunwayConfigured,
+} from './runway/server-actions';
 
 export type { InferenceProvider, InferenceProviderId } from './types';
 export type { InferenceCancelResult } from './types';
 export type { InferenceRequest, InferenceResult } from './types';
 
-/**
- * Resolve the active inference provider. App auto-detects which provider
- * is configured. If both are present, INFERENCE_PROVIDER decides; otherwise
- * Inference takes precedence because it is app's default stack.
- */
-export function resolveInferenceProvider(): InferenceProvider {
-  const configuredPreference = getOptionalEnv('INFERENCE_PROVIDER');
-  const preferred = normalizePreference(configuredPreference);
-  const babyseaReady = isBabySeaConfigured();
-  const byokReady = isByokProviderConfigured();
+export type InferenceMode = 'babysea' | 'byok';
 
-  if (configuredPreference && !preferred) {
+const BYOK_PROVIDER_CONFIGURED: Record<ByokInferenceProviderId, () => boolean> =
+  {
+    bfl: isBflConfigured,
+    runway: isRunwayConfigured,
+  };
+
+const BYOK_PROVIDER_FACTORY: Record<
+  ByokInferenceProviderId,
+  () => InferenceProvider
+> = {
+  bfl: createBflProvider,
+  runway: createRunwayProvider,
+};
+
+/** BYOK providers whose API key is configured on the server. */
+export function getConfiguredByokProviderIds(): ByokInferenceProviderId[] {
+  return BYOK_INFERENCE_PROVIDER_IDS.filter((id) =>
+    BYOK_PROVIDER_CONFIGURED[id](),
+  );
+}
+
+function isAnyByokConfigured() {
+  return getConfiguredByokProviderIds().length > 0;
+}
+
+function normalizeMode(value: string | undefined): InferenceMode | null {
+  if (!value) {
+    return null;
+  }
+
+  const lower = value.trim().toLowerCase();
+
+  if (lower === 'babysea') {
+    return 'babysea';
+  }
+
+  if (lower === 'byok' || isByokInferenceProviderId(lower)) {
+    return 'byok';
+  }
+
+  return null;
+}
+
+/**
+ * Resolve the active inference mode. BYOK takes precedence unless
+ * INFERENCE_PROVIDER=babysea, because BYOK is the app's default stack. In BYOK
+ * mode every configured provider (BFL, Runway) is active and each model routes
+ * to its provider by id prefix. Returns null when nothing is configured.
+ */
+export function resolveInferenceMode(): InferenceMode | null {
+  const configured = getOptionalEnv('INFERENCE_PROVIDER');
+  const preferred = normalizeMode(configured);
+
+  if (configured && !preferred) {
     throw new Error(
-      `INFERENCE_PROVIDER must be ${BYOK_INFERENCE_PROVIDER_ID} or babysea.`,
+      'INFERENCE_PROVIDER must be byok, babysea, bfl, or runway.',
     );
   }
 
   if (preferred === 'babysea') {
-    if (!babyseaReady) {
+    if (!isBabySeaConfigured()) {
       throw new Error(
         'INFERENCE_PROVIDER=babysea but BABYSEA_API_KEY is not set.',
       );
     }
-    return createBabySeaProvider();
+
+    return 'babysea';
   }
 
-  if (preferred === BYOK_INFERENCE_PROVIDER_ID) {
-    if (!byokReady) {
+  if (preferred === 'byok') {
+    if (!isAnyByokConfigured()) {
       throw new Error(
-        `INFERENCE_PROVIDER=${BYOK_INFERENCE_PROVIDER_ID} but the direct provider API key is not set.`,
+        'INFERENCE_PROVIDER=byok but no BYOK provider key (BFL_API_KEY, RUNWAYML_API_SECRET) is set.',
       );
     }
-    return createByokProvider();
+
+    return 'byok';
   }
 
-  if (byokReady) {
-    return createByokProvider();
+  if (isAnyByokConfigured()) {
+    return 'byok';
   }
 
-  if (babyseaReady) {
+  if (isBabySeaConfigured()) {
+    return 'babysea';
+  }
+
+  return null;
+}
+
+/** Resolve the provider that runs a given model under the active mode. */
+export function resolveInferenceProviderForModel(
+  model: SherinModelId,
+): InferenceProvider {
+  const mode = resolveInferenceMode();
+
+  if (mode === null) {
+    throw new Error(
+      'No inference provider configured. Set a BYOK provider key or BABYSEA_API_KEY.',
+    );
+  }
+
+  if (mode === 'babysea') {
     return createBabySeaProvider();
   }
 
-  throw new Error(
-    'No inference provider configured. Set the direct provider API key or BABYSEA_API_KEY.',
-  );
+  const byokId = byokProviderIdForModel(model);
+
+  if (!byokId) {
+    throw new Error(`No BYOK provider owns model ${model}.`);
+  }
+
+  if (!BYOK_PROVIDER_CONFIGURED[byokId]()) {
+    throw new Error(
+      `Model ${model} requires ${byokId}, but its API key is not configured.`,
+    );
+  }
+
+  return BYOK_PROVIDER_FACTORY[byokId]();
+}
+
+/**
+ * Representative active provider at the mode level (BabySea, or the first
+ * configured BYOK provider). Used for status/defaults; per-model generation
+ * uses `resolveInferenceProviderForModel`.
+ */
+export function resolveInferenceProvider(): InferenceProvider {
+  const mode = resolveInferenceMode();
+
+  if (mode === null) {
+    throw new Error(
+      'No inference provider configured. Set a BYOK provider key or BABYSEA_API_KEY.',
+    );
+  }
+
+  if (mode === 'babysea') {
+    return createBabySeaProvider();
+  }
+
+  const [firstByok] = getConfiguredByokProviderIds();
+
+  if (!firstByok) {
+    throw new Error('BYOK mode selected but no BYOK provider is configured.');
+  }
+
+  return BYOK_PROVIDER_FACTORY[firstByok]();
 }
 
 export function resolveInferenceProviderById(
@@ -74,43 +186,35 @@ export function resolveInferenceProviderById(
     return createBabySeaProvider();
   }
 
-  if (providerId === BYOK_INFERENCE_PROVIDER_ID) {
-    if (!isByokProviderConfigured()) {
+  if (isByokInferenceProviderId(providerId)) {
+    if (!BYOK_PROVIDER_CONFIGURED[providerId]()) {
       throw new Error(
-        'Queued generation requires the configured BYOK provider, but its API key is not set.',
+        `Queued generation requires ${providerId}, but its API key is not set.`,
       );
     }
 
-    return createByokProvider();
+    return BYOK_PROVIDER_FACTORY[providerId]();
   }
 
   throw new Error(`Unsupported queued inference provider: ${providerId}`);
 }
 
 export function getInferenceProviderStatus() {
-  const preferred = normalizePreference(getOptionalEnv('INFERENCE_PROVIDER'));
-  const byok = isByokProviderConfigured();
+  const configuredByok = getConfiguredByokProviderIds();
   const babysea = isBabySeaConfigured();
-  const active: InferenceProviderId | null = (() => {
+  const mode = (() => {
     try {
-      return resolveInferenceProvider().id;
+      return resolveInferenceMode();
     } catch {
       return null;
     }
   })();
 
-  return { preferred, byok, babysea, active };
-}
-
-function normalizePreference(
-  value: string | undefined,
-): InferenceProviderId | null {
-  if (!value) {
-    return null;
-  }
-  const lower = value.trim().toLowerCase();
-  if (lower === BYOK_INFERENCE_PROVIDER_ID || lower === 'babysea') {
-    return lower;
-  }
-  return null;
+  return {
+    mode,
+    configuredByok,
+    byok: configuredByok.length > 0,
+    babysea,
+    active: mode,
+  };
 }

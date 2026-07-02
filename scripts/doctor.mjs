@@ -6,7 +6,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 
 const ENV_FILES = ['.env.local', '.env'];
-const INFERENCE_PROVIDERS = new Set(['bfl', 'babysea']);
+const INFERENCE_PROVIDERS = new Set(['byok', 'babysea', 'bfl', 'runway']);
 const STORAGE_PROVIDERS = new Set([
   'aws-s3',
   'backblaze-b2',
@@ -47,15 +47,22 @@ checkRequired('SUPABASE_SECRET_KEY');
 const preferredInference = optional('INFERENCE_PROVIDER')?.toLowerCase();
 const hasBabySea = Boolean(optional('BABYSEA_API_KEY'));
 const hasBfl = Boolean(optional('BFL_API_KEY'));
+const hasRunway = Boolean(optional('RUNWAYML_API_SECRET'));
+const hasByok = hasBfl || hasRunway;
 
 if (preferredInference && !INFERENCE_PROVIDERS.has(preferredInference)) {
-  fail('INFERENCE_PROVIDER must be babysea or bfl.');
+  fail('INFERENCE_PROVIDER must be byok, babysea, bfl, or runway.');
 } else if (preferredInference === 'babysea' && !hasBabySea) {
   fail('INFERENCE_PROVIDER=babysea requires BABYSEA_API_KEY.');
-} else if (preferredInference === 'bfl' && !hasBfl) {
-  fail('INFERENCE_PROVIDER=bfl requires BFL_API_KEY.');
-} else if (!hasBabySea && !hasBfl) {
-  fail('Set BABYSEA_API_KEY or BFL_API_KEY.');
+} else if (
+  (preferredInference === 'byok' ||
+    preferredInference === 'bfl' ||
+    preferredInference === 'runway') &&
+  !hasByok
+) {
+  fail('INFERENCE_PROVIDER=byok requires BFL_API_KEY or RUNWAYML_API_SECRET.');
+} else if (!hasBabySea && !hasByok) {
+  fail('Set BABYSEA_API_KEY, BFL_API_KEY, or RUNWAYML_API_SECRET.');
 } else {
   pass('Inference provider is configured.');
 }

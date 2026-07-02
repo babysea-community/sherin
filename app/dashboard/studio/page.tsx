@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { CircleStop } from 'lucide-react';
 import {
-  type ByokInferenceProviderId,
   getModelIdsForInferenceProvider,
   isSherinModelId,
   type SherinModelId,
@@ -177,7 +176,8 @@ export default async function StudioPage({ searchParams }: PageProps) {
 
           <div className="space-y-5 px-5 py-5 sm:px-6">
             <StudioModelFields
-              activeProvider={activeProvider}
+              mode={activeProvider}
+              byokProviderIds={inferenceStatus.configuredByok}
               babySeaSchemas={babySeaSchemas ?? {}}
               initialModel={studioFormDefaults.model}
               initialPrompt={studioFormDefaults.prompt}
@@ -328,7 +328,7 @@ function createStudioToasts({
   errorParam,
   successId,
 }: {
-  activeProvider: 'babysea' | ByokInferenceProviderId | null;
+  activeProvider: 'babysea' | 'byok' | null;
   babySeaSchemaUnavailable: boolean;
   errorParam: string | null;
   successId: string | null;

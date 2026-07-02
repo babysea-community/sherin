@@ -20,10 +20,7 @@
  * a description with the suggested next step. The raw `message` is rendered
  * separately by the caller as a collapsible technical detail.
  */
-import {
-  BYOK_INFERENCE_PROVIDER_ID,
-  BYOK_INFERENCE_PROVIDER_LABEL,
-} from '@/lib/app-config';
+import { byokProviderLabel, isByokInferenceProviderId } from '@/lib/app-config';
 
 export type HumanizedGenerationError = {
   title: string;
@@ -128,8 +125,8 @@ export function humanizeGenerationError(input: {
 }
 
 function providerDisplayName(provider: string | null | undefined): string {
-  if (provider === BYOK_INFERENCE_PROVIDER_ID) {
-    return BYOK_INFERENCE_PROVIDER_LABEL;
+  if (provider && isByokInferenceProviderId(provider)) {
+    return byokProviderLabel(provider);
   }
   if (provider === 'babysea') return 'BabySea';
   return 'the inference provider';

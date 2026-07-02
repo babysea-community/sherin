@@ -17,7 +17,10 @@ import {
   InlineRenderLight,
   InlineVercelLight,
 } from '@/components/icons/inline-host';
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-inference';
+import {
+  InlineBlackForestLabsLight,
+  InlineRunwayLight,
+} from '@/components/icons/inline-inference';
 import { InlineGitHub } from '@/components/icons/inline-git';
 import {
   InlineAwsS3,
@@ -30,7 +33,7 @@ import { ClientGallery } from '@/components/gallery/client';
 import { DeployDropdown } from '@/components/deploy-dropdown';
 import { InlineNetlify as InlineNetlifySponsor } from '@/components/icons/inline-sponsor';
 import { ProtectedImage } from '@/components/protected-image';
-import { MODEL_OPTIONS } from '@/lib/app-config';
+import { MODEL_OPTIONS, byokProviderIdForModel } from '@/lib/app-config';
 
 const repositoryUrl = 'https://github.com/babysea-community/sherin';
 
@@ -68,9 +71,19 @@ type StackItem = {
   label?: string;
 };
 
-const supportedModels = MODEL_OPTIONS.map((model) => ({
+const bflModels = MODEL_OPTIONS.filter(
+  (model) => byokProviderIdForModel(model.id) === 'bfl',
+).map((model) => ({
   ariaLabel: model.label,
   Icon: InlineBlackForestLabsLight,
+  label: model.label,
+})) satisfies StackItem[];
+
+const runwayModels = MODEL_OPTIONS.filter(
+  (model) => byokProviderIdForModel(model.id) === 'runway',
+).map((model) => ({
+  ariaLabel: model.label,
+  Icon: InlineRunwayLight,
   label: model.label,
 })) satisfies StackItem[];
 
@@ -242,7 +255,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <SupportedModelsSection />
+      <BflModelsSection />
+
+      <RunwayModelsSection />
 
       <StorageHostingSection />
 
@@ -313,7 +328,7 @@ export default function HomePage() {
   );
 }
 
-function SupportedModelsSection() {
+function BflModelsSection() {
   return (
     <section className="border-t border-[#20263a] bg-[#000416]">
       <div className={`${pageContainerClass} py-28 sm:py-36`}>
@@ -330,7 +345,48 @@ function SupportedModelsSection() {
           </div>
 
           <div className="flex max-w-5xl flex-wrap items-center justify-center gap-3 sm:gap-4">
-            {supportedModels.map((item) => {
+            {bflModels.map((item) => {
+              const Icon = item.Icon;
+
+              return (
+                <span
+                  key={item.ariaLabel}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#f0abfc4d] bg-[#f0abfc14] px-3.5 py-2 text-xs font-semibold text-fuchsia-50 sm:text-sm"
+                  title={item.ariaLabel}
+                >
+                  <Icon
+                    className="h-4 w-auto shrink-0 text-fuchsia-100"
+                    aria-hidden="true"
+                  />
+                  <span>{item.label}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function RunwayModelsSection() {
+  return (
+    <section className="border-t border-[#20263a] bg-[#000416]">
+      <div className={`${pageContainerClass} py-28 sm:py-36`}>
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-14 text-center sm:gap-16 lg:gap-20">
+          <div className="max-w-4xl">
+            <h2 className={sectionTitleClassName}>
+              <span>Runway</span>
+              <span className="mx-4 text-slate-500">×</span>
+              <span className="font-normal text-slate-400">models</span>
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">
+              Powered by Runway models inside one private studio
+            </p>
+          </div>
+
+          <div className="flex max-w-5xl flex-wrap items-center justify-center gap-3 sm:gap-4">
+            {runwayModels.map((item) => {
               const Icon = item.Icon;
 
               return (
