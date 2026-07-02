@@ -1,6 +1,6 @@
 {
   "name": "sherin",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Private workspace for generative media with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
