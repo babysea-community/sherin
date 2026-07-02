@@ -11,14 +11,14 @@ import {
   SHERIN_BYOK_FAMILY as BFL_FAMILY,
   hasBflModelConfig,
   type BflModelId,
-} from './inference/bfl/family';
+} from './inference/black-forest-labs/family';
 import {
   SHERIN_BYOK_FAMILY as RUNWAY_FAMILY,
   hasRunwayModelConfig,
   type RunwayModelId,
 } from './inference/runway/family';
 
-export { SHERIN_BYOK_FAMILY as BYOK_FAMILY } from './inference/bfl/family';
+export { SHERIN_BYOK_FAMILY as BYOK_FAMILY } from './inference/black-forest-labs/family';
 
 export type SherinModelId = BflModelId | RunwayModelId;
 export type SherinModelOption = { id: SherinModelId; label: string };

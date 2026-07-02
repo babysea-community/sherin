@@ -13,7 +13,10 @@ import {
   createBabySeaProvider,
   isBabySeaConfigured,
 } from './babysea/server-actions';
-import { createBflProvider, isBflConfigured } from './bfl/server-actions';
+import {
+  createBflProvider,
+  isBflConfigured,
+} from './black-forest-labs/server-actions';
 import {
   createRunwayProvider,
   isRunwayConfigured,
