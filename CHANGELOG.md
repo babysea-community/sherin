@@ -8,6 +8,8 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ### Added
 
+- Add optional Backblaze B2 storage support for generated media and reference assets.
+- Cancel provider-side work when the owner cancels an active generation: Black Forest Labs tasks are canceled through the Black Forest Labs API and BabySea generations through the SDK (best-effort) before the generation is marked failed.
 - Added DigitalOcean App Platform Button deploy manifests, README buttons, deployment guidance, and doctor validation for the expanded one-click deploy set.
 - Added provider-neutral BYOK foundation wiring so future Sherin model-family starters can swap the direct inference provider through the model/provider boundary instead of shared queue, worker, and Studio runtime code.
 
@@ -25,11 +27,20 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 - Standardized security and contributing documentation to refer to `.env.example` for runtime variables instead of repeating secret inventories across human-facing docs.
 - Renamed provider-specific tests to BYOK-neutral shared and kept Black Forest Labs/FLUX test references limited to the direct-provider and model-registry test files.
 - Removed the Heroku-style `app.json` deploy manifest and doctor checks because Sherin does not publish a Heroku deployment path.
+- Render Black Forest Labs duration as a bounded select control and use local field descriptions for Studio form help text.
+- Order Studio model dropdowns by image models first, then video models, with alphabetical sorting inside each group.
+- Order storage providers alphabetically (`aws-s3`, `backblaze-b2`, `cloudflare-r2`, `supabase-storage`, `vercel-blob`) wherever they are enumerated across configuration, adapters, and dashboards.
 
 ### Fixed
 
-- Ignore stale form values that are outside the active FLUX models schema.
-- Omit empty video input values from BYOK submissions so image-only FLUX models do not receive unsupported schema fields.
+- Accept standard Backblaze `B2_KEY_ID`, `B2_APP_KEY`, and `B2_BUCKET_NAME` env aliases and refresh stale Backblaze Native API account tokens before falling back to Supabase Storage.
+- Read the Backblaze B2 endpoints from the v3 `b2_authorize_account` response (`apiInfo.storageApi`) so bucket lookups and uploads no longer fail with an undefined URL and silently fall back to Supabase Storage.
+- Display generated media and reference assets stored in a private Backblaze B2 bucket by adding the Backblaze download host to the image and media Content-Security-Policy allowlists.
+- Time out Backblaze B2 authorize, upload, and control-plane API requests so a stalled B2 endpoint can no longer hang media uploads or signed-URL generation.
+- Release failed asset-download response bodies between retries to avoid leaking connections when a provider asset URL returns an error.
+- Give generated video players an accessible name for screen readers.
+- Ignore stale form values that are outside the active FLUX model schema.
+- Omit empty video input values from BYOK submissions so image-only FLUX model paths do not receive unsupported schema fields.
 - Preserve durable input reference assets after terminal generation states so the References dashboard keeps displaying uploaded and URL-based inputs.
 - Normalize optional `/v1` suffixes from `BFL_API_BASE_URL` and reject non-API BFL hosts for polling URLs.
 - Fixed owner sign-in being dropped on hosts that do not merge `next/headers` cookies into a returned redirect (such as Netlify) by writing the Supabase session cookies directly onto the auth callback redirect response and anchoring redirects to `NEXT_PUBLIC_SITE_URL`, so the freshly minted session persists and the owner reaches the dashboard instead of bouncing back to `/access`.

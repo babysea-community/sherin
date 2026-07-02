@@ -1,6 +1,6 @@
 {
   "name": "sherin",
-  "version": "0.4.0",
+  "version": "0.1.0",
   "description": "Private workspace for generative media with own key, domain, and storage.",
   "private": true,
   "license": "Apache-2.0",
@@ -19,12 +19,7 @@
     "developer-tools",
     "creative-tools",
     "generative-ai",
-    "generative-media",
-    "supabase",
-    "vercel",
-    "cloudflare",
-    "aws",
-    "sentry"
+    "generative-media"
   ],
   "engines": {
     "node": ">=24.14.0 <25"
