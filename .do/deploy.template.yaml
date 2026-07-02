@@ -22,13 +22,16 @@ spec:
           type: SECRET
         - key: INFERENCE_PROVIDER
           scope: RUN_TIME
-          value: bfl
+          value: byok
         - key: BFL_API_KEY
           scope: RUN_TIME
           type: SECRET
         - key: BFL_API_BASE_URL
           scope: RUN_TIME
           value: https://api.bfl.ai
+        - key: RUNWAYML_API_SECRET
+          scope: RUN_TIME
+          type: SECRET
         - key: STORAGE_PROVIDER
           scope: RUN_TIME
           value: supabase-storage

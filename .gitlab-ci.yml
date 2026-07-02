@@ -44,9 +44,10 @@ variables:
   NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
   NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci_supabase_public_key
   SUPABASE_SECRET_KEY: ci_supabase_secret_key
-  INFERENCE_PROVIDER: bfl
+  INFERENCE_PROVIDER: byok
   BFL_API_KEY: ci_bfl_api_key
   BFL_API_BASE_URL: https://example.bfl.ai
+  RUNWAYML_API_SECRET: ci_runway_api_secret
   BABYSEA_API_KEY: ci_babysea_api_key
   BABYSEA_API_BASE_URL: https://api.us.babysea.ai
   STORAGE_PROVIDER: supabase-storage

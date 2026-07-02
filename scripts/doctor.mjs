@@ -16,7 +16,7 @@ const STORAGE_PROVIDERS = new Set([
 ]);
 const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
-  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
+  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,RUNWAYML_API_SECRET,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_DIGITALOCEAN_DEPLOY_URL = `https://cloud.digitalocean.com/apps/new?repo=${SHERIN_REPOSITORY_URL}/tree/main`;
 const SHERIN_RAILWAY_DEPLOY_URL =
@@ -31,6 +31,7 @@ const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'INFERENCE_PROVIDER',
   'BFL_API_KEY',
   'BFL_API_BASE_URL',
+  'RUNWAYML_API_SECRET',
   'STORAGE_PROVIDER',
   'CUSTOM_USER_STORAGE_QUOTA_GB',
 ];
