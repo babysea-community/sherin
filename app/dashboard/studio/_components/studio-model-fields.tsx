@@ -22,7 +22,7 @@ import { ByokFormFields } from './byok-form-fields';
 import { ModelField } from './form-controls';
 
 type StudioModelFieldsProps = {
-  mode: 'babysea' | 'byok' | null;
+  mode: 'byok' | 'babysea' | null;
   byokProviderIds: readonly ByokInferenceProviderId[];
   babySeaSchemas: Partial<Record<SherinModelId, BabySeaStudioModelSchema>>;
   initialModel?: SherinModelId;

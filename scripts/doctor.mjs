@@ -6,7 +6,13 @@ import { createHash, randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 
 const ENV_FILES = ['.env.local', '.env'];
-const INFERENCE_PROVIDERS = new Set(['byok', 'babysea', 'bfl', 'runway']);
+const INFERENCE_PROVIDERS = new Set([
+  'byok',
+  'babysea',
+  'alibaba-cloud',
+  'bfl',
+  'runway',
+]);
 const STORAGE_PROVIDERS = new Set([
   'aws-s3',
   'backblaze-b2',
@@ -16,7 +22,7 @@ const STORAGE_PROVIDERS = new Set([
 ]);
 const SHERIN_REPOSITORY_URL = 'https://github.com/babysea-community/sherin';
 const SHERIN_VERCEL_DEPLOY_URL =
-  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,RUNWAYML_API_SECRET,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
+  'https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,DASHSCOPE_API_KEY,BFL_API_KEY,BFL_API_BASE_URL,RUNWAYML_API_SECRET,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB';
 const SHERIN_NETLIFY_DEPLOY_URL = `https://app.netlify.com/start/deploy?repository=${SHERIN_REPOSITORY_URL}`;
 const SHERIN_DIGITALOCEAN_DEPLOY_URL = `https://cloud.digitalocean.com/apps/new?repo=${SHERIN_REPOSITORY_URL}/tree/main`;
 const SHERIN_RAILWAY_DEPLOY_URL =
@@ -29,6 +35,7 @@ const SHERIN_NETLIFY_TEMPLATE_ENV = [
   'NEXT_PUBLIC_SUPABASE_PUBLIC_KEY',
   'SUPABASE_SECRET_KEY',
   'INFERENCE_PROVIDER',
+  'DASHSCOPE_API_KEY',
   'BFL_API_KEY',
   'BFL_API_BASE_URL',
   'RUNWAYML_API_SECRET',
@@ -47,23 +54,31 @@ checkRequired('SUPABASE_SECRET_KEY');
 
 const preferredInference = optional('INFERENCE_PROVIDER')?.toLowerCase();
 const hasBabySea = Boolean(optional('BABYSEA_API_KEY'));
+const hasAlibabaCloud = Boolean(optional('DASHSCOPE_API_KEY'));
 const hasBfl = Boolean(optional('BFL_API_KEY'));
 const hasRunway = Boolean(optional('RUNWAYML_API_SECRET'));
-const hasByok = hasBfl || hasRunway;
+const hasByok = hasAlibabaCloud || hasBfl || hasRunway;
 
 if (preferredInference && !INFERENCE_PROVIDERS.has(preferredInference)) {
-  fail('INFERENCE_PROVIDER must be byok, babysea, bfl, or runway.');
+  fail(
+    'INFERENCE_PROVIDER must be byok, babysea, alibaba-cloud, bfl, or runway.',
+  );
 } else if (preferredInference === 'babysea' && !hasBabySea) {
   fail('INFERENCE_PROVIDER=babysea requires BABYSEA_API_KEY.');
 } else if (
   (preferredInference === 'byok' ||
+    preferredInference === 'alibaba-cloud' ||
     preferredInference === 'bfl' ||
     preferredInference === 'runway') &&
   !hasByok
 ) {
-  fail('INFERENCE_PROVIDER=byok requires BFL_API_KEY or RUNWAYML_API_SECRET.');
+  fail(
+    'INFERENCE_PROVIDER=byok requires DASHSCOPE_API_KEY, BFL_API_KEY, or RUNWAYML_API_SECRET.',
+  );
 } else if (!hasBabySea && !hasByok) {
-  fail('Set BABYSEA_API_KEY, BFL_API_KEY, or RUNWAYML_API_SECRET.');
+  fail(
+    'Set BABYSEA_API_KEY, DASHSCOPE_API_KEY, BFL_API_KEY, or RUNWAYML_API_SECRET.',
+  );
 } else {
   pass('Inference provider is configured.');
 }

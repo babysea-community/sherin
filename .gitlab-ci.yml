@@ -45,6 +45,7 @@ variables:
   NEXT_PUBLIC_SUPABASE_PUBLIC_KEY: ci_supabase_public_key
   SUPABASE_SECRET_KEY: ci_supabase_secret_key
   INFERENCE_PROVIDER: byok
+  DASHSCOPE_API_KEY: ci_alibaba_cloud_api_key
   BFL_API_KEY: ci_bfl_api_key
   BFL_API_BASE_URL: https://example.bfl.ai
   RUNWAYML_API_SECRET: ci_runway_api_secret

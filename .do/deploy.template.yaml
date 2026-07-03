@@ -23,6 +23,9 @@ spec:
         - key: INFERENCE_PROVIDER
           scope: RUN_TIME
           value: byok
+        - key: DASHSCOPE_API_KEY
+          scope: RUN_TIME
+          type: SECRET
         - key: BFL_API_KEY
           scope: RUN_TIME
           type: SECRET

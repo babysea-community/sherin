@@ -14,6 +14,10 @@ import {
   isBabySeaConfigured,
 } from './babysea/server-actions';
 import {
+  createAlibabaCloudProvider,
+  isAlibabaCloudConfigured,
+} from './alibaba-cloud/server-actions';
+import {
   createBflProvider,
   isBflConfigured,
 } from './black-forest-labs/server-actions';
@@ -26,10 +30,11 @@ export type { InferenceProvider, InferenceProviderId } from './types';
 export type { InferenceCancelResult } from './types';
 export type { InferenceRequest, InferenceResult } from './types';
 
-export type InferenceMode = 'babysea' | 'byok';
+export type InferenceMode = 'byok' | 'babysea';
 
 const BYOK_PROVIDER_CONFIGURED: Record<ByokInferenceProviderId, () => boolean> =
   {
+    'alibaba-cloud': isAlibabaCloudConfigured,
     bfl: isBflConfigured,
     runway: isRunwayConfigured,
   };
@@ -38,6 +43,7 @@ const BYOK_PROVIDER_FACTORY: Record<
   ByokInferenceProviderId,
   () => InferenceProvider
 > = {
+  'alibaba-cloud': createAlibabaCloudProvider,
   bfl: createBflProvider,
   runway: createRunwayProvider,
 };
@@ -74,8 +80,9 @@ function normalizeMode(value: string | undefined): InferenceMode | null {
 /**
  * Resolve the active inference mode. BYOK takes precedence unless
  * INFERENCE_PROVIDER=babysea, because BYOK is the app's default stack. In BYOK
- * mode every configured provider (BFL, Runway) is active and each model routes
- * to its provider by id prefix. Returns null when nothing is configured.
+ * mode every configured provider (Alibaba Cloud, BFL, Runway) is active and each
+ * model routes to its provider by id prefix. Returns null when nothing is
+ * configured.
  */
 export function resolveInferenceMode(): InferenceMode | null {
   const configured = getOptionalEnv('INFERENCE_PROVIDER');
@@ -83,7 +90,7 @@ export function resolveInferenceMode(): InferenceMode | null {
 
   if (configured && !preferred) {
     throw new Error(
-      'INFERENCE_PROVIDER must be byok, babysea, bfl, or runway.',
+      'INFERENCE_PROVIDER must be byok, babysea, alibaba-cloud, bfl, or runway.',
     );
   }
 
@@ -100,7 +107,7 @@ export function resolveInferenceMode(): InferenceMode | null {
   if (preferred === 'byok') {
     if (!isAnyByokConfigured()) {
       throw new Error(
-        'INFERENCE_PROVIDER=byok but no BYOK provider key (BFL_API_KEY, RUNWAYML_API_SECRET) is set.',
+        'INFERENCE_PROVIDER=byok but no BYOK provider key (DASHSCOPE_API_KEY, BFL_API_KEY, RUNWAYML_API_SECRET) is set.',
       );
     }
 

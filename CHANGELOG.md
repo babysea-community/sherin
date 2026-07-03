@@ -4,6 +4,19 @@ All notable changes will be documented here. The format follows [Keep a Changelo
 
 ## [Unreleased]
 
+### Added
+
+- Add Alibaba Cloud as a third bring-your-own-key (BYOK) inference provider alongside Black Forest Labs and Runway, so Sherin now runs Alibaba Cloud, BFL, Runway, and BabySea from a single Studio. In `INFERENCE_PROVIDER=byok` mode every configured provider is active at once and each model routes to its provider by id prefix (`qwen/*`, `wan/*`, `happyhorse/*`, and `z/*` to Alibaba Cloud DashScope).
+- Gate the Studio model catalog by the configured `DASHSCOPE_API_KEY` so Alibaba Cloud `qwen/*`, `wan/*`, `happyhorse/*`, and `z/*` models surface only when the key is set, alongside the existing `BFL_API_KEY` and `RUNWAYML_API_SECRET` gating.
+- Add the Alibaba Cloud DashScope API and delivery hosts (`dashscope-intl.aliyuncs.com`, `*.aliyuncs.com`) to the Content-Security-Policy and storage asset allowlists so DashScope-rendered media loads and downloads.
+- Add Alibaba Cloud model vendor icons (Qwen, Wan, HappyHorse, Z Image) to the homepage, Studio, and usage dashboards, and the Alibaba Cloud provider icon to the gallery and references provider summaries.
+
+### Changed
+
+- Allow `alibaba-cloud` in the `generations.inference_provider` database check constraint.
+- Order BYOK inference providers alphabetically (`alibaba-cloud`, `bfl`, `runway`) wherever they are enumerated across the model catalog, configuration, deploy manifests, and dashboards, and keep `byok` before `babysea` because BYOK is the default mode.
+- Update `.env.example`, the doctor preflight, one-click deploy manifests (DigitalOcean, Netlify, Render, Vercel), CI fixtures, and secret-scan allowlists to document the `DASHSCOPE_API_KEY` credential.
+
 ## [0.5.0] - 2026-07-02
 
 ### Added

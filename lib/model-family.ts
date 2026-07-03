@@ -1,12 +1,17 @@
 /**
  * App model-family registry facade (multi-BYOK).
  *
- * `sherin` supports multiple BYOK provider families (BFL + Runway) plus BabySea.
- * Each model id is prefixed with its provider (`bfl/*`, `runway/*`) and routed to
- * the matching direct adapter. The catalog surfaced to the studio is gated by
+ * `sherin` supports multiple BYOK provider families (Alibaba Cloud + BFL +
+ * Runway) plus BabySea. Each model id is prefixed with its provider and routed
+ * to the matching direct adapter. The catalog surfaced to the studio is gated by
  * which provider keys are configured (see `lib/inference`). BabySea mode exposes
  * the combined catalog routed through the BabySea API.
  */
+import {
+  SHERIN_BYOK_FAMILY as ALIBABACLOUD_FAMILY,
+  hasAlibabaCloudModelConfig,
+  type AlibabaCloudModelId,
+} from './inference/alibaba-cloud/family';
 import {
   SHERIN_BYOK_FAMILY as BFL_FAMILY,
   hasBflModelConfig,
@@ -20,10 +25,11 @@ import {
 
 export { SHERIN_BYOK_FAMILY as BYOK_FAMILY } from './inference/black-forest-labs/family';
 
-export type SherinModelId = BflModelId | RunwayModelId;
+export type SherinModelId = AlibabaCloudModelId | BflModelId | RunwayModelId;
 export type SherinModelOption = { id: SherinModelId; label: string };
 
 export const MODEL_OPTIONS: readonly SherinModelOption[] = [
+  ...ALIBABACLOUD_FAMILY.modelOptions,
   ...BFL_FAMILY.modelOptions,
   ...RUNWAY_FAMILY.modelOptions,
 ];
@@ -35,8 +41,9 @@ export const MODEL_IDS = MODEL_OPTIONS.map((option) => option.id) as [
 
 export const DEFAULT_MODEL_ID: SherinModelId = BFL_FAMILY.defaultModelId;
 
-/** BYOK provider ids, in catalog/default precedence order. */
+/** BYOK provider ids, in alphabetical catalog order. */
 export const BYOK_INFERENCE_PROVIDER_IDS = [
+  ALIBABACLOUD_FAMILY.providerId,
   BFL_FAMILY.providerId,
   RUNWAY_FAMILY.providerId,
 ] as const;
@@ -53,16 +60,19 @@ export function isByokInferenceProviderId(
 }
 
 const BYOK_PROVIDER_LABELS = {
+  [ALIBABACLOUD_FAMILY.providerId]: ALIBABACLOUD_FAMILY.providerLabel,
   [BFL_FAMILY.providerId]: BFL_FAMILY.providerLabel,
   [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.providerLabel,
 } as Record<ByokInferenceProviderId, string>;
 
 const BYOK_PROVIDER_KEYWORDS = {
+  [ALIBABACLOUD_FAMILY.providerId]: ALIBABACLOUD_FAMILY.providerKeyword,
   [BFL_FAMILY.providerId]: BFL_FAMILY.providerKeyword,
   [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.providerKeyword,
 } as Record<ByokInferenceProviderId, string>;
 
 const BYOK_MODEL_ID_PREFIXES = {
+  [ALIBABACLOUD_FAMILY.providerId]: ALIBABACLOUD_FAMILY.modelIdPrefix,
   [BFL_FAMILY.providerId]: BFL_FAMILY.modelIdPrefix,
   [RUNWAY_FAMILY.providerId]: RUNWAY_FAMILY.modelIdPrefix,
 } as Record<ByokInferenceProviderId, string>;
@@ -83,6 +93,10 @@ export function byokModelIdPrefix(providerId: ByokInferenceProviderId) {
 export function byokProviderIdForModel(
   model: string,
 ): ByokInferenceProviderId | null {
+  if (hasAlibabaCloudModelConfig(model)) {
+    return ALIBABACLOUD_FAMILY.providerId;
+  }
+
   if (hasBflModelConfig(model)) {
     return BFL_FAMILY.providerId;
   }
@@ -103,12 +117,14 @@ export function isSherinModelId(value: unknown): value is SherinModelId {
 export const RATIOS = {} as Record<string, { width: number; height: number }>;
 export type SherinDimensionRatio = string;
 export const RATIO_OPTIONS = uniqueStrings([
+  ...ALIBABACLOUD_FAMILY.ratioOptions,
   ...BFL_FAMILY.ratioOptions,
   ...RUNWAY_FAMILY.ratioOptions,
 ]);
 export type SherinRatio = (typeof RATIO_OPTIONS)[number];
 
 export const OUTPUT_FORMATS = uniqueStrings([
+  ...ALIBABACLOUD_FAMILY.outputFormats,
   ...BFL_FAMILY.outputFormats,
   ...RUNWAY_FAMILY.outputFormats,
 ]);
@@ -118,6 +134,7 @@ export const DEFAULT_RATIO: SherinDimensionRatio = BFL_FAMILY.defaultRatio;
 export const DEFAULT_OUTPUT_FORMAT: SherinOutputFormat =
   BFL_FAMILY.defaultOutputFormat;
 export const RESOLUTION_OPTIONS = uniqueStrings([
+  ...ALIBABACLOUD_FAMILY.resolutionOptions,
   ...BFL_FAMILY.resolutionOptions,
   ...RUNWAY_FAMILY.resolutionOptions,
 ]);
@@ -136,12 +153,14 @@ export const DEFAULT_BYOK_STEPS = BFL_FAMILY.defaultGenerationSteps;
 export const DEFAULT_BYOK_SAFETY_TOLERANCE = BFL_FAMILY.defaultSafetyTolerance;
 
 export const BYOK_MODEL_CONFIGS = {
+  ...ALIBABACLOUD_FAMILY.modelConfigs,
   ...BFL_FAMILY.modelConfigs,
   ...RUNWAY_FAMILY.modelConfigs,
 };
 export const BYOK_MODEL_IDS = MODEL_IDS;
 
 export const BABYSEA_MODEL_CONFIGS = {
+  ...ALIBABACLOUD_FAMILY.babySeaModelConfigs,
   ...BFL_FAMILY.babySeaModelConfigs,
   ...RUNWAY_FAMILY.babySeaModelConfigs,
 };
@@ -159,7 +178,11 @@ export const SHERIN_INPUT_FILE_LIMIT = Math.max(
 export type InferenceProviderScope = 'babysea' | ByokInferenceProviderId | null;
 
 export function hasByokModelConfig(model: string): model is SherinModelId {
-  return hasBflModelConfig(model) || hasRunwayModelConfig(model);
+  return (
+    hasAlibabaCloudModelConfig(model) ||
+    hasBflModelConfig(model) ||
+    hasRunwayModelConfig(model)
+  );
 }
 
 export function getModelOptionsForInferenceProvider(

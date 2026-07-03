@@ -16,7 +16,14 @@ import { getStorageProviderStatus } from '@/lib/storage';
 import { resolveAssetUrl } from '@/lib/storage/asset-url';
 import { getUser } from '@/lib/database/server-actions';
 import { getGenerationRequestSnapshot } from '@/lib/generation/display';
-import { InlineBlackForestLabsLight } from '@/components/icons/inline-model';
+import {
+  InlineBlackForestLabsLight,
+  InlineHappyHorseLight,
+  InlineQwen,
+  InlineRunwayLight,
+  InlineWan,
+  InlineZImage,
+} from '@/components/icons/inline-model';
 import {
   InlineAwsS3,
   InlineBackblazeB2,
@@ -360,18 +367,42 @@ function UsageKpiCard({
 
 function FavoriteModelValue({ model }: { model: string }) {
   const hasModel = model !== 'No outputs yet';
+  const Icon = hasModel ? modelVendorIcon(model) : null;
 
   return (
     <span className="inline-flex w-full max-w-full min-w-0 items-center gap-3">
-      {hasModel ? (
-        <InlineBlackForestLabsLight
-          className="h-5 w-7 shrink-0"
-          aria-hidden="true"
-        />
-      ) : null}
+      {Icon ? <Icon className="h-5 w-7 shrink-0" aria-hidden="true" /> : null}
       <span className="block min-w-0 truncate">{model}</span>
     </span>
   );
+}
+
+function modelVendorIcon(modelId: string) {
+  if (modelId.startsWith('qwen/')) {
+    return InlineQwen;
+  }
+
+  if (modelId.startsWith('wan/')) {
+    return InlineWan;
+  }
+
+  if (modelId.startsWith('happyhorse/')) {
+    return InlineHappyHorseLight;
+  }
+
+  if (modelId.startsWith('z/')) {
+    return InlineZImage;
+  }
+
+  if (modelId.startsWith('runway/')) {
+    return InlineRunwayLight;
+  }
+
+  if (modelId.startsWith('bfl/')) {
+    return InlineBlackForestLabsLight;
+  }
+
+  return null;
 }
 
 function InsightCard({

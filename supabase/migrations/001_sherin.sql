@@ -24,7 +24,7 @@ create table if not exists public.generations (
   user_id uuid not null references auth.users(id) on delete cascade,
   status text not null default 'queued'
     check (status in ('queued', 'running', 'succeeded', 'failed', 'unavailable')),
-  inference_provider text not null check (inference_provider in ('bfl', 'runway', 'babysea')),
+  inference_provider text not null check (inference_provider in ('alibaba-cloud', 'bfl', 'runway', 'babysea')),
   provider_generation_id text
     check (
       provider_generation_id is null

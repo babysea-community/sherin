@@ -328,7 +328,7 @@ function createStudioToasts({
   errorParam,
   successId,
 }: {
-  activeProvider: 'babysea' | 'byok' | null;
+  activeProvider: 'byok' | 'babysea' | null;
   babySeaSchemaUnavailable: boolean;
   errorParam: string | null;
   successId: string | null;

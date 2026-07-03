@@ -18,6 +18,8 @@ services:
         sync: false
       - key: INFERENCE_PROVIDER
         value: byok
+      - key: DASHSCOPE_API_KEY
+        sync: false
       - key: BFL_API_KEY
         sync: false
       - key: BFL_API_BASE_URL

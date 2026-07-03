@@ -55,7 +55,7 @@ Private workspace for generative media with own key, domain, and storage.
 [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/babysea-community/sherin)  
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/sherin?referralCode=_FJpRb)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/babysea-community/sherin)  
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,BFL_API_KEY,BFL_API_BASE_URL,RUNWAYML_API_SECRET,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fbabysea-community%2Fsherin&project-name=sherin&repository-name=sherin&env=NEXT_PUBLIC_SITE_URL,OWNER_EMAIL,NEXT_PUBLIC_SUPABASE_URL,NEXT_PUBLIC_SUPABASE_PUBLIC_KEY,SUPABASE_SECRET_KEY,INFERENCE_PROVIDER,DASHSCOPE_API_KEY,BFL_API_KEY,BFL_API_BASE_URL,RUNWAYML_API_SECRET,STORAGE_PROVIDER,CUSTOM_USER_STORAGE_QUOTA_GB)
 
 <br />
 
@@ -129,7 +129,7 @@ Use [`.env.example`](.env.example) as the source of truth for inference mode and
 
 This project supports bring-your-own-key (BYOK) inference across multiple providers plus BabySea execution, all sharing the same Studio workflow:
 
-- `INFERENCE_PROVIDER=byok` - every configured BYOK provider is active at once. Set `BFL_API_KEY` to enable Black Forest Labs models and `RUNWAYML_API_SECRET` to enable Runway models; set both to run both. Each model routes to its provider by id prefix.
+- `INFERENCE_PROVIDER=byok` - every configured BYOK provider is active at once. Set `DASHSCOPE_API_KEY` to enable Alibaba Cloud models, `BFL_API_KEY` to enable Black Forest Labs models, and `RUNWAYML_API_SECRET` to enable Runway models; set any combination to run them together. Each model routes to its provider by id prefix.
 - `INFERENCE_PROVIDER=babysea` - run the combined model catalog through BabySea.
 
 BabySea model schemas are published at [babysea.ai/model-schema](https://babysea.ai/model-schema).

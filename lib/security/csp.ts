@@ -47,6 +47,7 @@ function buildContentSecurityPolicy() {
     'https://api.us.bfl.ai', // bfl (us-region)
     'https://api.eu.bfl.ai', // bfl (eu-region)
     'https://api.dev.runwayml.com', // runway (global)
+    'https://dashscope-intl.aliyuncs.com', // alibaba cloud (singapore)
   ]);
   const imageHosts = new Set<string>([
     "'self'",
@@ -59,6 +60,7 @@ function buildContentSecurityPolicy() {
     'https://delivery-eu.bfl.ai', // bfl (eu-region)
     'https://*.runwayml.com', // runway (hosted)
     'https://*.cloudfront.net', // runway (cdn)
+    'https://*.aliyuncs.com', // alibaba cloud (oss results)
     'https://lh3.googleusercontent.com', // Google profile photos from Google OAuth
     BABYSEA_CDN_ORIGIN, // app assets
     'https://imagedelivery.net', // app assets

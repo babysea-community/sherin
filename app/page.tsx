@@ -19,8 +19,12 @@ import {
 } from '@/components/icons/inline-host';
 import {
   InlineBlackForestLabsLight,
+  InlineHappyHorseLight,
+  InlineQwen,
   InlineRunwayLight,
-} from '@/components/icons/inline-inference';
+  InlineWan,
+  InlineZImage,
+} from '@/components/icons/inline-model';
 import { InlineGitHub } from '@/components/icons/inline-git';
 import {
   InlineAwsS3,
@@ -70,6 +74,30 @@ type StackItem = {
   Icon: ComponentType<SVGProps<SVGSVGElement>>;
   label?: string;
 };
+
+function alibabaModelVendorIcon(modelId: string) {
+  if (modelId.startsWith('happyhorse/')) {
+    return InlineHappyHorseLight;
+  }
+
+  if (modelId.startsWith('wan/')) {
+    return InlineWan;
+  }
+
+  if (modelId.startsWith('z/')) {
+    return InlineZImage;
+  }
+
+  return InlineQwen;
+}
+
+const alibabaModels = MODEL_OPTIONS.filter(
+  (model) => byokProviderIdForModel(model.id) === 'alibaba-cloud',
+).map((model) => ({
+  ariaLabel: model.label,
+  Icon: alibabaModelVendorIcon(model.id),
+  label: model.label,
+})) satisfies StackItem[];
 
 const bflModels = MODEL_OPTIONS.filter(
   (model) => byokProviderIdForModel(model.id) === 'bfl',
@@ -255,6 +283,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      <AlibabaModelsSection />
+
       <BflModelsSection />
 
       <RunwayModelsSection />
@@ -325,6 +355,47 @@ export default function HomePage() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function AlibabaModelsSection() {
+  return (
+    <section className="border-t border-[#20263a] bg-[#000416]">
+      <div className={`${pageContainerClass} py-28 sm:py-36`}>
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-14 text-center sm:gap-16 lg:gap-20">
+          <div className="max-w-4xl">
+            <h2 className={sectionTitleClassName}>
+              <span>Alibaba Cloud</span>
+              <span className="mx-4 text-slate-500">×</span>
+              <span className="font-normal text-slate-400">models</span>
+            </h2>
+            <p className="mt-4 text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">
+              Powered by Alibaba Cloud models inside one private studio
+            </p>
+          </div>
+
+          <div className="flex max-w-5xl flex-wrap items-center justify-center gap-3 sm:gap-4">
+            {alibabaModels.map((item) => {
+              const Icon = item.Icon;
+
+              return (
+                <span
+                  key={item.ariaLabel}
+                  className="inline-flex items-center gap-2 rounded-full border border-[#f0abfc4d] bg-[#f0abfc14] px-3.5 py-2 text-xs font-semibold text-fuchsia-50 sm:text-sm"
+                  title={item.ariaLabel}
+                >
+                  <Icon
+                    className="h-4 w-auto shrink-0 text-fuchsia-100"
+                    aria-hidden="true"
+                  />
+                  <span>{item.label}</span>
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

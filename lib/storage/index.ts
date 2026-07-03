@@ -67,6 +67,7 @@ const ALLOWED_ASSET_HOST_SUFFIXES = [
   'bfl.ai',
   'runwayml.com',
   'cloudfront.net',
+  'aliyuncs.com',
   // BabySea
   'app.babysea.ai',
   'app.us.babysea.ai',

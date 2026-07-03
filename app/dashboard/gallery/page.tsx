@@ -25,6 +25,7 @@ import { getUser } from '@/lib/database/server-actions';
 import { formatDate } from '@/lib/utils';
 import { InlineBabySea } from '@/components/icons/inline-babysea';
 import {
+  InlineAlibabaCloud,
   InlineBlackForestLabsLight,
   InlineRunwayLight,
 } from '@/components/icons/inline-inference';
@@ -335,7 +336,11 @@ function inferenceProviderSummaryValue(provider: string): ProviderSummaryValue {
 
   if (isByokInferenceProviderId(provider)) {
     const Icon =
-      provider === 'runway' ? InlineRunwayLight : InlineBlackForestLabsLight;
+      provider === 'alibaba-cloud'
+        ? InlineAlibabaCloud
+        : provider === 'runway'
+          ? InlineRunwayLight
+          : InlineBlackForestLabsLight;
 
     return {
       content: (

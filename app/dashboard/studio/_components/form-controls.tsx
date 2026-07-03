@@ -4,13 +4,16 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 
 import {
   InlineBlackForestLabsLight,
+  InlineHappyHorseLight,
+  InlineQwen,
   InlineRunwayLight,
+  InlineWan,
+  InlineZImage,
 } from '@/components/icons/inline-model';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  byokProviderIdForModel,
   GENERATION_PROMPT_PLACEHOLDER,
   MODEL_OPTIONS,
   type SherinModelId,
@@ -174,20 +177,45 @@ export function ModelField({
 }
 
 function ModelVendorIcon({ modelId }: { modelId: string }) {
-  const providerId = byokProviderIdForModel(modelId);
+  const Icon = modelVendorIcon(modelId);
 
-  if (!providerId) {
+  if (!Icon) {
     return null;
   }
 
-  const Icon =
-    providerId === 'runway' ? InlineRunwayLight : InlineBlackForestLabsLight;
-
   return (
     <span className="flex size-5 shrink-0 items-center justify-center rounded bg-[#48d1cc1a]">
-      <Icon className="h-2.5 w-3.5 shrink-0" aria-hidden="true" />
+      <Icon className="size-3.5 shrink-0" aria-hidden="true" />
     </span>
   );
+}
+
+function modelVendorIcon(modelId: string) {
+  if (modelId.startsWith('qwen/')) {
+    return InlineQwen;
+  }
+
+  if (modelId.startsWith('wan/')) {
+    return InlineWan;
+  }
+
+  if (modelId.startsWith('happyhorse/')) {
+    return InlineHappyHorseLight;
+  }
+
+  if (modelId.startsWith('z/')) {
+    return InlineZImage;
+  }
+
+  if (modelId.startsWith('runway/')) {
+    return InlineRunwayLight;
+  }
+
+  if (modelId.startsWith('bfl/')) {
+    return InlineBlackForestLabsLight;
+  }
+
+  return null;
 }
 
 export function RatioField({

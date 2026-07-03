@@ -9,6 +9,7 @@
   NEXT_PUBLIC_SUPABASE_PUBLIC_KEY = "Required. Your Supabase publishable or anon key."
   SUPABASE_SECRET_KEY = "Required. Your Supabase service role key. Keep it server-only."
   INFERENCE_PROVIDER = "Required. Inference mode: byok or babysea. Default byok."
+  DASHSCOPE_API_KEY = "Optional (byok). Alibaba Cloud API key to enable qwen/*, wan/*, happyhorse/*, and z/* models."
   BFL_API_KEY = "Optional (byok). Black Forest Labs API key to enable bfl/* models."
   BFL_API_BASE_URL = "Optional (byok). Black Forest Labs API base URL, default https://api.bfl.ai."
   RUNWAYML_API_SECRET = "Optional (byok). Runway API key to enable runway/* models."
